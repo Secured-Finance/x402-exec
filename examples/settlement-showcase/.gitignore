@@ -1,0 +1,23 @@
+node_modules/
+.env
+.env.local
+dist/
+build/
+*.log
+
+# Foundry
+cache/
+out/
+broadcast/
+lib/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db

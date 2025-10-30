@@ -1,0 +1,29 @@
+# Foundry build outputs
+out/
+cache/
+broadcast/
+coverage/
+
+# Dependencies are managed by git submodules (.gitmodules)
+# Uncomment the following line if you want to ignore lib/ completely:
+# lib/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Testing
+gas-report.txt
+*.log
