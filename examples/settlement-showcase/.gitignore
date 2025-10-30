@@ -9,7 +9,7 @@ build/
 cache/
 out/
 broadcast/
-lib/
+# lib/ is managed by git submodules
 
 # IDE
 .vscode/

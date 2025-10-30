@@ -1,0 +1,23 @@
+{
+  "name": "settlement-showcase",
+  "version": "1.0.0",
+  "description": "x402 Settlement Extension Showcase - Demonstrating 3 payment scenarios",
+  "private": true,
+  "scripts": {
+    "install:all": "npm install && cd server && npm install && cd ../client && npm install",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build"
+  },
+  "keywords": [
+    "x402",
+    "settlement",
+    "payment",
+    "blockchain"
+  ],
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
+
