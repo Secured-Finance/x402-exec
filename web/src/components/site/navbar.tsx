@@ -25,7 +25,9 @@ export function Navbar() {
           {/* <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground text-xs">
             ⚡
           </span> */}
-          <span className="ml-2">x402-exec</span>
+          <span className="ml-2 text-xl font-bold tracking-tight">
+            x402-exec
+          </span>
         </Button>
         <NavigationMenu className="hidden md:flex" viewport={false}>
           <NavigationMenuList className="justify-end">
