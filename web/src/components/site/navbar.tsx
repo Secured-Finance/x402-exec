@@ -5,11 +5,6 @@ import {
   NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { FaGithub } from "react-icons/fa6";
 
 export function Navbar() {
@@ -31,6 +26,14 @@ export function Navbar() {
         </Button>
         <NavigationMenu className="hidden md:flex" viewport={false}>
           <NavigationMenuList className="justify-end">
+            <NavigationMenuItem>
+              <NavigationMenuLink href="#/docs">Docs</NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink href="#/facilitator">
+                Facilitator
+              </NavigationMenuLink>
+            </NavigationMenuItem>
             {/* <NavigationMenuItem>
               <NavigationMenuLink
                 href="https://github.com/nuwa-protocol/x402-exec#readme"
@@ -54,26 +57,16 @@ export function Navbar() {
               </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <NavigationMenuLink
-                    href="#diagram"
-                    onClick={(e) => {
-                      e.preventDefault();
-                    }}
-                    className="inline-flex h-9 items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium opacity-50 cursor-not-allowed"
-                  >
-                    Try the demo
-                  </NavigationMenuLink>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Coming soon</p>
-                  <p>
-                    We are working on the demo and will release it soon. Please
-                    stay tuned.
-                  </p>
-                </TooltipContent>
-              </Tooltip>
+              <NavigationMenuLink
+                href="#diagram"
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.open("https://demo.x402-exec.org/", "_blank");
+                }}
+                className="inline-flex h-9 items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium  cursor-pointer"
+              >
+                Try the demo
+              </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>

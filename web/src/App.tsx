@@ -3,8 +3,39 @@ import Hero from "@/components/site/hero";
 import Navbar from "@/components/site/navbar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { TriangleAlert } from "lucide-react";
+import { useEffect, useState } from "react";
+import DocsPage from "@/pages/docs";
+import FacilitatorPage from "@/pages/facilitator";
 
 function App() {
+  // extremely light-weight hash-based routing to avoid adding a router dep
+  const getRoute = () => {
+    const hash = (typeof window !== "undefined" ? window.location.hash : "").replace(
+      /^#\/?/,
+      "",
+    );
+    if (hash.startsWith("docs")) return "docs" as const;
+    if (hash.startsWith("facilitator")) return "facilitator" as const;
+    return "home" as const;
+  };
+
+  const [route, setRoute] = useState<"home" | "docs" | "facilitator">(getRoute());
+
+  useEffect(() => {
+    const onHashChange = () => setRoute(getRoute());
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  // Basic client-side SEO: update document title based on route
+  useEffect(() => {
+    const base = "x402-exec";
+    const title = route === "docs" ? `${base} • Docs` : route === "facilitator" ? `${base} • Facilitator` : `${base} • Atomic Pay-and-Execute`;
+    if (typeof document !== "undefined") {
+      document.title = title;
+    }
+  }, [route]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -21,7 +52,9 @@ function App() {
             </AlertDescription>
           </Alert>
         </div>
-        <Hero />
+        {route === "home" ? <Hero /> : null}
+        {route === "docs" ? <DocsPage /> : null}
+        {route === "facilitator" ? <FacilitatorPage /> : null}
       </main>
       <Footer />
     </div>
