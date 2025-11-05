@@ -20,9 +20,7 @@ export function Navbar() {
           {/* <span className="inline-flex h-6 w-6 items-center justify-center rounded bg-primary text-primary-foreground text-xs">
             ⚡
           </span> */}
-          <span className="ml-2 text-xl font-bold tracking-tight">
-            x402X
-          </span>
+          <span className="ml-2 text-xl font-bold tracking-tight">x402X</span>
         </Button>
         <NavigationMenu className="hidden md:flex" viewport={false}>
           <NavigationMenuList className="justify-end">
@@ -62,7 +60,7 @@ export function Navbar() {
                 onClick={(e) => {
                   e.preventDefault();
                   // Open the new primary domain for the demo
-                  window.open("https://x402x.dev/", "_blank");
+                  window.open("https://demo.x402x.dev/", "_blank");
                 }}
                 className="inline-flex h-9 items-center justify-center rounded-md bg-primary text-primary-foreground px-4 py-2 text-sm font-medium  cursor-pointer"
               >
