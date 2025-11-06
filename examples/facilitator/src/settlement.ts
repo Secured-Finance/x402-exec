@@ -3,21 +3,23 @@
  *
  * This module provides functions for detecting and handling settlement mode payments
  * that use the SettlementRouter contract for extended business logic via Hooks.
- * 
- * Now simplified using @x402x/core SDK.
+ *
+ * Most functionality is re-exported from @x402x/core with added logging.
  */
 
 import type { PaymentPayload, PaymentRequirements, SettleResponse, Signer } from "x402/types";
 import { isEvmSignerWallet } from "x402/types";
-import { 
+import {
   isSettlementMode as isSettlementModeCore,
+  validateSettlementRouter as validateSettlementRouterCore,
   settleWithRouter as settleWithRouterCore,
 } from "@x402x/core";
 import { SettlementExtraError } from "./types.js";
+import { getLogger } from "./telemetry.js";
 
 /**
  * Check if a payment request requires SettlementRouter mode
- * 
+ *
  * Re-exported from @x402x/core for backward compatibility
  *
  * @param paymentRequirements - The payment requirements from the 402 response
@@ -29,8 +31,8 @@ export function isSettlementMode(paymentRequirements: PaymentRequirements): bool
 
 /**
  * Validate SettlementRouter address against whitelist
- * 
- * Simplified wrapper around @x402x/core's validateSettlementRouter
+ *
+ * Wrapper around @x402x/core's validateSettlementRouter with additional logging
  *
  * @param network - The network name (e.g., "base-sepolia", "x-layer-testnet")
  * @param routerAddress - The SettlementRouter address to validate
@@ -40,42 +42,48 @@ export function isSettlementMode(paymentRequirements: PaymentRequirements): bool
 export function validateSettlementRouter(
   network: string,
   routerAddress: string,
-  allowedRouters: Record<string, string[]>
+  allowedRouters: Record<string, string[]>,
 ): void {
-  const allowedForNetwork = allowedRouters[network];
-  
-  if (!allowedForNetwork || allowedForNetwork.length === 0) {
-    throw new SettlementExtraError(
-      `No allowed settlement routers configured for network: ${network}. ` +
-      `Please configure environment variables for this network.`
+  const logger = getLogger();
+
+  try {
+    // Use core validation logic
+    validateSettlementRouterCore(network, routerAddress, allowedRouters);
+
+    // Log success
+    logger.info(
+      {
+        network,
+        routerAddress,
+      },
+      "Settlement router validated",
     );
-  }
-  
-  const normalizedRouter = routerAddress.toLowerCase();
-  const isAllowed = allowedForNetwork.some(
-    allowed => allowed.toLowerCase() === normalizedRouter
-  );
-  
-  if (!isAllowed) {
-    throw new SettlementExtraError(
-      `Settlement router ${routerAddress} is not in whitelist for network ${network}. ` +
-      `Allowed addresses: ${allowedForNetwork.join(', ')}`
+  } catch (error) {
+    // Log validation failure
+    logger.error(
+      {
+        network,
+        routerAddress,
+        allowedAddresses: allowedRouters[network] || [],
+        error: error instanceof Error ? error.message : String(error),
+      },
+      "Settlement router validation failed",
     );
+    throw error;
   }
-  
-  console.log(`✅ Settlement router validated: ${routerAddress} for network: ${network}`);
 }
 
 /**
  * Settle payment using SettlementRouter contract
  *
- * This function uses @x402x/core's settleWithRouter to:
- * 1. Validate SettlementRouter address against whitelist (SECURITY)
- * 2. Verify the EIP-3009 authorization
- * 3. Transfer tokens from payer to Router
- * 4. Deduct facilitator fee
- * 5. Execute the Hook with remaining amount
- * 6. Ensure Router doesn't hold funds
+ * Wrapper around @x402x/core's settleWithRouter with additional logging and observability.
+ * The core implementation:
+ * 1. Validates SettlementRouter address against whitelist (SECURITY)
+ * 2. Verifies the EIP-3009 authorization
+ * 3. Transfers tokens from payer to Router
+ * 4. Deducts facilitator fee
+ * 5. Executes the Hook with remaining amount
+ * 6. Ensures Router doesn't hold funds
  *
  * @param signer - The facilitator's wallet signer (must support EVM)
  * @param paymentPayload - The payment payload with authorization and signature
@@ -90,45 +98,46 @@ export async function settleWithRouter(
   paymentRequirements: PaymentRequirements,
   allowedRouters: Record<string, string[]>,
 ): Promise<SettleResponse> {
-  try {
-    // Validate SettlementRouter address against whitelist
-    if (!paymentRequirements.extra?.settlementRouter) {
-      throw new SettlementExtraError("Missing settlementRouter in payment requirements");
-    }
-    
-    validateSettlementRouter(
-      paymentRequirements.network, 
-      paymentRequirements.extra.settlementRouter,
-      allowedRouters
-    );
+  const logger = getLogger();
 
+  try {
     // Ensure signer is EVM signer
     if (!isEvmSignerWallet(signer)) {
       throw new Error("Settlement Router requires an EVM signer");
     }
 
-    // Use @x402x/core's settleWithRouter
-    const walletClient = signer as any;
-    const result = await settleWithRouterCore(
-      walletClient, 
-      paymentPayload, 
-      paymentRequirements,
-      { allowedRouters }
+    logger.debug(
+      {
+        network: paymentRequirements.network,
+        router: paymentRequirements.extra?.settlementRouter,
+      },
+      "Starting settlement with router",
     );
-    
-    console.log("SettlementRouter transaction confirmed:", {
-      transaction: result.transaction,
-      success: result.success,
+
+    // Use @x402x/core's settleWithRouter (includes validation)
+    const result = await settleWithRouterCore(signer as any, paymentPayload, paymentRequirements, {
+      allowedRouters,
     });
 
-    return {
-      success: true,
-      transaction: result.transaction,
-      network: paymentPayload.network,
-      payer: result.payer,
-    };
+    logger.info(
+      {
+        transaction: result.transaction,
+        payer: result.payer,
+        success: result.success,
+      },
+      "SettlementRouter transaction confirmed",
+    );
+
+    return result;
   } catch (error) {
-    console.error("Error in settleWithRouter:", error);
+    logger.error(
+      {
+        error,
+        network: paymentRequirements.network,
+        router: paymentRequirements.extra?.settlementRouter,
+      },
+      "Error in settleWithRouter",
+    );
 
     // Extract payer from payload if available
     let payer = "";
