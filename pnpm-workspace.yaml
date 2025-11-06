@@ -9,3 +9,6 @@ packages:
   - 'examples/facilitator'
   - 'examples/showcase/server'
   - 'examples/showcase/client'
+
+  # Website Project
+  - 'web'
