@@ -15,10 +15,12 @@ WORKDIR /app
 COPY . .
 
 # Install all dependencies
-# Note: Examples use npm:@x402x/x402 (pre-built from npm), so no need to build x402 workspace packages
 RUN pnpm install --frozen-lockfile
 
-# Build both services directly (x402 is already built and comes from npm)
+# 1. Build x402x SDK packages (required by examples)
+RUN pnpm run build:sdk
+
+# 2. Build both example services
 RUN pnpm --filter='@nuwa-ai/facilitator' build
 RUN pnpm --filter=x402-exec-showcase-server build
 

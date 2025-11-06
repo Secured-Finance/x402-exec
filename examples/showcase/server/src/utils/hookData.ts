@@ -19,7 +19,6 @@ export interface Split {
 export interface MintConfig {
   nftContract: string;
   tokenId: number;
-  recipient: string;
   merchant: string;
 }
 
@@ -53,8 +52,8 @@ export function encodeRevenueSplitData(splits: Split[]): string {
 export function encodeNFTMintData(config: MintConfig): string {
   const abiCoder = ethers.AbiCoder.defaultAbiCoder();
   const encoded = abiCoder.encode(
-    ['tuple(address nftContract, uint256 tokenId, address recipient, address merchant)'],
-    [[config.nftContract, config.tokenId, config.recipient, config.merchant]]
+    ['tuple(address nftContract, uint256 tokenId, address merchant)'],
+    [[config.nftContract, config.tokenId, config.merchant]]
   );
   return encoded;
 }
@@ -71,6 +70,24 @@ export function encodeRewardData(config: RewardConfig): string {
     [[config.rewardToken, config.merchant]]
   );
   return encoded;
+}
+
+/**
+ * Decodes NFT mint configuration from hookData
+ * @param hookData Hex-encoded hook data
+ * @returns Decoded mint configuration
+ */
+export function decodeNFTMintData(hookData: string): MintConfig {
+  const abiCoder = ethers.AbiCoder.defaultAbiCoder();
+  const [decoded] = abiCoder.decode(
+    ['tuple(address nftContract, uint256 tokenId, address merchant)'],
+    hookData
+  );
+  return {
+    nftContract: decoded[0],
+    tokenId: Number(decoded[1]),
+    merchant: decoded[2],
+  };
 }
 
 /**
