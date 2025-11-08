@@ -78,3 +78,9 @@ jobs:
         run: pnpm run build:examples
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+
+      - name: Test facilitator
+        working-directory: examples/facilitator
+        run: pnpm run test
+        env:
+          NODE_ENV: test

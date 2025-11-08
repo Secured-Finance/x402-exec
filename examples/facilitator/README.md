@@ -14,6 +14,28 @@ This is a **production-grade** implementation of an x402 facilitator service wit
 
 ### 🔒 Security Features
 
+- **Rate Limiting**: Protection against DoS/DDoS attacks
+  - Per-endpoint rate limits (configurable via environment variables)
+  - `/verify`: 100 req/min per IP (default)
+  - `/settle`: 20 req/min per IP (default)
+  - Health/monitoring endpoints unlimited
+  - Returns HTTP 429 with `Retry-After` header when exceeded
+- **Input Validation**: Deep validation beyond TypeScript types
+  - Request body size limits (default: 1MB)
+  - Zod schema validation for all inputs
+  - Sanitized error messages (no internal detail leaks)
+- **Hook Whitelist Security** 🆕: Protection against malicious Hook gas attacks
+  - Only pre-approved Hooks are accepted
+  - Network-specific Hook whitelists
+  - Prevents unknown/malicious contracts from draining facilitator funds
+- **Gas Limit Protection** 🆕: Maximum gas limit enforcement
+  - Configurable gas limit cap per transaction (default: 500k)
+  - Prevents excessive gas consumption even from whitelisted Hooks
+  - Additional safety layer against gas attacks
+- **Facilitator Fee Validation** 🆕: Ensures profitability
+  - Automatic minimum fee calculation based on gas costs
+  - Validates fees cover transaction costs before execution
+  - Prevents facilitator from accepting unprofitable settlements
 - **SettlementRouter Whitelist**: Only pre-configured, trusted SettlementRouter contracts are accepted
 - **Network-Specific Validation**: Each network has its own whitelist of allowed router addresses
 - **Case-Insensitive Matching**: Address validation works regardless of case
@@ -108,6 +130,15 @@ X_LAYER_TESTNET_SETTLEMENT_ROUTER_ADDRESS=0x...  # X-Layer Testnet SettlementRou
 # Server port (default: 3000)
 PORT=3000
 
+# Rate Limiting (生产环境推荐启用)
+RATE_LIMIT_ENABLED=true
+RATE_LIMIT_VERIFY_MAX=100  # verify 端点每分钟最大请求数
+RATE_LIMIT_SETTLE_MAX=20   # settle 端点每分钟最大请求数
+RATE_LIMIT_WINDOW_MS=60000 # 时间窗口（毫秒）
+
+# Input Validation
+REQUEST_BODY_LIMIT=1mb     # 请求体大小限制
+
 # Logging level (default: info)
 LOG_LEVEL=info
 
@@ -129,6 +160,254 @@ pnpm dev
 The server will start on http://localhost:3000
 
 ## Security Configuration
+
+### Hook Whitelist & Gas Attack Protection 🆕
+
+The facilitator implements multi-layer security against malicious Hook gas attacks:
+
+#### Security Threat
+
+Malicious Resource Servers could specify Hooks that consume excessive gas, causing:
+
+1. **Financial Loss**: Facilitator pays gas costs but `facilitatorFee` is insufficient
+2. **Resource Drain**: Signed authorizations wasted on unprofitable transactions
+3. **Service Degradation**: Facilitator funds depleted
+
+#### Multi-Layer Defense
+
+**Layer 1: Hook Whitelist** (Primary Defense)
+
+- Only pre-approved, audited Hooks are accepted
+- Configured per network via environment variables
+- Default: Automatically includes official TransferHook
+
+**Layer 2: Gas Limit Cap** (Secondary Defense)
+
+- Maximum gas limit enforced per transaction (default: 500k)
+- Protects even against whitelisted Hook issues
+- Configurable via `GAS_COST_MAX_GAS_LIMIT`
+
+**Layer 3: Fee Validation** (Financial Protection)
+
+- Calculates minimum required `facilitatorFee` based on gas costs
+- Rejects transactions with insufficient fees
+- Considers: gas limit, gas price (dynamic or static), native token price, safety multiplier
+- Supports three gas price strategies: static, dynamic, and hybrid
+
+#### Gas Price Strategies
+
+The facilitator supports three strategies for obtaining gas prices:
+
+**1. Static** (Manual Configuration)
+
+- Uses fixed gas price values from environment variables
+- Best for: Testing, stable networks, or when you want predictable fees
+- Configuration: Set `*_TARGET_GAS_PRICE` for each network
+- Pros: Fast (<1ms), reliable, predictable
+- Cons: Requires manual updates, may not reflect market changes
+
+**2. Dynamic** (Real-time Query)
+
+- Queries gas price from RPC on every calculation
+- Best for: Maximum accuracy when performance is not critical
+- Configuration: Set `GAS_PRICE_STRATEGY=dynamic` + RPC URLs
+- Pros: Real-time accuracy
+- Cons: Slower (100-200ms per request), depends on RPC availability
+
+**3. Hybrid** (Recommended, Default)
+
+- Background thread updates cached gas prices periodically
+- Falls back to static config if RPC fails
+- Best for: Production use - combines speed and accuracy
+- Configuration: Automatically enabled if no `*_TARGET_GAS_PRICE` is set
+- Pros: Fast (<1ms), accurate, reliable fallback
+- Cons: Slightly more complex setup
+
+**Default Behavior:**
+
+- If any `*_TARGET_GAS_PRICE` is set → Uses **static** strategy
+- Otherwise → Uses **hybrid** strategy (fetches from chain)
+
+#### Configuration
+
+**For Production (Hybrid Strategy - Recommended):**
+
+```env
+# Gas price strategy (hybrid is default)
+# GAS_PRICE_STRATEGY=hybrid
+
+# RPC URLs for dynamic gas price fetching
+
+# BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+# X_LAYER_TESTNET_RPC_URL=https://testrpc.xlayer.tech
+
+# Cache configuration
+GAS_PRICE_CACHE_TTL=300          # 5 minutes
+GAS_PRICE_UPDATE_INTERVAL=60     # 1 minute
+
+# Enable Hook whitelist (default: false, enable for production)
+HOOK_WHITELIST_ENABLED=true
+
+# Enable fee validation (default: true)
+GAS_COST_VALIDATION_ENABLED=true
+
+# Maximum gas limit per transaction
+GAS_COST_MAX_GAS_LIMIT=500000
+
+# Add trusted Hooks to whitelist
+BASE_SEPOLIA_ALLOWED_HOOKS=0x6b486aF5A08D27153d0374BE56A1cB1676c460a8
+X_LAYER_TESTNET_ALLOWED_HOOKS=0x3D07D4E03a2aDa2EC49D6937ab1B40a83F3946AB
+
+# Native token prices (update periodically)
+# ETH: https://www.coingecko.com/en/coins/ethereum
+# OKB: https://www.coingecko.com/en/coins/okb
+BASE_SEPOLIA_ETH_PRICE=3000
+X_LAYER_TESTNET_ETH_PRICE=50
+
+# Dynamic token pricing (enabled by default)
+TOKEN_PRICE_ENABLED=true
+TOKEN_PRICE_CACHE_TTL=3600
+TOKEN_PRICE_UPDATE_INTERVAL=600
+# COINGECKO_API_KEY=your_api_key_here  # Optional, for higher rate limits
+```
+
+**For Testing with Static Prices:**
+
+```env
+# Manually set gas prices (forces static strategy)
+BASE_SEPOLIA_TARGET_GAS_PRICE=1000000000   # 1 gwei
+X_LAYER_TESTNET_TARGET_GAS_PRICE=100000000 # 0.1 gwei
+
+# ⚠️ Warning: Only for development/testing
+HOOK_WHITELIST_ENABLED=false
+GAS_COST_VALIDATION_ENABLED=false
+```
+
+**For Maximum Accuracy (Dynamic Strategy):**
+
+```env
+# Force dynamic strategy (queries RPC every time)
+GAS_PRICE_STRATEGY=dynamic
+
+# RPC URLs (auto from viem chains default value, optional override)
+# BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+# X_LAYER_TESTNET_RPC_URL=https://testrpc.xlayer.tech
+```
+
+#### Fee Calculation Formula
+
+```
+1. Total Gas = BASE_LIMIT (150k) + HOOK_OVERHEAD (50k-100k)
+2. Gas Price = From chain (hybrid/dynamic) OR config (static)
+3. Gas Cost (Native Token) = Total Gas × Gas Price
+4. Gas Cost (USD) = Native Token Amount × Token Price
+5. Fee Required (USD) = Gas Cost × Safety Multiplier (1.5x)
+6. Fee (USDC) = USD Amount × 10^6
+```
+
+**Example (Hybrid Strategy on Base Sepolia):**
+
+```
+- Gas Price: 1.5 gwei (fetched from chain)
+- Gas: 200,000 × 1.5 gwei = 0.0003 ETH
+- USD: 0.0003 ETH × $3,000 = $0.900
+- With safety (1.5x): $0.900 × 1.5 = $1.350
+- USDC: 1,350,000 (1.35 USDC with 6 decimals)
+```
+
+**Example (Static Strategy on X-Layer Testnet):**
+
+```
+- Gas Price: 0.1 gwei (from config)
+- Gas: 200,000 × 0.1 gwei = 0.00002 OKB
+- USD: 0.00002 OKB × $50 = $0.001
+- With safety (1.5x): $0.001 × 1.5 = $0.0015
+- USDC: 1,500 (0.0015 USDC with 6 decimals)
+```
+
+#### Native Token Price Management
+
+The facilitator supports both **static** and **dynamic** token pricing strategies:
+
+**Current Implementation**: Dynamic pricing enabled by default with CoinGecko API integration.
+
+##### Configuration Options:
+
+**1. Dynamic Pricing (Recommended, Default)**
+
+Automatically fetch real-time token prices from CoinGecko API:
+
+```env
+# Enable dynamic pricing (default: true)
+TOKEN_PRICE_ENABLED=true
+
+# Cache TTL (default: 3600 seconds = 1 hour)
+TOKEN_PRICE_CACHE_TTL=3600
+
+# Background update interval (default: 600 seconds = 10 minutes)
+TOKEN_PRICE_UPDATE_INTERVAL=600
+
+# Optional: CoinGecko Pro API key for higher rate limits
+# Free tier: 50 calls/minute
+# Pro tier: 500 calls/minute ($129/month)
+COINGECKO_API_KEY=your_api_key_here
+```
+
+**2. Static Pricing (Fallback)**
+
+Use fixed prices configured via environment variables:
+
+```env
+# Disable dynamic pricing
+TOKEN_PRICE_ENABLED=false
+
+# Set static prices (updated manually)
+BASE_SEPOLIA_ETH_PRICE=3000  # $3000/ETH
+X_LAYER_TESTNET_ETH_PRICE=50 # $50/OKB
+```
+
+##### Price Sources:
+
+- **CoinGecko**: https://www.coingecko.com/ (default for dynamic pricing)
+  - ETH: https://www.coingecko.com/en/coins/ethereum
+  - OKB: https://www.coingecko.com/en/coins/okb
+- **CoinMarketCap**: https://coinmarketcap.com/ (alternative)
+- **DEX Aggregators**: On-chain price feeds
+
+##### Advantages of Dynamic Pricing:
+
+✅ **Auto-updated** - No manual intervention required  
+✅ **Real-time** - Reflects market prices (with 10-minute updates)  
+✅ **Cached** - Minimal API calls, excellent performance  
+✅ **Fallback** - Uses static prices if API fails  
+✅ **Free** - Works with CoinGecko free tier
+
+##### Impact of Outdated Prices (Static Mode):
+
+- **If price is too LOW**: Facilitator charges insufficient fees (loses money on gas)
+- **If price is too HIGH**: Facilitator charges excessive fees (poor UX, users go elsewhere)
+- **Recommendation**: Use dynamic pricing or update static prices weekly with 1.5x safety multiplier
+
+##### Custom Coin IDs:
+
+If needed, override default CoinGecko coin IDs:
+
+```env
+# Defaults (usually no need to change):
+# BASE_SEPOLIA_COIN_ID=ethereum
+# X_LAYER_TESTNET_COIN_ID=okb
+```
+
+#### Adding New Hooks to Whitelist
+
+1. **Audit the Hook contract** thoroughly
+2. Test on testnet extensively
+3. Add address to environment variable:
+   ```env
+   BASE_SEPOLIA_ALLOWED_HOOKS=0xHook1,0xHook2,0xHook3
+   ```
+4. Restart facilitator to load new configuration
+5. Verify with `/min-facilitator-fee?network=base-sepolia&hook=0xHook1`
 
 ### SettlementRouter Whitelist
 
@@ -290,6 +569,69 @@ Settles an x402 payment. Automatically detects and routes between standard and S
   "errorReason"?: string
 }
 ```
+
+**Security Validations:**
+
+- Hook whitelist check (if SettlementRouter mode)
+- Gas limit validation (max: 500k)
+- Facilitator fee minimum requirement check
+
+### GET /min-facilitator-fee 🆕
+
+Query minimum facilitator fee for a specific network and hook. Resource Servers should call this endpoint to determine appropriate `facilitatorFee` values.
+
+**Query Parameters:**
+
+- `network` (required): Network name (e.g., `base-sepolia`)
+- `hook` (required): Hook contract address
+
+**Response Example (Hook allowed):**
+
+```json
+{
+  "network": "base-sepolia",
+  "hook": "0x6b486aF5A08D27153d0374BE56A1cB1676c460a8",
+  "hookAllowed": true,
+  "minFacilitatorFee": "45000000",
+  "minFacilitatorFeeUSD": "45.00",
+  "breakdown": {
+    "gasLimit": 200000,
+    "maxGasLimit": 500000,
+    "gasPrice": "50000000000",
+    "gasCostNative": "0.01",
+    "gasCostUSD": "30.00",
+    "safetyMultiplier": 1.5,
+    "finalCostUSD": "45.00"
+  },
+  "token": {
+    "address": "0x036CbD...",
+    "symbol": "USDC",
+    "decimals": 6
+  },
+  "prices": {
+    "nativeToken": "3000.00",
+    "timestamp": "2024-01-15T10:30:00.000Z"
+  }
+}
+```
+
+**Response Example (Hook not allowed):**
+
+```json
+{
+  "network": "base-sepolia",
+  "hook": "0xmalicious...",
+  "hookAllowed": false,
+  "error": "Hook not in whitelist"
+}
+```
+
+**Integration Guide for Resource Servers:**
+
+1. Before generating PaymentRequirements, query this endpoint
+2. Use returned `minFacilitatorFee` as `facilitatorFee` in the PaymentRequirements
+3. Cache the result for 5-10 minutes to reduce API calls
+4. Handle `hookAllowed: false` responses appropriately
 
 ## SettlementRouter Integration
 
@@ -465,6 +807,76 @@ The facilitator handles various error scenarios:
 
 ## Production Deployment
 
+### Security Hardening
+
+The facilitator includes production-grade security features enabled by default:
+
+#### Rate Limiting
+
+Protects against DoS/DDoS attacks and API abuse:
+
+**Configuration:**
+
+```env
+# Enable/disable rate limiting (default: true)
+RATE_LIMIT_ENABLED=true
+
+# Limits per IP address per time window
+RATE_LIMIT_VERIFY_MAX=100  # /verify endpoint
+RATE_LIMIT_SETTLE_MAX=20   # /settle endpoint
+RATE_LIMIT_WINDOW_MS=60000 # Time window (1 minute)
+```
+
+**Behavior:**
+
+- Returns HTTP 429 when limit exceeded
+- Includes `RateLimit-*` headers in responses
+- Includes `Retry-After` header when rate limited
+- Monitoring endpoints (`/health`, `/ready`, `/supported`) are unlimited
+
+**Development vs Production:**
+
+- Development: Can disable with `RATE_LIMIT_ENABLED=false`
+- Production: **Keep enabled** to prevent abuse
+
+#### Input Validation
+
+Multiple layers of protection:
+
+**Request Body Size Limits:**
+
+```env
+REQUEST_BODY_LIMIT=1mb  # Prevents memory exhaustion attacks
+```
+
+**Schema Validation:**
+
+- All inputs validated with Zod schemas
+- Type checking beyond TypeScript
+- Automatic rejection of malformed requests
+
+**Error Sanitization:**
+
+- No internal error details leaked to clients
+- Stack traces never exposed in responses
+- Clear, actionable error messages for legitimate issues
+
+#### Secret Management (Roadmap)
+
+Current implementation uses environment variables for private keys. For production:
+
+**Recommended for Production:**
+
+- AWS KMS for AWS deployments
+- HashiCorp Vault for multi-cloud
+- Kubernetes Secrets for K8s environments
+
+**Current (Development/Testing):**
+
+- Environment variables (`.env` file)
+- **Never commit `.env` to version control**
+- Use separate keys for dev/staging/prod
+
 ### Observability
 
 #### Structured Logging
@@ -592,23 +1004,34 @@ The facilitator includes production-grade error handling:
 
 For production use, consider:
 
-1. **Use Production Facilitators**:
+1. **Security Configuration**:
 
-   - Testnet: https://x402.org/facilitator
-   - Production: https://api.cdp.coinbase.com/platform/v2/x402
+   - **Enable rate limiting** (default: enabled)
+   - Set appropriate request body limits (default: 1MB)
+   - Review and adjust rate limits based on expected traffic
+   - Monitor rate limit metrics to detect attacks
 
-2. **Security Considerations**:
+2. **Secret Management**:
 
-   - Secure private key storage (e.g., AWS KMS, HashiCorp Vault)
-   - Rate limiting to prevent abuse
-   - Request validation and sanitization
-   - HTTPS/TLS for all connections
+   - Use production-grade secret management (KMS/Vault)
+   - Never store private keys in environment variables for production
+   - Rotate keys regularly
+   - Use different keys for different environments
 
-3. **Monitoring**:
-   - Track settlement success rates
-   - Monitor gas usage
-   - Alert on failed settlements
-   - Log all transactions for reconciliation
+3. **Network Security**:
+
+   - Use HTTPS/TLS for all connections
+   - Configure proper CORS policies
+   - Deploy behind a WAF (Web Application Firewall)
+   - Use private networks for internal communication
+
+4. **Monitoring**:
+   - Track settlement success rates (target: >99%)
+   - Monitor P99 latency (target: <30s)
+   - Alert on high error rates
+   - Monitor rate limit hits (may indicate attacks)
+   - Track request sizes to detect anomalies
+   - Log all transactions for reconciliation and auditing
 
 ## Further Reading
 
