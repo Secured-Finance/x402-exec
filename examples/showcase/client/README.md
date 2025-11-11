@@ -54,15 +54,16 @@ src/
 ├── components/       # Reusable UI components
 │   ├── WalletConnect.tsx    # Wallet connection UI
 │   ├── PaymentStatus.tsx    # Payment status display
-│   └── DebugPanel.tsx       # Debug information panel
+│   └── UnifiedDebugPanel.tsx # Debug information panel
 ├── hooks/           # React hooks
 │   ├── usePayment.ts        # Payment flow logic
 │   └── useWallet.ts         # Wallet interaction
 ├── scenarios/       # Payment scenario demos
-│   ├── DirectPayment.tsx    # Simple payment
-│   ├── ReferralSplit.tsx    # Payment splitting
-│   ├── RandomNFT.tsx        # NFT purchase
-│   └── PointsReward.tsx     # Reward distribution
+│   ├── ServerlessTransfer.tsx      # Serverless transfer
+│   ├── ServerlessReferralSplit.tsx # Serverless referral splitting
+│   ├── ServerlessRandomNFT.tsx     # Serverless NFT purchase
+│   ├── ServerlessPointsReward.tsx  # Serverless reward distribution
+│   └── PremiumDownload.tsx         # Server-mode premium content
 ├── utils/           # Utility functions
 │   └── commitment.ts        # Commitment hash calculation
 ├── config.ts        # Configuration management
@@ -140,3 +141,132 @@ MIT
 - [Facilitator Documentation](../../facilitator/README.md)
 - [x402 Protocol Specification](https://github.com/x402-protocol/x402-spec)
 
+
+## 🔧 Development Configuration
+
+### Facilitator URL Configuration
+
+The showcase client supports configuring the facilitator URL for local development and debugging.
+
+#### Quick Start
+
+1. **Copy the environment template:**
+   ```bash
+   cp .env.example .env.local
+   ```
+
+2. **For local facilitator development:**
+   ```bash
+   # .env.local
+   VITE_FACILITATOR_URL=http://localhost:3001
+   ```
+
+3. **Restart the dev server:**
+   ```bash
+   pnpm dev
+   ```
+
+#### Environment Variables
+
+- `VITE_FACILITATOR_URL` - Facilitator service URL
+  - Default: `https://facilitator.x402x.dev`
+  - Local: `http://localhost:3001`
+  
+- `VITE_SERVER_URL` - Server URL (for Server Mode examples)
+  - Default: Empty (uses relative paths/Vite proxy)
+  - Local: `http://localhost:3000`
+
+#### Debug Panel
+
+The app includes a **Facilitator Debug Panel** in the bottom-right corner that shows:
+- Current facilitator URL
+- ⚠️ Warning when using local facilitator
+- Instructions for changing configuration
+
+#### Examples
+
+**Production (default):**
+```env
+VITE_FACILITATOR_URL=https://facilitator.x402x.dev
+```
+
+**Local development:**
+```env
+VITE_FACILITATOR_URL=http://localhost:3001
+```
+
+**Custom facilitator:**
+```env
+VITE_FACILITATOR_URL=https://my-facilitator.example.com
+```
+
+#### Testing Local Facilitator
+
+1. Start local facilitator:
+   ```bash
+   cd facilitator
+   pnpm dev
+   ```
+
+2. Configure showcase client:
+   ```bash
+   cd examples/showcase/client
+   echo "VITE_FACILITATOR_URL=http://localhost:3001" > .env.local
+   pnpm dev
+   ```
+
+3. Check the debug panel - it should show a yellow warning indicating local mode.
+
+
+## 🔧 Environment Variables
+
+The showcase client uses environment variables for configuration. All client-side variables must be prefixed with `VITE_`.
+
+### Setup
+
+1. **Copy the example file:**
+   ```bash
+   cp .env.example .env
+   ```
+
+2. **For local development, create `.env.local`:**
+   ```bash
+   cp .env.local.example .env.local
+   ```
+
+### Available Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `VITE_FACILITATOR_URL` | Facilitator service URL | `https://facilitator.x402x.dev` |
+| `VITE_SERVER_URL` | Server URL for Server Mode examples | Empty (uses proxy) |
+| `VITE_REWARD_HOOK_BASE_SEPOLIA` | RewardHook contract on Base Sepolia | `0x0000...` (throws error) |
+| `VITE_REWARD_HOOK_XLAYER_TESTNET` | RewardHook contract on X Layer Testnet | `0x0000...` (throws error) |
+| `VITE_NFT_MINT_HOOK_BASE_SEPOLIA` | NFTMintHook contract on Base Sepolia | `0x0000...` (throws error) |
+| `VITE_NFT_MINT_HOOK_XLAYER_TESTNET` | NFTMintHook contract on X Layer Testnet | `0x0000...` (throws error) |
+
+### File Priority
+
+Vite loads environment files in this order (later files override earlier ones):
+
+1. `.env` - Default configuration (committed to git)
+2. `.env.local` - Local overrides (git-ignored, for your local setup)
+3. `.env.production` - Production-specific config
+4. `.env.production.local` - Local production overrides
+
+### Important Notes
+
+- **Hook Addresses**: If a hook address is not configured (or is `0x0000...`), calling `RewardHook.getAddress()` or `NFTMintHook.getAddress()` will throw an error with a helpful message.
+- **Local Development**: Use `.env.local` to override values without affecting the committed `.env` file.
+- **Security**: Never commit sensitive data (API keys, private keys) to `.env` files. Use `.env.local` for secrets.
+
+### Example `.env.local` for Local Development
+
+```bash
+# Local Facilitator
+VITE_FACILITATOR_URL=http://localhost:3001
+
+# Local Hook Deployments
+VITE_REWARD_HOOK_BASE_SEPOLIA=0x1234567890123456789012345678901234567890
+VITE_NFT_MINT_HOOK_BASE_SEPOLIA=0x0987654321098765432109876543210987654321
+```

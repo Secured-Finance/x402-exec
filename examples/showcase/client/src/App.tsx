@@ -1,21 +1,24 @@
 /**
  * Main application component
  * Manages wallet connection and scenario tab switching
+ * 
+ * Modes:
+ * - Serverless: Client-side only (Split Payment, NFT Mint, Reward Points)
+ * - Server: Server-controlled (Premium Download)
  */
 
 import { useState } from 'react';
-import { WalletDebugInfo } from './components/WalletDebugInfo';
-import { DirectPayment } from './scenarios/DirectPayment';
-import { TransferWithHook } from './scenarios/TransferWithHook';
-import { ReferralSplit } from './scenarios/ReferralSplit';
-import { RandomNFT } from './scenarios/RandomNFT';
-import { PointsReward } from './scenarios/PointsReward';
+import { UnifiedDebugPanel } from './components/UnifiedDebugPanel';
+import { ServerlessSplitPayment } from './scenarios/ServerlessSplitPayment';
+import { ServerlessRandomNFT } from './scenarios/ServerlessRandomNFT';
+import { ServerlessPointsReward } from './scenarios/ServerlessPointsReward';
+import { PremiumDownload } from './scenarios/PremiumDownload';
 import './App.css';
 
-type ScenarioTab = 'direct-payment' | 'transfer-with-hook' | 'referral' | 'nft' | 'reward';
+type ScenarioTab = 'split-payment' | 'nft-mint' | 'points-reward' | 'premium-download';
 
 function App() {
-  const [activeTab, setActiveTab] = useState<ScenarioTab>('direct-payment');
+  const [activeTab, setActiveTab] = useState<ScenarioTab>('split-payment');
   const [showDebug, setShowDebug] = useState<boolean>(false);
 
 
@@ -24,8 +27,8 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-left">
-            <h1>🎯 x402-exec Showcase</h1>
-            <p className="subtitle">x402 Payment Scenarios Demo</p>
+            <h1>🎯 x402x Protocol Demo</h1>
+            <p className="subtitle">Atomic Payment & Smart Contract Execution</p>
           </div>
         </div>
       </header>
@@ -34,48 +37,44 @@ function App() {
       <main className="app-main">
         <div className="tabs">
           <button
-            className={`tab ${activeTab === 'direct-payment' ? 'active' : ''}`}
-            onClick={() => setActiveTab('direct-payment')}
-          >
-            <span className="tab-number">0</span>
-            <span>Direct Payment</span>
-          </button>
-          <button
-            className={`tab ${activeTab === 'transfer-with-hook' ? 'active' : ''}`}
-            onClick={() => setActiveTab('transfer-with-hook')}
+            className={`tab ${activeTab === 'split-payment' ? 'active' : ''}`}
+            onClick={() => setActiveTab('split-payment')}
           >
             <span className="tab-number">1</span>
-            <span>Transfer Hook</span>
+            <span>💸 Split Payment</span>
+            <span className="tab-badge" style={{ marginLeft: '8px', fontSize: '11px', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#dbeafe', color: '#1e40af' }}>Serverless</span>
           </button>
           <button
-            className={`tab ${activeTab === 'referral' ? 'active' : ''}`}
-            onClick={() => setActiveTab('referral')}
+            className={`tab ${activeTab === 'nft-mint' ? 'active' : ''}`}
+            onClick={() => setActiveTab('nft-mint')}
           >
             <span className="tab-number">2</span>
-            <span>Referral Split</span>
+            <span>🎨 Pay & Mint NFT</span>
+            <span className="tab-badge" style={{ marginLeft: '8px', fontSize: '11px', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#dbeafe', color: '#1e40af' }}>Serverless</span>
           </button>
           <button
-            className={`tab ${activeTab === 'nft' ? 'active' : ''}`}
-            onClick={() => setActiveTab('nft')}
+            className={`tab ${activeTab === 'points-reward' ? 'active' : ''}`}
+            onClick={() => setActiveTab('points-reward')}
           >
             <span className="tab-number">3</span>
-            <span>NFT Mint</span>
+            <span>🎁 Pay & Earn Points</span>
+            <span className="tab-badge" style={{ marginLeft: '8px', fontSize: '11px', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#dbeafe', color: '#1e40af' }}>Serverless</span>
           </button>
           <button
-            className={`tab ${activeTab === 'reward' ? 'active' : ''}`}
-            onClick={() => setActiveTab('reward')}
+            className={`tab ${activeTab === 'premium-download' ? 'active' : ''}`}
+            onClick={() => setActiveTab('premium-download')}
           >
             <span className="tab-number">4</span>
-            <span>Points Reward</span>
+            <span>📥 Premium Download</span>
+            <span className="tab-badge" style={{ marginLeft: '8px', fontSize: '11px', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#fef3c7', color: '#92400e' }}>Server</span>
           </button>
         </div>
 
         <div className="scenario-container">
-          {activeTab === 'direct-payment' && <DirectPayment />}
-          {activeTab === 'transfer-with-hook' && <TransferWithHook />}
-          {activeTab === 'referral' && <ReferralSplit />}
-          {activeTab === 'nft' && <RandomNFT />}
-          {activeTab === 'reward' && <PointsReward />}
+          {activeTab === 'split-payment' && <ServerlessSplitPayment />}
+          {activeTab === 'nft-mint' && <ServerlessRandomNFT />}
+          {activeTab === 'points-reward' && <ServerlessPointsReward />}
+          {activeTab === 'premium-download' && <PremiumDownload />}
         </div>
       </main>
 
@@ -107,8 +106,8 @@ function App() {
         </p>
       </footer>
 
-      {/* Wallet Debug Info - floating panel */}
-      <WalletDebugInfo visible={showDebug} />
+      {/* Unified Debug Panel - floating panel */}
+      <UnifiedDebugPanel visible={showDebug} />
     </div>
   );
 }
