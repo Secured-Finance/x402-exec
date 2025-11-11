@@ -7,6 +7,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -130,6 +131,17 @@ export default function FacilitatorPage() {
             <Card key={network.network} className="h-full">
               <CardHeader className="space-y-2 flex items-center gap-2">
                 <div className="flex items-center gap-2">
+                  <Avatar className="size-8 rounded-md">
+                    {network.logoUrl ? (
+                      <AvatarImage
+                        src={network.logoUrl}
+                        alt={`${network.name} logo`}
+                      />
+                    ) : null}
+                    <AvatarFallback className="text-xs font-semibold">
+                      {network.name?.[0] ?? "?"}
+                    </AvatarFallback>
+                  </Avatar>
                   <CardTitle className="text-lg">{network.name}</CardTitle>
                   <Badge
                     variant={
@@ -146,15 +158,11 @@ export default function FacilitatorPage() {
               <CardContent className="space-y-4 text-sm">
                 <div className="grid grid-cols-2 gap-2 items-center">
                   <div>
-                    <p className="text-xs uppercase font-semibold">
-                      Network
-                    </p>
+                    <p className="text-xs uppercase font-semibold">Network</p>
                     <p>{network.network}</p>
                   </div>
                   <div>
-                    <p className="text-xs uppercase font-semibold">
-                      Chain ID
-                    </p>
+                    <p className="text-xs uppercase font-semibold">Chain ID</p>
                     <p>{network.chainId}</p>
                   </div>
                 </div>

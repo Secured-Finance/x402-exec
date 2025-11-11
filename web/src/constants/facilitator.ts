@@ -205,6 +205,8 @@ export type SupportedNetwork = {
 	status: "Mainnet" | "Testnet";
 	settlementRouter: string;
 	explorerUrl: string;
+	// Optional logo URL to display for this network on the Facilitator page
+	logoUrl?: string;
 	paymentTokens: PaymentToken[];
 };
 

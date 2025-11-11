@@ -31,18 +31,22 @@ export function DocsSidebar({ activeSlug }: DocsSidebarProps) {
 
 									return (
 										<li key={item.slug}>
-											<Link
-												to={href}
-												className={cn(
-													"flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
-													"hover:bg-muted/70",
-													isActive
-														? "bg-muted font-medium text-foreground"
-														: "text-muted-foreground",
-												)}
-											>
-												<span>{item.label}</span>
-											</Link>
+                            <Link
+                                to={href}
+                                className={cn(
+                                    // Base item styling
+                                    "group flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors border border-transparent",
+                                    // Hover for inactive items
+                                    !isActive && "hover:bg-muted/70",
+                                    // Active state: use primary brand styling
+                                    isActive &&
+                                        "bg-primary text-primary-foreground font-medium hover:bg-primary/90 border-primary/60 shadow-xs",
+                                    // Inactive text color
+                                    !isActive && "text-muted-foreground",
+                                )}
+                            >
+                                <span>{item.label}</span>
+                            </Link>
 										</li>
 									);
 								})}

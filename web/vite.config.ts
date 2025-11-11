@@ -4,6 +4,7 @@ import mdx from "@mdx-js/rollup";
 import rehypeStarryNight from "rehype-starry-night";
 import path from "node:path";
 import remarkFrontmatter from "remark-frontmatter";
+import remarkGfm from "remark-gfm";
 import remarkMdxFrontmatter from "remark-mdx-frontmatter";
 import { defineConfig } from "vite";
 
@@ -11,10 +12,11 @@ import { defineConfig } from "vite";
 export default defineConfig({
 	plugins: [
 		mdx({
-			remarkPlugins: [
-				remarkFrontmatter,
-				[remarkMdxFrontmatter, { name: "frontmatter" }],
-			],
+            remarkPlugins: [
+                remarkFrontmatter,
+                remarkGfm,
+                [remarkMdxFrontmatter, { name: "frontmatter" }],
+            ],
 			rehypePlugins: [rehypeStarryNight],
 		}),
 		react(),
