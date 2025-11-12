@@ -28,7 +28,9 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@x402x/core": ["../../typescript/packages/core/dist"],
+      "@x402x/core/*": ["../../typescript/packages/core/dist/*"]
     }
   },
   "include": ["src"]
