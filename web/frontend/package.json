@@ -9,9 +9,9 @@
 		"pnpm": ">=10.7.0"
 	},
 	"scripts": {
-		"dev": "vite",
-		"build": "tsc -b && vite build",
-		"build:prod": "vite build",
+    "dev": "pnpm -C ../../typescript/packages/core build && vite",
+    "build": "pnpm -C ../../typescript/packages/core build && tsc -b && vite build",
+    "build:prod": "pnpm -C ../../typescript/packages/core build && vite build",
 		"typecheck": "tsc -b --pretty false",
 		"lint": "biome lint .",
 		"check": "biome check .",

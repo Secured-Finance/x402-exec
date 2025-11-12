@@ -25,10 +25,8 @@ export default defineConfig({
 		tailwindcss(),
 	],
 	resolve: {
-		alias: {
-			"@": path.resolve(__dirname, "./src"),
-			// Use local workspace build output for @x402x/core to avoid publishing / installing
-			"@x402x/core": path.resolve(__dirname, "../../typescript/packages/core/dist"),
-		},
-	},
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
 });
