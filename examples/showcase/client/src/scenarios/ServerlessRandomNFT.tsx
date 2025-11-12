@@ -8,7 +8,6 @@
 
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
-import type { Address } from 'viem';
 import { ServerlessPaymentDialog } from '../components/ServerlessPaymentDialog';
 import { ScenarioCard } from '../components/ScenarioCard';
 import { PaymentButton } from '../components/PaymentButton';
@@ -47,10 +46,9 @@ export function ServerlessRandomNFT() {
     const nftContract = NFTMintHook.getNFTContractAddress(network);
     
     // Encode hookData using NFTMintHook.encode() for correct tuple format
+    // After refactoring: only nftContract is needed, merchant is passed via recipient
     const hookData = NFTMintHook.encode({
       nftContract,
-      tokenId: 0n, // 0 for random NFT selection
-      merchant: connectedAddress as Address // merchant = payer (funds return to user)
     });
 
     return { hook, hookData };

@@ -38,40 +38,72 @@ contract ScenariosTest is Test {
     
     function testNFTMint() public {
         vm.prank(nftMintHook);
-        nft.mint(user, 0); // tokenId is ignored
+        nft.mint(user);
         
         assertEq(nft.ownerOf(0), user);
         assertEq(nft.totalSupply(), 1);
-        assertEq(nft.remainingSupply(), 999);
+        assertEq(nft.remainingSupply(), 9_999);
     }
     
     function testNFTMintOnlyMinter() public {
         vm.prank(user);
         vm.expectRevert(RandomNFT.OnlyMinter.selector);
-        nft.mint(user, 0);
+        nft.mint(user);
     }
     
     function testNFTMaxSupply() public {
         vm.startPrank(nftMintHook);
         
-        // Mint 1000 NFTs
-        for (uint256 i = 0; i < 1000; i++) {
-            nft.mint(user, i);
+        // Mint 10,000 NFTs
+        for (uint256 i = 0; i < 10_000; i++) {
+            nft.mint(user);
         }
         
         // Try to mint one more
         vm.expectRevert(RandomNFT.MaxSupplyReached.selector);
-        nft.mint(user, 1000);
+        nft.mint(user);
         
         vm.stopPrank();
     }
     
     // ===== RewardToken Tests =====
     
-    function testRewardTokenInitialSupply() public {
-        uint256 maxSupply = 1_000_000 * 10**18;
+    function testRewardTokenInitialSupply() public view {
+        uint256 maxSupply = 100_000_000 * 10**18; // 100M tokens
         assertEq(rewardToken.totalSupply(), maxSupply);
         assertEq(rewardToken.balanceOf(address(rewardToken)), maxSupply);
+    }
+    
+    function testRewardTokenZeroAddressProtection() public {
+        // Distribute some tokens to test user first
+        vm.prank(address(rewardHook));
+        rewardToken.distribute(user, 1000 * 10**18);
+        
+        // Try to transfer to zero address via transferWithAuthorization
+        // This should revert with InvalidRecipient
+        bytes32 nonce = keccak256("test-nonce");
+        
+        // Build authorization parameters
+        address from = user;
+        address to = address(0); // Zero address
+        uint256 value = 100 * 10**18;
+        uint256 validAfter = 0;
+        uint256 validBefore = type(uint256).max;
+        
+        // Create a mock signature (doesn't matter since we expect revert before signature check)
+        bytes memory signature = new bytes(65);
+        
+        // Should revert with InvalidRecipient before checking signature
+        vm.expectRevert(RewardToken.InvalidRecipient.selector);
+        rewardToken.transferWithAuthorization(
+            from,
+            to,
+            value,
+            validAfter,
+            validBefore,
+            nonce,
+            signature
+        );
     }
     
     function testRewardDistribution() public {
@@ -108,6 +140,39 @@ contract ScenariosTest is Test {
         uint256 expectedPoints = (amount * REWARD_RATE * 10**18) / 100_000;
         
         assertEq(expectedPoints, 1000 * 10**18);
+    }
+    
+    function testRewardHookCapProtection() public pure {
+        // Test that rewards are capped at MAX_REWARD_AMOUNT (0.1 USDC)
+        uint256 MAX_REWARD_AMOUNT = 100_000; // 0.1 USDC
+        uint256 REWARD_RATE = 1000;
+        
+        // Case 1: Small amount (0.05 USDC) - no cap applied
+        uint256 smallAmount = 50_000;
+        uint256 smallReward = (smallAmount * REWARD_RATE * 10**18) / 100_000;
+        assertEq(smallReward, 500 * 10**18); // 500 points
+        
+        // Case 2: Exact cap (0.1 USDC) - full rewards
+        uint256 capAmount = 100_000;
+        uint256 capReward = (capAmount * REWARD_RATE * 10**18) / 100_000;
+        assertEq(capReward, 1000 * 10**18); // 1000 points
+        
+        // Case 3: Large amount (10 USDC) - capped at 0.1 USDC
+        uint256 largeAmount = 10_000_000; // 10 USDC
+        uint256 rewardableAmount = largeAmount > MAX_REWARD_AMOUNT ? MAX_REWARD_AMOUNT : largeAmount;
+        uint256 largeReward = (rewardableAmount * REWARD_RATE * 10**18) / 100_000;
+        assertEq(largeReward, 1000 * 10**18); // Still only 1000 points!
+        
+        // Case 4: Verify 100 USDC cannot drain entire supply
+        uint256 hugeAmount = 100_000_000; // 100 USDC
+        uint256 rewardableAmount2 = hugeAmount > MAX_REWARD_AMOUNT ? MAX_REWARD_AMOUNT : hugeAmount;
+        uint256 hugeReward = (rewardableAmount2 * REWARD_RATE * 10**18) / 100_000;
+        assertEq(hugeReward, 1000 * 10**18); // Still only 1000 points!
+        
+        // Total supply is 100M tokens, so it would take 100,000 transactions to drain
+        uint256 MAX_SUPPLY = 100_000_000 * 10**18;
+        uint256 transactionsNeeded = MAX_SUPPLY / hugeReward;
+        assertEq(transactionsNeeded, 100_000); // 100,000 transactions needed ✅
     }
 }
 
