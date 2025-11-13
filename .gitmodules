@@ -10,3 +10,4 @@
 [submodule "deps/x402"]
 	path = deps/x402
 	url = https://github.com/nuwa-protocol/x402.git
+	branch = x402x
