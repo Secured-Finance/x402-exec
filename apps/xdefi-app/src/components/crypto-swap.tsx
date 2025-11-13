@@ -19,6 +19,11 @@ import {
   Zap,
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
+// Wallet connection guard: use wagmi account state + AppKit modal
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { useAppKit } from "@reown/appkit/react";
+import { useAccount } from "wagmi";
 
 // Hook for click outside functionality
 function useClickOutside(
@@ -117,6 +122,9 @@ function CryptoSwapBase({
   mode: Mode;
   networks?: Network[];
 }) {
+  const { isConnected } = useAccount();
+  // open() will trigger the connect modal when wallet is not connected
+  const { open } = useAppKit?.() ?? { open: undefined } as any;
   const { mode: netMode } = useNetworkMode();
   // Memoize fromNetworks so effects don't retrigger on every render
   const fromNetworks = React.useMemo(
@@ -257,6 +265,13 @@ function CryptoSwapBase({
 
   const handleSwap = async () => {
     if (!swapState.fromAmount || Number(swapState.fromAmount) <= 0) return;
+    // Require wallet connection for swap/bridge actions
+    if (!isConnected) {
+      try {
+        await open?.();
+      } catch {}
+      return;
+    }
 
     setSwapState((prev) => ({ ...prev, status: "loading", isLoading: true }));
 
@@ -562,7 +577,7 @@ function CryptoSwapBase({
                     : !swapState.fromAmount || Number(swapState.fromAmount) <= 0
                       ? "bg-muted text-muted-foreground cursor-not-allowed"
                       : "bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700",
-            )}
+          )}
             whileHover={
               !swapState.isLoading && swapState.fromAmount
                 ? { scale: 1.02 }
@@ -582,7 +597,9 @@ function CryptoSwapBase({
             variants={itemVariants}
           >
             <div className="flex items-center justify-center gap-2">
-              {swapState.isLoading ? (
+              {!isConnected ? (
+                <>Connect Wallet</>
+              ) : swapState.isLoading ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   Swapping...

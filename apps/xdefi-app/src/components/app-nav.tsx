@@ -1,9 +1,12 @@
 import { useNetworkMode } from "@/contexts/NetworkModeContext";
-import { useTheme } from "@/contexts/ThemeContext";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
-import { Moon, Sun } from "lucide-react";
 import { NavLink } from "react-router-dom";
+// AppKit provides the wallet connect button UI
+// Note: packages will be added to the project; until then TS may show missing types
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
+import { AppKitButton } from "@reown/appkit/react";
 
 // Minimal floating nav using the visual style from simple-floating-nav.tsx
 // Fixed, centered, and floating at the top. Contains Swap, Bridge, FAQ links.
@@ -19,7 +22,11 @@ export function AppNav() {
       <AppNavLink to="/faq">FAQ</AppNavLink>
 
       <div className="ml-1 pl-2 border-l border-neutral-700/80 flex items-center gap-2">
-        <ThemeSwitch />
+        {/* Connect Wallet button (AppKit) */}
+        <div className="[&>*]:!m-0">
+          {/* AppKit renders its own styled button */}
+          <AppKitButton />
+        </div>
       </div>
     </nav>
   );
@@ -44,26 +51,6 @@ function AppNavLink({ to, children }: { to: string; children: string }) {
         </span>
       </motion.div>
     </NavLink>
-  );
-}
-
-function ThemeSwitch() {
-  const { theme, setTheme } = useTheme();
-  const isDark = theme === "dark";
-  const next = isDark ? "light" : "dark";
-
-  return (
-    <button
-      type="button"
-      onClick={() => setTheme(next)}
-      title={`Switch to ${next} mode`}
-      className="flex items-center gap-1 rounded-md border border-neutral-700 bg-neutral-800/70 px-2 py-1 text-neutral-300 hover:bg-neutral-700 hover:text-neutral-50 transition-colors"
-    >
-      {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-      <span className="hidden sm:inline capitalize">
-        {isDark ? "Light" : "Dark"}
-      </span>
-    </button>
   );
 }
 
