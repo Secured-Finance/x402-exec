@@ -1,7 +1,7 @@
 import { PropsWithChildren, useMemo } from 'react';
 import { WagmiProvider } from 'wagmi';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { createAppKit } from '@reown/appkit';
+import { AppKitProvider } from '@reown/appkit/react';
 import { WagmiAdapter } from '@reown/appkit-adapter-wagmi';
 import { base, baseSepolia, xLayer, xLayerTestnet } from '@reown/appkit/networks';
 
@@ -18,26 +18,26 @@ const wagmiAdapter = new WagmiAdapter({
   projectId: appKitProjectId ?? 'demo',
 });
 
-createAppKit({
-  projectId: appKitProjectId ?? 'demo',
-  adapters: [wagmiAdapter],
-  networks: appNetworks,
-  defaultNetwork: base,
-  metadata: {
-    name: 'xdefi.app',
-    description: 'xdefi.app — Swap & Bridge',
-    url: 'https://xdefi.app',
-    icons: ['https://avatars.githubusercontent.com/u/13698671?s=200&v=4'],
-  },
-});
-
 const queryClient = new QueryClient();
 
 export function Web3Provider({ children }: PropsWithChildren) {
   const qc = useMemo(() => queryClient, []);
   return (
     <WagmiProvider config={wagmiAdapter.wagmiConfig}>
-      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      <AppKitProvider
+        projectId={appKitProjectId ?? 'demo'}
+        adapters={[wagmiAdapter] as any}
+        networks={appNetworks as any}
+        defaultNetwork={base as any}
+        metadata={{
+          name: 'xdefi.app',
+          description: 'xdefi.app — Swap & Bridge',
+          url: 'https://xdefi.app',
+          icons: ['https://avatars.githubusercontent.com/u/13698671?s=200&v=4'],
+        }}
+      >
+        <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+      </AppKitProvider>
     </WagmiProvider>
   );
 }

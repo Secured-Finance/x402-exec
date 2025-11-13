@@ -20,9 +20,10 @@ import {
 } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 // Wallet connection guard: use wagmi account state + AppKit modal
+// Import the shared modal instance to open on demand without using the hook
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import { useAppKit } from "@reown/appkit/react";
+import { modal as appKitModal } from "@reown/appkit/react";
 import { useAccount } from "wagmi";
 
 // Hook for click outside functionality
@@ -123,8 +124,6 @@ function CryptoSwapBase({
   networks?: Network[];
 }) {
   const { isConnected } = useAccount();
-  // open() will trigger the connect modal when wallet is not connected
-  const { open } = useAppKit?.() ?? { open: undefined } as any;
   const { mode: netMode } = useNetworkMode();
   // Memoize fromNetworks so effects don't retrigger on every render
   const fromNetworks = React.useMemo(
@@ -268,7 +267,7 @@ function CryptoSwapBase({
     // Require wallet connection for swap/bridge actions
     if (!isConnected) {
       try {
-        await open?.();
+        await appKitModal?.open();
       } catch {}
       return;
     }
