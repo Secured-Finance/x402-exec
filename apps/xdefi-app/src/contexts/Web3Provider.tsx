@@ -1,5 +1,5 @@
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
-import { base, baseSepolia, defineChain, xLayer } from "@reown/appkit/networks";
+import { base, xLayer } from "@reown/appkit/networks";
 import { AppKitProvider } from "@reown/appkit/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type PropsWithChildren, useMemo } from "react";
@@ -16,25 +16,7 @@ if (!appKitProjectId) {
   );
 }
 
-const xLayerTestnet = defineChain({
-  id: 1952,
-  caipNetworkId: "eip155:1952",
-  chainNamespace: "eip155",
-  name: "X Layer Testnet",
-  nativeCurrency: {
-    decimals: 18,
-    name: "OKB",
-    symbol: "OKB",
-  },
-  blockExplorers: {
-    default: { name: "OKLink", url: "https://www.oklink.com/xlayer-test" },
-  },
-  rpcUrls: {
-    default: { http: ["https://testrpc.xlayer.tech/terigon"] },
-  },
-});
-
-const appNetworks = [base, baseSepolia, xLayer, xLayerTestnet] as unknown as [
+const appNetworks = [base, xLayer] as unknown as [
   any,
   ...any[],
 ];

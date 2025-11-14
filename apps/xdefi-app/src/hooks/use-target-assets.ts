@@ -22,19 +22,17 @@ export type TargetNetwork = {
 export type UseTargetAssetsParams = {
   mode: 'swap' | 'bridge';
   fromNetworkId?: string;
-  networkMode: 'mainnet' | 'testnet';
 };
 
-export function useTargetAssets({ mode, fromNetworkId, networkMode }: UseTargetAssetsParams) {
+export function useTargetAssets({ mode, fromNetworkId }: UseTargetAssetsParams) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [networks, setNetworks] = useState<TargetNetwork[]>(() => []);
 
   // Compute target networks (without tokens). Tokens will be populated from OKX.
   const targets = useMemo(() => {
-    const candidates = SUPPORTED_NETWORKS.filter((n) =>
-      networkMode === 'mainnet' ? n.status === 'Mainnet' : n.status === 'Testnet',
-    );
+    // SUPPORTED_NETWORKS is filtered to mainnet only.
+    const candidates = SUPPORTED_NETWORKS;
 
     const pickList = (() => {
       if (!fromNetworkId) return candidates;
@@ -47,7 +45,7 @@ export function useTargetAssets({ mode, fromNetworkId, networkMode }: UseTargetA
       name: n.status === 'Mainnet' ? n.name.replace(/\s*Mainnet\b/i, '') : n.name,
       chainId: n.chainId,
     }));
-  }, [mode, fromNetworkId, networkMode]);
+  }, [mode, fromNetworkId]);
 
   useEffect(() => {
     let cancelled = false;

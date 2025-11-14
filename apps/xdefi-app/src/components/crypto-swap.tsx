@@ -5,7 +5,6 @@ import {
   SUPPORTED_NETWORKS,
   SUPPORTED_PAYMENT_TOKENS,
 } from "@/constants/networks";
-import { useNetworkMode } from "@/contexts/NetworkModeContext";
 import { useTargetAssets } from "@/hooks/use-target-assets";
 import { cn } from "@/lib/utils";
 import { AnimatePresence, motion } from "framer-motion";
@@ -14,6 +13,7 @@ import {
   ArrowDown,
   CheckCircle,
   ChevronDown,
+  Search,
   Loader2,
   Settings,
   Zap,
@@ -88,11 +88,9 @@ interface SwapState {
   error?: string;
 }
 
-// Build networks from the SDK's supported list. We currently expose USDC per network.
-function buildNetworksFromSDK(mode: "mainnet" | "testnet"): Network[] {
-  return SUPPORTED_NETWORKS.filter((n) =>
-    mode === "mainnet" ? n.status === "Mainnet" : n.status === "Testnet",
-  ).map((n) => {
+// Build networks from the SDK's supported list (constants are already filtered to mainnet only).
+function buildNetworksFromSDK(): Network[] {
+  return SUPPORTED_NETWORKS.map((n) => {
     const tokens = (SUPPORTED_PAYMENT_TOKENS[n.network] ?? []).map(
       (t): Token => ({
         symbol: t.symbol,
@@ -104,8 +102,7 @@ function buildNetworksFromSDK(mode: "mainnet" | "testnet"): Network[] {
       }),
     );
     // Remove the word "Mainnet" from display name when showing
-    const displayName =
-      n.status === "Mainnet" ? n.name.replace(/\s*Mainnet\b/i, "") : n.name;
+    const displayName = n.name.replace(/\s*Mainnet\b/i, "");
     return {
       id: n.network,
       name: displayName,
@@ -126,14 +123,13 @@ function CryptoSwapBase({
   networks?: Network[];
 }) {
   const { isConnected } = useAccount();
-  const { mode: netMode } = useNetworkMode();
   // Memoize fromNetworks so effects don't retrigger on every render
   const fromNetworks = React.useMemo(
     () =>
       networks && networks.length > 0
         ? networks
-        : buildNetworksFromSDK(netMode),
-    [networks, netMode],
+        : buildNetworksFromSDK(),
+    [networks],
   );
   const initialFromNetwork = fromNetworks[0];
   // to networks come from API (mock hook for now). We'll compute after state init.
@@ -150,10 +146,9 @@ function CryptoSwapBase({
   });
 
   // Load target assets based on current selection
-  const { networks: toNetworks } = useTargetAssets({
+  const { networks: toNetworks, loading: toLoading } = useTargetAssets({
     mode,
     fromNetworkId: swapState.fromNetwork?.id,
-    networkMode: netMode,
   });
 
   // Initialize or reconcile the From side when the available from-networks list changes
@@ -194,6 +189,7 @@ function CryptoSwapBase({
   >(null);
   const [selectorNetwork, setSelectorNetwork] = useState<Network | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [tokenSearch, setTokenSearch] = useState("");
   // no-op swap animation; we no longer flip from/to in UI
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [isHovering, setIsHovering] = useState(false);
@@ -204,6 +200,11 @@ function CryptoSwapBase({
 
   useClickOutside(tokenSelectorRef, () => setShowTokenSelector(null));
   useClickOutside(settingsRef, () => setShowSettings(false));
+
+  // Reset token search when the selector closes
+  useEffect(() => {
+    if (!showTokenSelector) setTokenSearch("");
+  }, [showTokenSelector]);
 
   // Mouse tracking for glow effects
   useEffect(() => {
@@ -487,17 +488,30 @@ function CryptoSwapBase({
             <div className="bg-muted/30 rounded-2xl p-4 border border-border/30">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-sm text-muted-foreground">To</span>
-                <span className="text-sm text-muted-foreground">
-                  Balance: {swapState.toToken.balance}
+                <span className="text-sm text-muted-foreground flex items-center gap-2">
+                  {toLoading && (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      <span>Loading assets…</span>
+                    </>
+                  )}
+                  {!toLoading && (
+                    <>Balance: {swapState.toToken.balance}</>
+                  )}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 min-w-0">
                 <motion.button
-                  className="flex items-start gap-2 bg-background/50 rounded-xl px-3 py-2 hover:bg-background/80 transition-colors shrink-0"
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  className={cn(
+                    "flex items-start gap-2 bg-background/50 rounded-xl px-3 py-2 transition-colors shrink-0",
+                    toLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-background/80",
+                  )}
+                  whileHover={toLoading ? undefined : { scale: 1.02 }}
+                  whileTap={toLoading ? undefined : { scale: 0.98 }}
+                  disabled={toLoading}
                   onClick={() => {
+                    if (toLoading) return;
                     setSelectorNetwork(swapState.toNetwork);
                     setShowTokenSelector("to");
                   }}
@@ -516,6 +530,7 @@ function CryptoSwapBase({
                       <span className="truncate max-w-[8rem] sm:max-w-[10rem]">
                         {swapState.toNetwork.name}
                       </span>
+                      {toLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                     </span>
                   </div>
                   <ChevronDown className="w-4 h-4 text-muted-foreground self-center" />
@@ -641,7 +656,7 @@ function CryptoSwapBase({
               <div className="absolute inset-0 bg-background/60 backdrop-blur-sm" />
               <motion.div
                 ref={tokenSelectorRef}
-                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-card border border-border rounded-2xl p-4 shadow-2xl"
+                className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-xl bg-card border border-border rounded-2xl p-5 shadow-2xl"
                 initial={{ scale: 0.9, opacity: 0, y: 20 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -650,62 +665,96 @@ function CryptoSwapBase({
                 <h3 className="text-lg font-semibold mb-3">
                   Select Network & Asset
                 </h3>
-                <div className="flex gap-2 mb-3 overflow-x-auto">
-                  {(showTokenSelector === "from"
-                    ? fromNetworks
-                    : toNetworks
-                  ).map((net) => (
-                    <button
-                      type="button"
-                      key={net.id}
-                      className={cn(
-                        "px-3 py-1.5 rounded-full text-sm border",
-                        (selectorNetwork?.id ??
-                          (showTokenSelector === "from"
-                            ? swapState.fromNetwork.id
-                            : swapState.toNetwork.id)) === net.id
-                          ? "bg-muted text-foreground border-border"
-                          : "bg-background text-muted-foreground border-border/50",
-                      )}
-                      onClick={() => setSelectorNetwork(net)}
-                    >
-                      <span className="mr-1 inline-flex align-middle">
-                        <AssetLogo kind="network" id={net.id} size={16} />
-                      </span>
-                      <span className="align-middle">{net.name}</span>
-                    </button>
-                  ))}
+                {/* Search Bar */}
+                <div className="mb-3 relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <input
+                    type="text"
+                    placeholder="Search tokens by symbol or name"
+                    className="w-full pl-9 pr-3 py-2 rounded-lg border border-border bg-background placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={tokenSearch}
+                    onChange={(e) => setTokenSearch(e.target.value)}
+                    disabled={showTokenSelector === "to" && toLoading}
+                  />
                 </div>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {(
-                    selectorNetwork ??
-                    (showTokenSelector === "from"
-                      ? swapState.fromNetwork
-                      : swapState.toNetwork)
-                  ).tokens.map((token, index) => (
-                    <motion.button
-                      key={token.address}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors"
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => handleTokenSelect(token)}
-                    >
-                      <AssetLogo kind="token" id={token.symbol} size={36} src={(token as any).logoUrl} />
-                      <div className="flex-1 text-left">
-                        <div className="font-semibold">{token.symbol}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {token.name}
+                {/* Network chips (show loader when fetching to-side assets) */}
+                <div className="flex gap-2 mb-3 overflow-x-auto">
+                  {showTokenSelector === "to" && toLoading ? (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Loader2 className="w-4 h-4 animate-spin" /> Fetching assets…
+                    </div>
+                  ) : (
+                    (showTokenSelector === "from" ? fromNetworks : toNetworks).map(
+                      (net) => (
+                        <button
+                          type="button"
+                          key={net.id}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-sm border",
+                            (selectorNetwork?.id ??
+                              (showTokenSelector === "from"
+                                ? swapState.fromNetwork.id
+                                : swapState.toNetwork.id)) === net.id
+                              ? "bg-muted text-foreground border-border"
+                              : "bg-background text-muted-foreground border-border/50",
+                          )}
+                          onClick={() => setSelectorNetwork(net)}
+                        >
+                          <span className="mr-1 inline-flex align-middle">
+                            <AssetLogo kind="network" id={net.id} size={16} />
+                          </span>
+                          <span className="align-middle">{net.name}</span>
+                        </button>
+                      ),
+                    )
+                  )}
+                </div>
+                {/* Tokens list */}
+                <div className="space-y-2 max-h-80 overflow-y-auto">
+                  {showTokenSelector === "to" && toLoading ? (
+                    <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
+                      <Loader2 className="w-5 h-5 mr-2 animate-spin" /> Loading tokens…
+                    </div>
+                  ) : (
+                    (
+                      selectorNetwork ??
+                      (showTokenSelector === "from"
+                        ? swapState.fromNetwork
+                        : swapState.toNetwork)
+                    ).tokens
+                      .filter((token) => {
+                        const q = tokenSearch.trim().toLowerCase();
+                        if (!q) return true;
+                        return (
+                          token.symbol.toLowerCase().includes(q) ||
+                          token.name.toLowerCase().includes(q)
+                        );
+                      })
+                      .map((token, index) => (
+                      <motion.button
+                        key={token.address}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleTokenSelect(token)}
+                      >
+                        <AssetLogo kind="token" id={token.symbol} size={36} src={(token as any).logoUrl} />
+                        <div className="flex-1 text-left">
+                          <div className="font-semibold">{token.symbol}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {token.name}
+                          </div>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{token.balance}</div>
-                        {/* Change is not tracked here; omit the delta color bar */}
-                      </div>
-                    </motion.button>
-                  ))}
+                        <div className="text-right">
+                          <div className="font-semibold">{token.balance}</div>
+                          {/* Change is not tracked here; omit the delta color bar */}
+                        </div>
+                      </motion.button>
+                    ))
+                  )}
                 </div>
               </motion.div>
             </motion.div>

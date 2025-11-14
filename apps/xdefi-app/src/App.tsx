@@ -1,5 +1,4 @@
 import { BrowserRouter, HashRouter } from "react-router";
-import { NetworkModeProvider } from "./contexts/NetworkModeContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { Web3Provider } from "./contexts/Web3Provider";
 import Router from "./Router";
@@ -10,13 +9,11 @@ const AppRouter =
 export default function App() {
     return (
         <ThemeProvider>
-            <NetworkModeProvider>
-                <Web3Provider>
-                    <AppRouter>
-                        <Router />
-                    </AppRouter>
-                </Web3Provider>
-            </NetworkModeProvider>
+            <Web3Provider>
+                <AppRouter>
+                    <Router />
+                </AppRouter>
+            </Web3Provider>
         </ThemeProvider>
     );
 }

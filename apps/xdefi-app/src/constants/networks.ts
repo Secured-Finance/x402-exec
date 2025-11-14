@@ -30,6 +30,8 @@ export const SUPPORTED_PAYMENT_TOKENS: Record<string, PaymentToken[]> = (() => {
   const result: Record<string, PaymentToken[]> = {};
   for (const n of getSupportedNetworks()) {
     const cfg = getNetworkConfig(n);
+    // Only include mainnet networks
+    if (cfg.type !== 'mainnet') continue;
     const addressBase = cfg.addressExplorerBaseUrl;
     const usdcAddress = cfg.usdc.address;
 
@@ -50,11 +52,13 @@ export const SUPPORTED_NETWORKS: SupportedNetwork[] = (() => {
   const list: SupportedNetwork[] = [];
   for (const n of getSupportedNetworks()) {
     const cfg = getNetworkConfig(n);
+    // Only include mainnet networks
+    if (cfg.type !== 'mainnet') continue;
     list.push({
       name: cfg.name ?? n,
       network: n,
       chainId: cfg.chainId,
-      status: cfg.type === 'mainnet' ? 'Mainnet' : 'Testnet',
+      status: 'Mainnet',
       settlementRouter: cfg.settlementRouter,
       hookTransfer: cfg.hooks.transfer,
       explorerUrl: cfg.addressExplorerBaseUrl
