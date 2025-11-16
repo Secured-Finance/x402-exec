@@ -4,8 +4,6 @@
 
 import type { Address, Hex } from "viem";
 import { getAddress, isAddress } from "viem";
-import type { Network } from "x402/types";
-import { processPriceToAtomicAmount } from "x402/shared";
 import { ValidationError } from "../errors.js";
 
 /**
@@ -107,109 +105,60 @@ export function validateHex(hex: string, name: string, expectedLength?: number):
 }
 
 /**
- * Parse amount from various formats to atomic units
+ * Validate amount format - must be atomic units (positive integer string)
  *
- * Supports multiple input formats:
- * - Dollar format: '$1.2' or '$1.20' → '1200000' (1.2 USDC)
- * - Decimal string: '1.2' or '1.20' → '1200000'
- * - Number: 1.2 → '1200000'
- * - Atomic units: '1200000' → '1200000' (pass-through for large integers >= 100)
+ * This function validates that the amount is a valid atomic unit string.
+ * For converting USD amounts to atomic units, use parseDefaultAssetAmount from @x402x/core.
  *
- * Uses x402's processPriceToAtomicAmount for parsing.
- *
- * @param amount - Amount in various formats
- * @param network - Network name (default: 'base-sepolia') - used to determine token decimals
- * @returns Amount in atomic units as string
- * @throws ValidationError if amount format is invalid
- *
- * @example
- * ```typescript
- * parseAmount('$1.2')      // '1200000'
- * parseAmount('1.2')       // '1200000'
- * parseAmount(1.2)         // '1200000'
- * parseAmount('1200000')   // '1200000'
- * ```
- */
-export function parseAmount(amount: string | number, network: Network = "base-sepolia"): string {
-  // Handle empty/invalid input
-  if (amount === null || amount === undefined || amount === "") {
-    throw new ValidationError("Amount is required");
-  }
-
-  // If it's a string integer >= 100, treat as atomic units (pass-through)
-  if (typeof amount === "string") {
-    const trimmed = amount.trim();
-    if (/^\d+$/.test(trimmed)) {
-      const numValue = BigInt(trimmed);
-      if (numValue <= 0n) {
-        throw new ValidationError("Amount must be greater than 0");
-      }
-      // If >= 100, assume it's atomic units (e.g., 1000000 for 1 USDC)
-      // If < 100, fall through to decimal parsing (e.g., "1" means 1 dollar)
-      if (numValue >= 100n) {
-        return trimmed;
-      }
-    }
-  }
-
-  // Use x402's processPriceToAtomicAmount for parsing
-  const result = processPriceToAtomicAmount(amount, network);
-
-  if ("error" in result) {
-    throw new ValidationError(`Invalid amount format: ${result.error}`);
-  }
-
-  return result.maxAmountRequired;
-}
-
-/**
- * Format atomic units to human-readable decimal string
- *
- * @param amount - Amount in atomic units
- * @param decimals - Token decimals (default: 6 for USDC)
- * @returns Human-readable decimal string
- *
- * @example
- * ```typescript
- * formatAmount('1200000')  // '1.2'
- * formatAmount('1000000')  // '1'
- * formatAmount('1')        // '0.000001'
- * ```
- */
-export function formatAmount(amount: string, decimals: number = 6): string {
-  const atomicAmount = BigInt(amount);
-  if (atomicAmount < 0n) {
-    throw new ValidationError("Amount cannot be negative");
-  }
-
-  const amountStr = atomicAmount.toString().padStart(decimals + 1, "0");
-  const integerPart = amountStr.slice(0, -decimals) || "0";
-  const decimalPart = amountStr.slice(-decimals);
-
-  // Remove trailing zeros from decimal part
-  const trimmedDecimal = decimalPart.replace(/0+$/, "");
-
-  if (trimmedDecimal) {
-    return `${integerPart}.${trimmedDecimal}`;
-  }
-  return integerPart;
-}
-
-/**
- * Validate amount format (legacy function, now supports multiple formats)
- *
- * @param amount - Amount to validate
+ * @param amount - Amount in atomic units (must be a positive integer string)
  * @param name - Parameter name for error messages
  * @throws ValidationError if amount is invalid
+ *
+ * @example
+ * ```typescript
+ * validateAmount('1000000', 'amount'); // Valid: atomic units
+ * validateAmount('0.1', 'amount');     // Invalid: not atomic units
+ * validateAmount('-1', 'amount');       // Invalid: negative
+ * ```
  */
 export function validateAmount(amount: string | number, name: string): void {
+  if (amount === null || amount === undefined || amount === "") {
+    throw new ValidationError(`${name} is required`);
+  }
+
+  // Convert to string if number
+  const amountStr = typeof amount === "number" ? amount.toString() : amount;
+
+  // Must be a non-empty string
+  if (typeof amountStr !== "string" || amountStr.trim() === "") {
+    throw new ValidationError(`${name} must be a non-empty string`);
+  }
+
+  // Must be a valid positive integer (atomic units)
+  // Allow leading zeros but must be numeric
+  if (!/^\d+$/.test(amountStr)) {
+    throw new ValidationError(
+      `${name} must be a positive integer string (atomic units). ` +
+        `Use parseDefaultAssetAmount() from @x402x/core to convert USD amounts.`,
+    );
+  }
+
+  // Validate it can be converted to BigInt (no overflow)
   try {
-    parseAmount(amount);
+    const atomicAmount = BigInt(amountStr);
+    if (atomicAmount < 0n) {
+      throw new ValidationError(`${name} cannot be negative`);
+    }
+    if (atomicAmount === 0n) {
+      throw new ValidationError(`${name} cannot be zero`);
+    }
   } catch (error) {
     if (error instanceof ValidationError) {
-      throw new ValidationError(`${name}: ${error.message}`);
+      throw error;
     }
-    throw error;
+    throw new ValidationError(
+      `${name} is not a valid amount: ${error instanceof Error ? error.message : "Invalid format"}`,
+    );
   }
 }
 
