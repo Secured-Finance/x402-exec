@@ -27,8 +27,6 @@ import {
 } from "@/constants/networks";
 import { useSwapQuoteExactIn } from "@/hooks/use-swap-quote";
 import { useTargetAssets } from "@/hooks/use-target-assets";
-// Use hooks for pricing and quotes; avoid calling OKX lib directly here
-import { useTokenPrice } from "@/hooks/use-token-price";
 import { cn } from "@/lib/utils";
 
 // Hook for click outside functionality
@@ -119,15 +117,11 @@ function buildNetworksFromSDK(): Network[] {
   });
 }
 
-type Mode = "swap" | "bridge";
-
 // Internal base component used by the SwapComponent and BridgeComponent wrappers.
 // Consumers should import/use the specific components instead of a generic "mode" prop.
 function CryptoSwapBase({
-  mode,
   networks,
 }: {
-  mode: Mode;
   networks?: Network[];
 }) {
   const { isConnected, address } = useAccount();
@@ -170,7 +164,6 @@ function CryptoSwapBase({
 
   // Load target assets based on current selection
   const { networks: toNetworks, loading: toLoading } = useTargetAssets({
-    mode,
     fromNetworkId: swapState.fromNetwork?.id,
     enabled: showTokenSelector === "to",
     excludeAddress: swapState.fromToken?.address,
@@ -213,12 +206,6 @@ function CryptoSwapBase({
     });
   }, [toNetworks]);
 
-  // Keep toNetwork aligned to fromNetwork in swap mode
-  useEffect(() => {
-    if (mode !== "swap") return;
-    setSwapState((prev) => ({ ...prev, toNetwork: prev.fromNetwork }));
-  }, [mode, swapState.fromNetwork?.id]);
-
   // Amount editing is restricted to the 'from' side; 'to' is always derived.
   // no-op swap animation; we no longer flip from/to in UI
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -229,38 +216,32 @@ function CryptoSwapBase({
   const settingsRef = useRef<HTMLDivElement>(null);
 
   // Helpers to map our network ids to chainIds used by wagmi
-  const fromChainId = React.useMemo(() => {
+  const chainId = React.useMemo(() => {
     return (
       SUPPORTED_NETWORKS.find((n) => n.network === swapState.fromNetwork?.id)
         ?.chainId ?? undefined
     );
   }, [swapState.fromNetwork?.id]);
-  const toChainId = React.useMemo(() => {
-    return (
-      SUPPORTED_NETWORKS.find((n) => n.network === swapState.toNetwork?.id)
-        ?.chainId ?? undefined
-    );
-  }, [swapState.toNetwork?.id]);
 
   // Live balances from connected wallet for selected tokens (ERC-20)
   // We scope reads to the currently selected tokens to avoid spamming RPCs.
   const fromBalance = useBalance({
     address,
     token: swapState.fromToken?.address as `0x${string}`,
-    chainId: fromChainId,
+    chainId: chainId,
     query: {
       enabled: Boolean(
-        isConnected && address && fromChainId && swapState.fromToken?.address,
+        isConnected && address && chainId && swapState.fromToken?.address,
       ),
     },
   });
   const toBalance = useBalance({
     address,
     token: swapState.toToken?.address as `0x${string}`,
-    chainId: toChainId,
+    chainId: chainId,
     query: {
       enabled: Boolean(
-        isConnected && address && toChainId && swapState.toToken?.address,
+        isConnected && address && chainId && swapState.toToken?.address,
       ),
     },
   });
@@ -285,36 +266,6 @@ function CryptoSwapBase({
     return `~$${Math.round(v)}`;
   }
 
-  // Price loading state for UI feedback when fetching real-time quotes
-  // Prices via hook
-  const { price: fromLivePrice, loading: fromPriceLoading } = useTokenPrice({
-    chainId: fromChainId,
-    tokenAddress: swapState.fromToken?.address,
-  });
-  const { price: toLivePrice, loading: toPriceLoading } = useTokenPrice({
-    chainId: toChainId,
-    tokenAddress: swapState.toToken?.address,
-  });
-
-  // Sync from token price into swap state when hook updates
-  useEffect(() => {
-    if (fromLivePrice && fromLivePrice > 0) {
-      setSwapState((prev) => ({
-        ...prev,
-        fromToken: { ...prev.fromToken, price: fromLivePrice },
-      }));
-    }
-  }, [fromLivePrice]);
-
-  // Sync to token price into swap state when hook updates
-  useEffect(() => {
-    if (toLivePrice && toLivePrice > 0) {
-      setSwapState((prev) => ({
-        ...prev,
-        toToken: { ...prev.toToken, price: toLivePrice },
-      }));
-    }
-  }, [toLivePrice]);
 
   // Debounced exact-in quote via hook; updates `toAmount` and meta
   const {
@@ -322,17 +273,10 @@ function CryptoSwapBase({
     loading: quoteLoading,
     meta: lastQuoteMeta,
   } = useSwapQuoteExactIn({
-    fromChainId,
-    toChainId,
+    chainId: chainId,
     fromToken: swapState.fromToken,
     toToken: swapState.toToken,
     amountIn: swapState.fromAmount,
-    slippage: swapState.slippage,
-    userAddress: address as string | undefined,
-    fallbackPrices: {
-      fromPrice: swapState.fromToken.price,
-      toPrice: swapState.toToken.price,
-    },
   });
 
   useEffect(() => {
@@ -388,12 +332,12 @@ function CryptoSwapBase({
         ...prev,
         fromToken: token,
         fromNetwork: selectorNetwork ?? prev.fromNetwork,
+        toNetwork: selectorNetwork ?? prev.toNetwork,
       }));
     } else if (showTokenSelector === "to") {
       setSwapState((prev) => ({
         ...prev,
         toToken: token,
-        toNetwork: selectorNetwork ?? prev.toNetwork,
       }));
     }
     setShowTokenSelector(null);
@@ -520,12 +464,10 @@ function CryptoSwapBase({
               </motion.div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">
-                  {mode === "bridge" ? "Bridge" : "Swap"}
+                  Swap
                 </h1>
                 <p className="text-sm text-muted-foreground">
-                  {mode === "bridge"
-                    ? "Move assets between networks"
-                    : "Trade tokens instantly"}
+                  Trade tokens instantly
                 </p>
               </div>
             </div>
@@ -967,10 +909,6 @@ function CryptoSwapBase({
 
 // Public: swap-only component
 export function SwapComponent({ networks }: { networks?: Network[] }) {
-  return <CryptoSwapBase mode="swap" networks={networks} />;
+  return <CryptoSwapBase networks={networks} />;
 }
 
-// Public: bridge-only component
-export function BridgeComponent({ networks }: { networks?: Network[] }) {
-  return <CryptoSwapBase mode="bridge" networks={networks} />;
-}

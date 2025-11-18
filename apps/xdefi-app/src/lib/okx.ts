@@ -79,82 +79,6 @@ export async function okxGetTokens(params: {
 		.filter((t) => !!t.address && !!t.symbol);
 }
 
-// Fetch spot price for a token via OKX Aggregator `market/price` endpoint.
-// Example upstream URL:
-//   https://web3.okx.com/api/v6/dex/market/price?chainIndex=1&tokenContractAddress=0x...
-// We call it through our signed proxy at /api/okx using the `path` query param.
-export type OkxTokenPrice = {
-	price: number; // USD-based price per OKX docs
-	time?: number; // ms epoch if provided by API
-	chainIndex?: number;
-	tokenContractAddress?: string;
-};
-
-export async function okxGetTokenPrice(params: {
-	chainId: number; // EVM chain id (OKX `chainIndex`)
-	tokenAddress: string; // token contract address
-	// Optional: quote token address to price against (defaults to USD/USDC implied by OKX)
-	quoteTokenAddress?: string;
-}): Promise<OkxTokenPrice | null> {
-	const qs = new URLSearchParams();
-	qs.set("path", "/api/v6/dex/market/price");
-	qs.set("chainIndex", String(params.chainId));
-	qs.set("tokenContractAddress", params.tokenAddress);
-	if (params.quoteTokenAddress)
-		qs.set("quoteTokenContractAddress", params.quoteTokenAddress);
-
-	const url = `${OKX_PROXY}?${qs.toString()}`;
-	const res = await fetch(url, { headers: { Accept: "application/json" } });
-	if (!res.ok) return null;
-
-	// Response is not strongly typed; normalize a few known shapes
-	const payload = (await res.json().catch(() => ({}))) as any;
-	const data = payload?.data;
-
-	// Try several keys that OKX uses across endpoints
-	const tryParse = (x: any): OkxTokenPrice | null => {
-		if (x == null) return null;
-		// Per OKX docs, the `price` field (string) contains the latest USD price.
-		const p =
-			typeof x.price === "string"
-				? Number.parseFloat(x.price)
-				: typeof x.price === "number"
-					? x.price
-					: NaN;
-		if (!Number.isNaN(p) && Number.isFinite(p) && p > 0) {
-			const timeRaw = x.time;
-			const time =
-				typeof timeRaw === "string"
-					? Number.parseInt(timeRaw, 10)
-					: typeof timeRaw === "number"
-						? timeRaw
-						: undefined;
-			const chainIndex =
-				typeof x.chainIndex === "string"
-					? Number.parseInt(x.chainIndex, 10)
-					: typeof x.chainIndex === "number"
-						? x.chainIndex
-						: undefined;
-			const tokenContractAddress = x.tokenContractAddress as string | undefined;
-			return { price: p, time, chainIndex, tokenContractAddress };
-		}
-		return null;
-	};
-
-	// data can be an object or array; handle both
-	let parsed: OkxTokenPrice | null = null;
-	if (Array.isArray(data)) {
-		for (const item of data) {
-			parsed = tryParse(item);
-			if (parsed) break;
-		}
-	} else {
-		parsed = tryParse(data);
-	}
-
-	return parsed;
-}
-
 // Get a DEX quote for swapping tokenIn -> tokenOut using OKX Aggregator.
 // We proxy to: /api/v6/dex/aggregator/quote
 // Typical parameters include:
@@ -191,13 +115,6 @@ export async function okxGetQuote(params: {
 	tokenIn: string; // fromTokenAddress
 	tokenOut: string; // toTokenAddress
 	amountRaw: string; // raw units string (includes precision)
-	swapMode?: "exactIn" | "exactOut";
-	dexIds?: string;
-	directRoute?: boolean;
-	priceImpactProtectionPercent?: string;
-	feePercent?: string;
-	slippage?: number; // percent, e.g., 0.5 (kept for compatibility if needed)
-	userAddress?: string;
 }): Promise<OkxQuote | null> {
 	const qs = new URLSearchParams();
 	qs.set("path", "/api/v6/dex/aggregator/quote");
@@ -205,15 +122,7 @@ export async function okxGetQuote(params: {
 	qs.set("fromTokenAddress", params.tokenIn);
 	qs.set("toTokenAddress", params.tokenOut);
 	qs.set("amount", params.amountRaw);
-	qs.set("swapMode", params.swapMode ?? "exactIn");
-	if (params.dexIds) qs.set("dexIds", params.dexIds);
-	if (typeof params.directRoute === "boolean")
-		qs.set("directRoute", String(params.directRoute));
-	if (params.priceImpactProtectionPercent)
-		qs.set("priceImpactProtectionPercent", params.priceImpactProtectionPercent);
-	if (params.feePercent) qs.set("feePercent", params.feePercent);
-	if (params.slippage != null) qs.set("slippage", String(params.slippage));
-	if (params.userAddress) qs.set("userWalletAddress", params.userAddress);
+	qs.set("swapMode", "exactIn"); // we only support exactIn mode
 
 	const url = `${OKX_PROXY}?${qs.toString()}`;
 	const res = await fetch(url, { headers: { Accept: "application/json" } });

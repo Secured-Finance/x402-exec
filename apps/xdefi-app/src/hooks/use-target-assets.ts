@@ -1,7 +1,7 @@
 import {
+	NATIVE_TOKEN_ADDRESS,
 	SUPPORTED_NETWORKS,
 	SUPPORTED_PAYMENT_TOKENS,
-	NATIVE_TOKEN_ADDRESS,
 } from "@/constants/networks";
 import { okxGetTokens } from "@/lib/okx";
 import { useEffect, useMemo, useState } from "react";
@@ -25,14 +25,12 @@ export type TargetNetwork = {
 };
 
 export type UseTargetAssetsParams = {
-	mode: "swap" | "bridge";
 	fromNetworkId?: string;
 	enabled?: boolean; // only fetch when enabled (e.g., when opening the 'to' selector)
 	excludeAddress?: string; // exclude this token address from results
 };
 
 export function useTargetAssets({
-	mode,
 	fromNetworkId,
 	enabled = false,
 	excludeAddress,
@@ -48,9 +46,7 @@ export function useTargetAssets({
 
 		const pickList = (() => {
 			if (!fromNetworkId) return candidates;
-			if (mode === "swap")
-				return candidates.filter((n) => n.network === fromNetworkId);
-			return candidates.filter((n) => n.network !== fromNetworkId);
+			return candidates.filter((n) => n.network === fromNetworkId);
 		})();
 
 		return pickList.map((n) => ({
@@ -59,7 +55,7 @@ export function useTargetAssets({
 				n.status === "Mainnet" ? n.name.replace(/\s*Mainnet\b/i, "") : n.name,
 			chainId: n.chainId,
 		}));
-	}, [mode, fromNetworkId]);
+	}, [fromNetworkId]);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -84,7 +80,7 @@ export function useTargetAssets({
 							chainId: t.chainId,
 							limit: 200,
 						});
-						let mapped: TargetToken[] = (okxTokens ?? [])
+						const mapped: TargetToken[] = (okxTokens ?? [])
 							.slice(0, 200)
 							.map((tok) => ({
 								symbol: tok.symbol,
@@ -96,8 +92,10 @@ export function useTargetAssets({
 								logoUrl: tok.logoURI,
 								decimals: tok.decimals,
 							}))
-							.filter((tok) =>
-								!excludeAddress || tok.address.toLowerCase() !== excludeAddress.toLowerCase(),
+							.filter(
+								(tok) =>
+									!excludeAddress ||
+									tok.address.toLowerCase() !== excludeAddress.toLowerCase(),
 							);
 
 						// Deduplicate by address (first occurrence wins)
@@ -109,7 +107,8 @@ export function useTargetAssets({
 						let tokensFromOkx = Array.from(dedupMap.values());
 						// Move native token (OKX native address) to the front when present
 						const nativeIdx = tokensFromOkx.findIndex(
-							(x) => x.address.toLowerCase() === NATIVE_TOKEN_ADDRESS.toLowerCase(),
+							(x) =>
+								x.address.toLowerCase() === NATIVE_TOKEN_ADDRESS.toLowerCase(),
 						);
 						if (nativeIdx > 0) {
 							const nativeTok = tokensFromOkx.splice(nativeIdx, 1)[0];
@@ -117,30 +116,39 @@ export function useTargetAssets({
 						}
 
 						// If OKX returned nothing, fall back to our minimal supported token list (USDC)
-						const fallbackList = (SUPPORTED_PAYMENT_TOKENS[t.key] ?? []).map((x) => ({
-							symbol: x.symbol,
-							name: x.label ?? x.symbol,
-							address: x.address,
-							price: 1,
-							balance: "0",
-							change24h: 0,
-							decimals: x.symbol.toUpperCase() === "USDC" ? 6 : 18,
-						}));
+						const fallbackList = (SUPPORTED_PAYMENT_TOKENS[t.key] ?? []).map(
+							(x) => ({
+								symbol: x.symbol,
+								name: x.label ?? x.symbol,
+								address: x.address,
+								price: 1,
+								balance: "0",
+								change24h: 0,
+								decimals: x.symbol.toUpperCase() === "USDC" ? 6 : 18,
+							}),
+						);
 
-						const tokens: TargetToken[] = tokensFromOkx.length > 0 ? tokensFromOkx : fallbackList;
+						const tokens: TargetToken[] =
+							tokensFromOkx.length > 0 ? tokensFromOkx : fallbackList;
 						return { id: t.key, name: t.name, tokens } as TargetNetwork;
 					} catch (e) {
 						// On error, use fallback tokens to keep the UI functional (no synthetic native)
-						const fallbackList = (SUPPORTED_PAYMENT_TOKENS[t.key] ?? []).map((x) => ({
-							symbol: x.symbol,
-							name: x.label ?? x.symbol,
-							address: x.address,
-							price: 1,
-							balance: "0",
-							change24h: 0,
-							decimals: x.symbol.toUpperCase() === "USDC" ? 6 : 18,
-						}));
-						return { id: t.key, name: t.name, tokens: fallbackList } as TargetNetwork;
+						const fallbackList = (SUPPORTED_PAYMENT_TOKENS[t.key] ?? []).map(
+							(x) => ({
+								symbol: x.symbol,
+								name: x.label ?? x.symbol,
+								address: x.address,
+								price: 1,
+								balance: "0",
+								change24h: 0,
+								decimals: x.symbol.toUpperCase() === "USDC" ? 6 : 18,
+							}),
+						);
+						return {
+							id: t.key,
+							name: t.name,
+							tokens: fallbackList,
+						} as TargetNetwork;
 					}
 				}),
 			);
