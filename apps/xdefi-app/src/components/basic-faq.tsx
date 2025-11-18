@@ -11,25 +11,29 @@ export default function BasicFAQ() {
           Frequently asked questions
         </h3>
 
-        <Question title="Which networks can I use?" defaultOpen>
+        <Question title="How are swaps gas-free and approval-free?" defaultOpen>
           <p>
-            The demo supports multiple networks and groups assets by network in the selector.
-            You can choose the network first, then pick the asset.
+            The app leverages the x402x protocol to settle trades using a signed USDC payment
+            authorization instead of on-chain token approvals. A facilitator submits the
+            transaction on your behalf and covers the network gas, so you only sign once in your
+            wallet-no ERC-20 approvals and no native gas required. Your USDC is used to pay for
+            the swap.
           </p>
         </Question>
-        <Question title="What’s the difference between Swap and Bridge?">
+
+        <Question title="What is the facilitator fee?">
           <p>
-            Swap trades tokens on the same network. Bridge moves assets between different networks.
+            The facilitator charges a small fee for settling your transaction on-chain. This fee
+            covers gas and the service of relaying the transaction. It is separate from DEX pricing
+            and is denominated in USDC. The exact amount can vary by network and market conditions.
           </p>
         </Question>
-        <Question title="Is a wallet required?">
+
+        <Question title="Where do swap prices and routes come from?">
           <p>
-            Not in this demo. The UI simulates interactions without connecting to a wallet.
-          </p>
-        </Question>
-        <Question title="Can I customize networks and tokens?">
-          <p>
-            Yes. The component accepts network data and can be extended to real chain metadata.
+            Swaps are executed via the OKX Web3 DEX Aggregator. The app requests quotes and builds
+            executable calldata through the OKX DEX API; the resulting trade is then settled on-chain
+            by the facilitator using the selected route.
           </p>
         </Question>
       </div>
