@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { formatUsdcAtomicToDisplay, useFacilitatorStats } from "@/hooks/use-facilitator-stats";
 import { animate } from "motion";
-import { useFacilitatorStats, formatUsdcAtomicToDisplay } from "@/hooks/use-facilitator-stats";
+import { useEffect, useRef, useState } from "react";
 
 // Pretty-print a number with K/M/B suffix and return { value, suffix, decimals }
 function formatWithSuffix(n: number): { value: number; suffix: string; decimals: number } {
@@ -27,7 +27,7 @@ export function CountUpStats() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-12 md:py-16">
       <div className="flex flex-col items-center justify-center sm:flex-row">
-        <Stat num={loading ? 0 : usdcVal} suffix={`${usdcSuf}+`} decimals={usdcDec} subheading="Total Value (USDC)" />
+        <Stat num={loading ? 0 : usdcVal} suffix={`${usdcSuf}+`} decimals={usdcDec} subheading="Total Value Transferred (USDC)" />
         <div className="h-[1px] w-12 bg-indigo-200 sm:h-12 sm:w-[1px]" />
         <Stat num={loading ? 0 : payersVal} suffix={`${payersSuf}+`} decimals={payersDec} subheading="Unique Payers" />
         <div className="h-[1px] w-12 bg-indigo-200 sm:h-12 sm:w-[1px]" />
