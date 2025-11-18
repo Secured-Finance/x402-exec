@@ -29,6 +29,9 @@
       ],
       "@x402x/core": [
         "../../typescript/packages/core/dist"
+      ],
+      "@x402x/client": [
+        "../../typescript/packages/client/dist"
       ]
     }
   },

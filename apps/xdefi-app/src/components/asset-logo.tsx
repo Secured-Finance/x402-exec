@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState } from "react";
 
 type Props = {
   kind: "network" | "token";
-  id: string; // network key (e.g., 'base-sepolia') or token symbol (e.g., 'USDC')
+  id: string; // network key (e.g., 'base') or token symbol (e.g., 'USDC')
   size?: number; // square size in px
   className?: string;
   title?: string;

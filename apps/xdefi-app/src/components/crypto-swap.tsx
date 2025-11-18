@@ -26,6 +26,7 @@ import {
   SUPPORTED_PAYMENT_TOKENS,
 } from "@/constants/networks";
 import { useSwapQuoteExactIn } from "@/hooks/use-swap-quote";
+import { useSwapSettlement } from "@/hooks/use-swap-settlement";
 import { useTargetAssets } from "@/hooks/use-target-assets";
 import { cn } from "@/lib/utils";
 
@@ -72,7 +73,7 @@ interface Token {
 }
 
 interface Network {
-  id: string; // network key from SDK (e.g., 'base', 'base-sepolia')
+  id: string; // network key from SDK (e.g., 'base')
   name: string;
   // icon is unused now; we render with <AssetLogo/>
   icon?: string;
@@ -84,6 +85,7 @@ interface SwapState {
   toNetwork: Network;
   fromToken: Token;
   toToken: Token;
+  toTokenSelected: boolean; // user explicitly selected a 'to' token
   fromAmount: string;
   toAmount: string;
   slippage: number;
@@ -119,11 +121,7 @@ function buildNetworksFromSDK(): Network[] {
 
 // Internal base component used by the SwapComponent and BridgeComponent wrappers.
 // Consumers should import/use the specific components instead of a generic "mode" prop.
-function CryptoSwapBase({
-  networks,
-}: {
-  networks?: Network[];
-}) {
+function CryptoSwapBase({ networks }: { networks?: Network[] }) {
   const { isConnected, address } = useAccount();
   // Memoize fromNetworks so effects don't retrigger on every render
   const fromNetworks = React.useMemo(
@@ -146,6 +144,7 @@ function CryptoSwapBase({
       address: NATIVE_TOKEN_ADDRESS,
       decimals: 18,
     },
+    toTokenSelected: false,
     fromAmount: "",
     toAmount: "",
     slippage: 0.5,
@@ -266,7 +265,6 @@ function CryptoSwapBase({
     return `~$${Math.round(v)}`;
   }
 
-
   // Debounced exact-in quote via hook; updates `toAmount` and meta
   const {
     toAmount: computedToAmount,
@@ -277,11 +275,21 @@ function CryptoSwapBase({
     fromToken: swapState.fromToken,
     toToken: swapState.toToken,
     amountIn: swapState.fromAmount,
+    enabled: Boolean(
+      swapState.toTokenSelected &&
+      swapState.toToken?.address &&
+      swapState.fromAmount,
+    ),
   });
 
   useEffect(() => {
-    setSwapState((prev) => ({ ...prev, toAmount: computedToAmount }));
-  }, [computedToAmount]);
+    if (swapState.toTokenSelected) {
+      setSwapState((prev) => ({ ...prev, toAmount: computedToAmount }));
+    } else {
+      setSwapState((prev) => ({ ...prev, toAmount: "" }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [computedToAmount, swapState.toTokenSelected]);
 
   useClickOutside(tokenSelectorRef, () => setShowTokenSelector(null));
   useClickOutside(settingsRef, () => setShowSettings(false));
@@ -333,11 +341,14 @@ function CryptoSwapBase({
         fromToken: token,
         fromNetwork: selectorNetwork ?? prev.fromNetwork,
         toNetwork: selectorNetwork ?? prev.toNetwork,
+        toTokenSelected: false,
+        toAmount: "",
       }));
     } else if (showTokenSelector === "to") {
       setSwapState((prev) => ({
         ...prev,
         toToken: token,
+        toTokenSelected: true,
       }));
     }
     setShowTokenSelector(null);
@@ -346,9 +357,40 @@ function CryptoSwapBase({
 
   // removed token swap toggle; for bridge/swap targets come from hook
 
+  const { execute, status: settleStatus } = useSwapSettlement();
+
+  // Map execute() status to UI state flags
+  useEffect(() => {
+    const isLoading = [
+      "building",
+      "preparing",
+      "signing",
+      "submitting",
+    ].includes(settleStatus as any);
+    const status =
+      settleStatus === "success"
+        ? "success"
+        : settleStatus === "error"
+          ? "error"
+          : isLoading
+            ? "loading"
+            : "idle";
+
+    const userError =
+      status === "error" ? "Swap failed. Please try again." : undefined;
+    setSwapState((prev) => ({ ...prev, isLoading, status, error: userError }));
+
+    if (settleStatus === "success") {
+      setSwapState((prev) => ({ ...prev, fromAmount: "", toAmount: "" }));
+      const t = setTimeout(() => {
+        setSwapState((prev) => ({ ...prev, status: "idle", error: undefined }));
+      }, 2000);
+      return () => clearTimeout(t);
+    }
+  }, [settleStatus]);
+
   const handleSwap = async () => {
     if (!swapState.fromAmount || Number(swapState.fromAmount) <= 0) return;
-    // Require wallet connection for swap/bridge actions
     if (!isConnected) {
       try {
         await appKitModal?.open();
@@ -356,30 +398,18 @@ function CryptoSwapBase({
       return;
     }
 
-    setSwapState((prev) => ({ ...prev, status: "loading", isLoading: true }));
-
-    // Simulate swap transaction
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 3000));
-      setSwapState((prev) => ({
-        ...prev,
-        status: "success",
-        isLoading: false,
-        fromAmount: "",
-        toAmount: "",
-      }));
-
-      setTimeout(() => {
-        setSwapState((prev) => ({ ...prev, status: "idle" }));
-      }, 2000);
-    } catch (error) {
-      setSwapState((prev) => ({
-        ...prev,
-        status: "error",
-        isLoading: false,
-        error: "Swap failed. Please try again.",
-      }));
-    }
+    // Execute settlement with swap hook
+    await execute({
+      chainId: chainId!,
+      network: swapState.fromNetwork.id,
+      fromTokenAddress: swapState.fromToken.address,
+      fromTokenDecimals: swapState.fromToken.decimals ?? 6,
+      toTokenAddress: swapState.toToken.address,
+      amount: swapState.fromAmount,
+      slippagePercent: swapState.slippage,
+      userAddress: address!,
+      payTo: address!,
+    });
   };
 
   const containerVariants: any = {
@@ -463,9 +493,7 @@ function CryptoSwapBase({
                 <Zap className="w-5 h-5 text-white" />
               </motion.div>
               <div>
-                <h1 className="text-xl font-bold text-foreground">
-                  Swap
-                </h1>
+                <h1 className="text-xl font-bold text-foreground">Swap</h1>
                 <p className="text-sm text-muted-foreground">
                   Trade tokens instantly
                 </p>
@@ -602,7 +630,7 @@ function CryptoSwapBase({
                   )}
                   <div className="flex flex-col leading-tight items-start justify-start">
                     <span className="font-semibold">
-                      {hasFetchedToTokens
+                      {swapState.toTokenSelected
                         ? swapState.toToken.symbol
                         : "Select Assets"}
                     </span>
@@ -615,15 +643,22 @@ function CryptoSwapBase({
                   <ChevronDown className="w-4 h-4 text-muted-foreground self-center" />
                 </motion.button>
 
-                {/* To amount is read-only; it is computed from quotes or token prices */}
-                <input
-                  type="text"
-                  placeholder="0.0"
-                  value={swapState.toAmount}
-                  readOnly
-                  aria-readonly="true"
-                  className="min-w-0 flex-1 bg-transparent text-right text-2xl font-semibold outline-none placeholder:text-muted-foreground cursor-default"
-                />
+                {/* To amount is read-only; it is computed from quotes */}
+                {quoteLoading ? (
+                  <div className="min-w-0 flex-1 text-right text-2xl font-semibold text-muted-foreground inline-flex items-center justify-end gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Estimating…</span>
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    placeholder="0.0"
+                    value={swapState.toTokenSelected ? swapState.toAmount : ""}
+                    readOnly
+                    aria-readonly="true"
+                    className="min-w-0 flex-1 bg-transparent text-right text-2xl font-semibold outline-none placeholder:text-muted-foreground cursor-default"
+                  />
+                )}
               </div>
             </div>
           </motion.div>
@@ -708,7 +743,7 @@ function CryptoSwapBase({
               ) : swapState.status === "error" ? (
                 <>
                   <AlertCircle className="w-5 h-5" />
-                  Swap Failed
+                  Try Again
                 </>
               ) : !swapState.fromAmount || Number(swapState.fromAmount) <= 0 ? (
                 "Enter an amount"
@@ -720,6 +755,11 @@ function CryptoSwapBase({
               )}
             </div>
           </motion.button>
+          {swapState.status === "error" && swapState.error && (
+            <div className="mt-2 text-sm text-red-500 text-center break-words">
+              {String(swapState.error)}
+            </div>
+          )}
         </motion.div>
 
         {/* Token & Network Selector Modal */}
@@ -911,4 +951,3 @@ function CryptoSwapBase({
 export function SwapComponent({ networks }: { networks?: Network[] }) {
   return <CryptoSwapBase networks={networks} />;
 }
-

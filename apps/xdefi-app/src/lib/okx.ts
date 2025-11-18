@@ -155,7 +155,6 @@ export async function okxGetQuote(params: {
 	const data = Array.isArray(raw) ? pickBest(raw) : raw;
 
 	const out: OkxQuote = { data };
-	console.log(out);
 	// Primary raw amounts on root
 	if (typeof data?.fromTokenAmount === "string")
 		out.rawAmountIn = data.fromTokenAmount;
@@ -200,4 +199,60 @@ export async function okxGetQuote(params: {
 	}
 
 	return out;
+}
+
+// Build executable swap transaction calldata via OKX Aggregator.
+// We proxy to: /api/v6/dex/aggregator/swap (naming may vary across OKX deployments).
+// The function attempts to be tolerant to minor schema differences and will
+// normalize the common fields required for execution.
+export type OkxSwapTx = {
+	// Target contract to call (typically the OKX aggregator/router)
+	aggregatorAddress: string;
+	// Encoded calldata (must include the 4-byte selector)
+	data: `0x${string}`;
+};
+
+export async function okxBuildSwapTx(params: {
+	chainId: number;
+	fromToken: string; // tokenIn (asset you pay with)
+	toToken: string; // tokenOut (asset you receive)
+	amountRaw: string; // raw input amount (atomic units of fromToken)
+	slippagePercent?: number; // e.g. 0.5, 1, 3
+	userAddress: string; // recipient/beneficiary of the swap
+}): Promise<OkxSwapTx | null> {
+	// Compose query tolerated by OKX proxy; include both canonical and alt keys
+	const qs = new URLSearchParams();
+	qs.set("path", "/api/v6/dex/aggregator/swap");
+	qs.set("chainIndex", String(params.chainId));
+	qs.set("fromTokenAddress", params.fromToken);
+	qs.set("toTokenAddress", params.toToken);
+	qs.set("amount", params.amountRaw);
+	qs.set("userWalletAddress", params.userAddress);
+	// exactIn mode for deterministic minOut computation
+	qs.set("swapMode", "exactIn");
+	// Slippage as percentage string; add a couple common aliases just in case
+	if (params.slippagePercent != null) {
+		const s = String(params.slippagePercent);
+		qs.set("slippagePercent", s);
+	}
+
+	const url = `${OKX_PROXY}?${qs.toString()}`;
+	const res = await fetch(url, { headers: { Accept: "application/json" } });
+	if (!res.ok) return null;
+
+	const payload = (await res.json().catch(() => ({}))) as any;
+	const data = payload?.data ?? payload;
+	const tx = data[0]?.tx;
+
+	const to = tx?.to;
+	const calldata = tx?.data;
+
+	if (!to || typeof calldata !== "string") {
+		return null;
+	}
+
+	return {
+		aggregatorAddress: to,
+		data: calldata as `0x${string}`,
+	} satisfies OkxSwapTx;
 }

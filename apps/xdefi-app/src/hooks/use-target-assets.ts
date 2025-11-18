@@ -20,7 +20,7 @@ export type TargetToken = {
 
 export type TargetNetwork = {
 	id: string; // network key
-	name: string; // display name (e.g., Base, Base Sepolia)
+	name: string; // display name (e.g., Base)
 	tokens: TargetToken[];
 };
 

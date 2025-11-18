@@ -9,13 +9,14 @@ export type TokenShape = {
 };
 
 export function useSwapQuoteExactIn(params: {
-	chainId?: number;
-	fromToken?: TokenShape;
-	toToken?: TokenShape;
-	amountIn?: string; // human units string
-	debounceMs?: number;
+    chainId?: number;
+    fromToken?: TokenShape;
+    toToken?: TokenShape;
+    amountIn?: string; // human units string
+    debounceMs?: number;
+    enabled?: boolean; // when false, no quote is fetched and output remains empty
 }) {
-	const { chainId, fromToken, toToken, amountIn, debounceMs = 450 } = params;
+    const { chainId, fromToken, toToken, amountIn, debounceMs = 450, enabled = true } = params;
 
 	const { debounced: debouncedAmountIn, isDebouncing } = useDebouncedValue(
 		amountIn ?? "",
@@ -31,9 +32,18 @@ export function useSwapQuoteExactIn(params: {
 	const [error, setError] = useState<Error | null>(null);
 	const reqIdRef = useRef(0);
 
-	// biome-ignore lint/correctness/useExhaustiveDependencies: <>
-	useEffect(() => {
-		const amt = debouncedAmountIn?.trim();
+    // biome-ignore lint/correctness/useExhaustiveDependencies: <>
+    useEffect(() => {
+        const amt = debouncedAmountIn?.trim();
+
+        // Disabled: clear outputs and stop
+        if (!enabled) {
+            setToAmount("");
+            setMeta(null);
+            setError(null);
+            setLoading(false);
+            return;
+        }
 
 		// Reset state when not ready
 		if (!chainId || !fromToken?.address || !toToken?.address) {
@@ -113,21 +123,22 @@ export function useSwapQuoteExactIn(params: {
 				if (reqIdRef.current === rid) setLoading(false);
 			}
 		})();
-	}, [
-		chainId,
-		fromToken?.address,
-		toToken?.address,
-		fromToken?.decimals,
-		toToken?.decimals,
-		debouncedAmountIn,
-	]);
+    }, [
+        chainId,
+        fromToken?.address,
+        toToken?.address,
+        fromToken?.decimals,
+        toToken?.decimals,
+        debouncedAmountIn,
+        enabled,
+    ]);
 
-	return {
-		toAmount,
-		loading,
-		meta,
-		error,
-		isDebouncing,
-		debouncedAmountIn,
-	} as const;
+    return {
+        toAmount,
+        loading,
+        meta,
+        error,
+        isDebouncing,
+        debouncedAmountIn,
+    } as const;
 }

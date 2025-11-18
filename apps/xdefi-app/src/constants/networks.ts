@@ -17,9 +17,9 @@ export type PaymentToken = {
 
 export type SupportedNetwork = {
   name: string;
-  network: string; // e.g. 'base', 'base-sepolia'
+  network: string; // e.g. 'base'
   chainId: number;
-  status: 'Mainnet' | 'Testnet';
+  status: 'Mainnet';
   settlementRouter: string;
   hookTransfer: string;
   explorerUrl: string; // direct link to the settlement router on an explorer

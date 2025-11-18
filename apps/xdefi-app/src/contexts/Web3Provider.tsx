@@ -16,10 +16,7 @@ if (!appKitProjectId) {
   );
 }
 
-const appNetworks = [base, xLayer] as unknown as [
-  any,
-  ...any[],
-];
+const appNetworks = [base, xLayer] as unknown as [any, ...any[]];
 const wagmiAdapter = new WagmiAdapter({
   networks: appNetworks,
   projectId: appKitProjectId ?? "demo",
