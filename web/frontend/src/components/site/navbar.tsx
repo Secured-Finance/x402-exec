@@ -46,6 +46,7 @@ export function Navbar() {
                 <Link to="/docs">Docs</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
+            {/* Hidden for now: Stats page link intentionally removed from nav */}
             {/* <NavigationMenuItem>
               <NavigationMenuLink
                 asChild

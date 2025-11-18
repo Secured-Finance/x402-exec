@@ -5,7 +5,7 @@ import DebugPage from "@/pages/debug";
 import DocsPage from "@/pages/docs";
 import EcosystemPage from "@/pages/ecosystem";
 import FacilitatorPage from "@/pages/facilitator";
-import ScanPage from "@/pages/scan";
+import StatsPage from "@/pages/stats";
 import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
@@ -22,8 +22,8 @@ function App() {
         ? "facilitator"
           : pathname.startsWith("ecosystem")
             ? "ecosystem"
-            : pathname.startsWith("scan")
-              ? "scan"
+            : pathname.startsWith("stats")
+              ? "stats"
               : pathname.startsWith("debug")
                 ? "debug"
                 : "home";
@@ -34,8 +34,8 @@ function App() {
           ? `${base} • Facilitator`
           : route === "ecosystem"
             ? `${base} • Ecosystem`
-            : route === "scan"
-              ? `${base} • Scan`
+            : route === "stats"
+              ? `${base} • Stats`
               : route === "debug"
                 ? `${base} • Debug`
                 : `${base} - Turn any x402 payment into an on-chain action`;
@@ -56,7 +56,8 @@ function App() {
           <Route path="/docs/:slug" element={<DocsPage />} />
           <Route path="/facilitator" element={<FacilitatorPage />} />
           <Route path="/ecosystem" element={<EcosystemPage />} />
-          <Route path="/scan" element={<ScanPage />} />
+          <Route path="/stats" element={<StatsPage />} />
+          <Route path="/scan" element={<Navigate to="/stats" replace />} />
           <Route path="/debug" element={<DebugPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

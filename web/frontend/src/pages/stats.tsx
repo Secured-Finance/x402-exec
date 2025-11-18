@@ -1,28 +1,17 @@
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SUPPORTED_NETWORKS } from "@/constants/facilitator";
-import { useScanStats } from "@/hooks/use-scan-stats";
+import { useFacilitatorStats, formatUsdcAtomicToDisplay } from "@/hooks/use-facilitator-stats";
 import { formatNetwork, useTransactions } from "@/hooks/use-transactions";
 import type { HookInfo, Transaction } from "@/types/scan";
-import * as React from "react";
 
 function formatUsd(v: number | undefined): string {
   const n = Number.isFinite(v as number) ? (v as number) : 0;
@@ -61,89 +50,6 @@ function getTxUrl(t: Transaction): string {
     default:
       return `https://etherscan.io/tx/${t.hash}`;
   }
-}
-
-function ScanPagination({
-  page,
-  pageSize,
-  total,
-  onChange,
-}: {
-  page: number;
-  pageSize: number;
-  total: number;
-  onChange: (p: number) => void;
-}) {
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const makePages = () => {
-    const pages: (number | "ellipsis")[] = [];
-    const window = 2; // show current +/- 2
-    const add = (n: number) => pages.push(n);
-    const addEllipsis = () => pages.push("ellipsis");
-    add(1);
-    const start = Math.max(2, page - window);
-    const end = Math.min(totalPages - 1, page + window);
-    if (start > 2) addEllipsis();
-    for (let i = start; i <= end; i++) add(i);
-    if (end < totalPages - 1) addEllipsis();
-    if (totalPages > 1) add(totalPages);
-    return pages;
-  };
-  const pages = makePages();
-  const prevDisabled = page <= 1;
-  const nextDisabled = page >= totalPages;
-  return (
-    <div className="flex items-center justify-between pt-3">
-      <Pagination>
-        <PaginationContent>
-          <PaginationItem>
-            <PaginationPrevious
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                if (!prevDisabled) onChange(page - 1);
-              }}
-              aria-disabled={prevDisabled}
-              className={
-                prevDisabled ? "pointer-events-none opacity-50" : undefined
-              }
-            />
-          </PaginationItem>
-          {pages.map((p) => (
-            <PaginationItem key={`${p}`}>
-              {p === "ellipsis" ? (
-                <PaginationEllipsis />
-              ) : (
-                <PaginationLink
-                  href="#"
-                  isActive={p === page}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onChange(p as number);
-                  }}
-                >
-                  {p}
-                </PaginationLink>
-              )}
-            </PaginationItem>
-          ))}
-          <PaginationItem>
-            <PaginationNext
-              href="#"
-              onClick={(e) => {
-                e.preventDefault();
-                if (!nextDisabled) onChange(page + 1);
-              }}
-              aria-disabled={nextDisabled}
-              className={
-                nextDisabled ? "pointer-events-none opacity-50" : undefined
-              }
-            />
-          </PaginationItem>
-        </PaginationContent>
-      </Pagination>
-    </div>
-  );
 }
 
 function HookBadge({ hook }: { hook?: HookInfo }) {
@@ -256,20 +162,57 @@ function ByHooksTable({ items }: { items: Transaction[] }) {
       <TableHeader>
         <TableRow>
           <TableHead>Hook</TableHead>
+          <TableHead className="text-right">Unique Payers</TableHead>
           <TableHead className="text-right">Transactions</TableHead>
           <TableHead className="text-right">Volume (USD)</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
+        {rows.map((r) => {
+          const uniquePayers = new Set(
+            items
+              .filter((t) => t.hook?.address?.toLowerCase() === r.hook.address.toLowerCase())
+              .map((t) => t.from.toLowerCase()),
+          ).size;
+          return (
+            <TableRow key={r.hook.address}>
+              <TableCell>
+                <HookBadge hook={r.hook} />
+              </TableCell>
+              <TableCell className="text-right">{uniquePayers}</TableCell>
+              <TableCell className="text-right">{r.txCount}</TableCell>
+              <TableCell className="text-right">{formatUsd(r.volumeUsd)}</TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
+  );
+}
+
+type ApiTopHook = { address: string; txCount: number; uniquePayers: number; total: string };
+
+function TopHooksTableApi({ rows }: { rows: ApiTopHook[] }) {
+  if (!rows || rows.length === 0) {
+    return <div className="text-muted-foreground">No hook activity found.</div>;
+  }
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Hook Address</TableHead>
+          <TableHead className="text-right">Unique Payers</TableHead>
+          <TableHead className="text-right">Transactions</TableHead>
+          <TableHead className="text-right">Total (USDC)</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
         {rows.map((r) => (
-          <TableRow key={r.hook.address}>
-            <TableCell>
-              <HookBadge hook={r.hook} />
-            </TableCell>
+          <TableRow key={r.address}>
+            <TableCell className="font-mono text-xs">{shortHex(r.address)}</TableCell>
+            <TableCell className="text-right">{r.uniquePayers}</TableCell>
             <TableCell className="text-right">{r.txCount}</TableCell>
-            <TableCell className="text-right">
-              {formatUsd(r.volumeUsd)}
-            </TableCell>
+            <TableCell className="text-right">{formatUsdcAtomicToDisplay(r.total, 2)}</TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -278,51 +221,66 @@ function ByHooksTable({ items }: { items: Transaction[] }) {
 }
 
 export default function ScanPage() {
-  // Top-level filters (kept minimal for now; easily extend later)
-  const [page, setPage] = React.useState(1);
-  const pageSize = 8;
-  const tx = useTransactions({ page, pageSize });
+  // Latest tx (sample data for now)
+  const pageSize = 20;
+  const tx = useTransactions({ page: 1, pageSize });
   const all = useTransactions({ page: 1, pageSize: 1000 });
-  const stats = useScanStats({});
+  const stats = useFacilitatorStats({});
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">x402x Scan</h1>
-        <p className="text-muted-foreground">
-          Overview of facilitator activity across all networks.
-        </p>
+      <header className="flex items-start justify-between gap-4">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold tracking-tight">Stats</h1>
+          <p className="text-muted-foreground">Overview of facilitator activity across all networks.</p>
+        </div>
+        <div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">See All on Explorer</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {SUPPORTED_NETWORKS.map((n) => (
+                <DropdownMenuItem asChild key={n.network}>
+                  <a href={n.explorerUrl} target="_blank" rel="noreferrer">
+                    {n.name}
+                  </a>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </header>
 
       <section className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle>Transaction Volume ($)</CardTitle>
+              <CardTitle>Total Value (USDC)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">
-                {formatUsd(stats.transactionVolumeUsd)}
+                {stats.data ? formatUsdcAtomicToDisplay(stats.data.totalValueAtomic, 2) : "…"}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Accounts Amount</CardTitle>
+              <CardTitle>Unique Payers</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">
-                {stats.accountsCount.toLocaleString()}
+                {stats.data ? stats.data.accountsCount.toLocaleString() : "…"}
               </div>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Transaction Amount</CardTitle>
+              <CardTitle>Total Transactions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-semibold">
-                {stats.transactionsCount.toLocaleString()}
+                {stats.data ? stats.data.transactionsCount.toLocaleString() : "…"}
               </div>
             </CardContent>
           </Card>
@@ -330,33 +288,25 @@ export default function ScanPage() {
       </section>
 
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold tracking-tight">Transactions</h2>
-        <Tabs defaultValue="overall">
-          <TabsList>
-            <TabsTrigger value="overall">Overall</TabsTrigger>
-            <TabsTrigger value="by-hooks">By Hooks</TabsTrigger>
-          </TabsList>
-          <TabsContent value="overall">
-            <Card>
-              <CardContent className="py-4">
-                <OverallTable items={tx.items} />
-              </CardContent>
-            </Card>
-            <ScanPagination
-              page={tx.page}
-              pageSize={tx.pageSize}
-              total={tx.total}
-              onChange={setPage}
-            />
-          </TabsContent>
-          <TabsContent value="by-hooks">
-            <Card>
-              <CardContent className="py-4">
-                <ByHooksTable items={all.items} />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+        <h2 className="text-xl font-semibold tracking-tight">Latest Transactions</h2>
+        <Card>
+          <CardContent className="py-4">
+            <OverallTable items={tx.items} />
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight">Top Hook Contracts</h2>
+        <Card>
+          <CardContent className="py-4">
+            {stats.data?.topHooks?.length ? (
+              <TopHooksTableApi rows={stats.data.topHooks as any} />
+            ) : (
+              <ByHooksTable items={all.items} />
+            )}
+          </CardContent>
+        </Card>
       </section>
     </div>
   );

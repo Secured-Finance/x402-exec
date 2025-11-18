@@ -12,6 +12,7 @@ import { createVerifyRoutes, VerifyRouteDependencies } from "./verify.js";
 import { createSettleRoutes, SettleRouteDependencies } from "./settle.js";
 import { createSupportedRoutes, SupportedRouteDependencies } from "./supported.js";
 import { createFeeRoutes, FeeRouteDependencies } from "./fee.js";
+import { createStatsRoutes, type StatsRouteDependencies } from "./stats.js";
 import { createHookValidationMiddleware } from "../middleware/hook-validation.js";
 import { createFeeValidationMiddleware } from "../middleware/fee-validation.js";
 import type { GasCostConfig } from "../gas-cost.js";
@@ -26,7 +27,8 @@ export interface RoutesDependencies
     VerifyRouteDependencies,
     SettleRouteDependencies,
     SupportedRouteDependencies,
-    FeeRouteDependencies {
+    FeeRouteDependencies,
+    StatsRouteDependencies {
   gasCost: GasCostConfig;
   dynamicGasPrice: DynamicGasPriceConfig;
   tokenPrice: TokenPriceConfig;
@@ -89,4 +91,8 @@ export function registerRoutes(
   // Supported payment kinds routes (no rate limiting)
   const supportedRoutes = createSupportedRoutes(deps);
   app.use(supportedRoutes);
+
+  // Stats routes (no rate limiting)
+  const statsRoutes = createStatsRoutes(deps);
+  app.use(statsRoutes);
 }

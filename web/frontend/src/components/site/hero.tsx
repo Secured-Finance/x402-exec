@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import { ApplicationHooksSnippets } from "./application-hooks-snippets";
+import { CountUpStats } from "@/components/site/countup-stats";
 
 // Simplified hero: remove illustration and complex code block.
 // Add a small installation snippet with common package managers.
@@ -37,6 +38,9 @@ export function Hero() {
             <Link to="/ecosystem">Explore Ecosystems</Link>
           </Button>
         </div>
+
+        {/* Live Stats Snapshot with count-up animation */}
+        <CountUpStats />
 
         {/* Application hooks */}
         <ApplicationHooksSnippets />
