@@ -4,7 +4,9 @@
 	"url": "https://demo.x402x.dev",
 	"paymentTokensByNetwork": {
 		"base-sepolia": ["USDC"],
-		"x-layer-testnet": ["USDC_TEST"]
+		"x-layer-testnet": ["USDC_TEST"],
+		"base": ["USDC"],
+		"x-layer": ["USDC"]
 	},
-	"tag": "demo"
+	"tag": "app"
 }
