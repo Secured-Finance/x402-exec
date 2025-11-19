@@ -6,6 +6,7 @@
  * This script helps construct the `data` parameter for the OKXDexHook.execute() method
  * by encoding a SwapConfig struct with the following fields:
  * - address dexAggregator
+ * - address approveAddress
  * - bytes swapCalldata
  * - address toToken
  * - uint256 minAmountOut
@@ -32,6 +33,8 @@ import { type Address, encodeAbiParameters, type Hex } from "viem";
 export interface SwapConfigParams {
 	/** Address of the DEX aggregator contract (must be whitelisted OKX aggregator) */
 	dexAggregator: Address;
+	/** Address to approve tokens to (usually the DEX aggregator or router) */
+	approveAddress: Address;
 	/** Pre-encoded swap transaction calldata from OKX DEX API (must have function selector) */
 	swapCalldata: Hex | string;
 	/** Address of the token to receive after swap (must be address(0) if isNativeToken is true) */
@@ -55,6 +58,13 @@ export function encodeSwapConfig(config: SwapConfigParams): Hex {
 		config.dexAggregator === "0x0000000000000000000000000000000000000000"
 	) {
 		throw new Error("dexAggregator address cannot be zero");
+	}
+
+	if (
+		!config.approveAddress ||
+		config.approveAddress === "0x0000000000000000000000000000000000000000"
+	) {
+		throw new Error("approveAddress cannot be zero");
 	}
 
 	if (!config.swapCalldata || config.swapCalldata.length < 10) {
@@ -93,9 +103,10 @@ export function encodeSwapConfig(config: SwapConfigParams): Hex {
 				: (`0x${config.swapCalldata}` as Hex)
 			: config.swapCalldata;
 
-	// Encode the SwapConfig struct
+	// Encode the SwapConfig struct as a tuple
 	// struct SwapConfig {
 	//   address dexAggregator;
+	//   address approveAddress;
 	//   bytes swapCalldata;
 	//   address toToken;
 	//   uint256 minAmountOut;
@@ -103,18 +114,27 @@ export function encodeSwapConfig(config: SwapConfigParams): Hex {
 	// }
 	const encoded = encodeAbiParameters(
 		[
-			{ name: "dexAggregator", type: "address" },
-			{ name: "swapCalldata", type: "bytes" },
-			{ name: "toToken", type: "address" },
-			{ name: "minAmountOut", type: "uint256" },
-			{ name: "isNativeToken", type: "bool" },
+			{
+				type: "tuple",
+				components: [
+					{ name: "dexAggregator", type: "address" },
+					{ name: "approveAddress", type: "address" },
+					{ name: "swapCalldata", type: "bytes" },
+					{ name: "toToken", type: "address" },
+					{ name: "minAmountOut", type: "uint256" },
+					{ name: "isNativeToken", type: "bool" },
+				],
+			},
 		],
 		[
-			config.dexAggregator,
-			swapCalldata,
-			config.toToken,
-			minAmountOut,
-			config.isNativeToken,
+			{
+				dexAggregator: config.dexAggregator,
+				approveAddress: config.approveAddress,
+				swapCalldata: swapCalldata,
+				toToken: config.toToken,
+				minAmountOut: minAmountOut,
+				isNativeToken: config.isNativeToken,
+			},
 		],
 	);
 

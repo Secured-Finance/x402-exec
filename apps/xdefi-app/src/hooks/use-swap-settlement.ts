@@ -6,7 +6,7 @@ import {
 	SUPPORTED_PAYMENT_TOKENS,
 } from "@/constants/networks";
 import { encodeSwapConfig } from "@/lib/encode-swap-config";
-import { okxBuildSwapTx } from "@/lib/okx";
+import { okxBuildSwapTx, okxGetApproveTx } from "@/lib/okx";
 import {
 	prepareSettlement,
 	type SettleResult,
@@ -139,6 +139,21 @@ export function useSwapSettlement(): UseSwapSettlementResult {
 				return null;
 			}
 
+			// 1.5) Get approve transaction to determine approveAddress
+			// approveAmount should be the same as amountRaw (the amount being swapped)
+			const approveTx = await okxGetApproveTx({
+				chainId: params.chainId,
+				tokenAddress: effectiveFromTokenAddress,
+				approveAmount: amountRaw, // Use the same amount as the swap
+			});
+			if (!approveTx) {
+				setStatus("error");
+				const err = new Error("approve_tx_failed");
+				setLastError(err);
+				console.error("swap_error: approve_tx_failed");
+				return null;
+			}
+
 			// 2) Encode SwapConfig for the Dex Hook (router from constants; ignore minOut for now)
 			const isNative =
 				params.toTokenAddress?.toLowerCase?.() ===
@@ -147,15 +162,17 @@ export function useSwapSettlement(): UseSwapSettlementResult {
 				? ("0x0000000000000000000000000000000000000000" as const)
 				: (params.toTokenAddress as `0x${string}`);
 			const minAmountOut = "0"; // always 0 (ignore OKX minOut for now)
-
 			const hookDataForDex = encodeSwapConfig({
 				// Use the aggregator/route address returned by OKX in tx.to
 				dexAggregator: built.aggregatorAddress as `0x${string}`,
+				// Get approveAddress from OKX approve-transaction API
+				approveAddress: approveTx.approveAddress as `0x${string}`,
 				swapCalldata: built.data,
 				toToken: toTokenForHook,
 				minAmountOut,
 				isNativeToken: isNative,
 			});
+            // console.log(hookDataForDex)
 
 			// 3) Prepare, sign and settle
 			setStatus("preparing");

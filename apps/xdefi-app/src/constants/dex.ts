@@ -19,6 +19,6 @@ export const DEX_HOOK_BY_NETWORK: Record<string, `0x${string}` | undefined> = {
 	// Example placeholders (replace with your Dex Hook addresses)
 	// 'base': '0x...',
 	// 'x-layer': '0x...',
-	base: "0x32654A1666b718234921cE2c6b3912Dd1Aa5133f",
-	"x-layer": "0x32654A1666b718234921cE2c6b3912Dd1Aa5133f",
+	base: "0x7A9d1F41DFE2F83b718577C899E441112516f1F2",
+	"x-layer": "0x3A278270787c18Cd3595D6eD90567d7D709c2cEf",
 };

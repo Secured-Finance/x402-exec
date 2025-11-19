@@ -256,3 +256,68 @@ export async function okxBuildSwapTx(params: {
 		data: calldata as `0x${string}`,
 	} satisfies OkxSwapTx;
 }
+
+// Get approve transaction data via OKX Aggregator.
+// We proxy to: /api/v6/dex/aggregator/approve-transaction
+// This returns the transaction data needed to approve tokens for swapping.
+// Reference: https://web3.okx.com/zh-hans/build/dev-docs/wallet-api/dex-approve-transaction
+export type OkxApproveTx = {
+	// Address to approve tokens to (dexContractAddress from API response)
+	approveAddress: string;
+	// Encoded approve transaction calldata
+	data: `0x${string}`;
+	// Gas limit for the approve transaction
+	gasLimit?: string;
+	// Gas price for the approve transaction
+	gasPrice?: string;
+};
+
+export async function okxGetApproveTx(params: {
+	chainId: number;
+	tokenAddress: string; // token to approve
+	approveAmount: string; // amount to approve (in atomic units, e.g., "1000000" for 1 USDC with 6 decimals)
+}): Promise<OkxApproveTx | null> {
+	const qs = new URLSearchParams();
+	qs.set("path", "/api/v6/dex/aggregator/approve-transaction");
+	qs.set("chainIndex", String(params.chainId));
+	qs.set("tokenContractAddress", params.tokenAddress);
+	qs.set("approveAmount", params.approveAmount);
+
+	const url = `${OKX_PROXY}?${qs.toString()}`;
+	const res = await fetch(url, { headers: { Accept: "application/json" } });
+	if (!res.ok) return null;
+
+	const payload = (await res.json().catch(() => ({}))) as any;
+	
+	// Check for error code
+	const code = payload?.code;
+	if (code != null && String(code) !== "0") {
+		return null;
+	}
+
+	// Response format: { code: "0", data: [{ data, dexContractAddress, gasLimit, gasPrice }], msg: "" }
+	const dataArray = Array.isArray(payload?.data) ? payload.data : [];
+	const approveData = dataArray[0];
+    console.log(approveData)
+
+	if (!approveData) {
+		return null;
+	}
+
+	const dexContractAddress = approveData?.dexContractAddress;
+	const calldata = approveData?.data;
+	const gasLimit = approveData?.gasLimit;
+	const gasPrice = approveData?.gasPrice;
+
+	// dexContractAddress and data are required
+	if (!dexContractAddress || typeof calldata !== "string") {
+		return null;
+	}
+
+	return {
+		approveAddress: dexContractAddress,
+		data: calldata as `0x${string}`,
+		gasLimit: typeof gasLimit === "string" ? gasLimit : undefined,
+		gasPrice: typeof gasPrice === "string" ? gasPrice : undefined,
+	} satisfies OkxApproveTx;
+}
