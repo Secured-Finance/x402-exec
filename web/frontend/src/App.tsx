@@ -5,7 +5,7 @@ import DebugPage from "@/pages/debug";
 import DocsPage from "@/pages/docs";
 import EcosystemPage from "@/pages/ecosystem";
 import FacilitatorPage from "@/pages/facilitator";
-import StatsPage from "@/pages/stats";
+import ActivitiesPage from "@/pages/activities";
 import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 
@@ -20,13 +20,13 @@ function App() {
       ? "docs"
       : pathname.startsWith("facilitator")
         ? "facilitator"
-          : pathname.startsWith("ecosystem")
-            ? "ecosystem"
-            : pathname.startsWith("stats")
-              ? "stats"
-              : pathname.startsWith("debug")
-                ? "debug"
-                : "home";
+        : pathname.startsWith("ecosystem")
+          ? "ecosystem"
+          : pathname.startsWith("activities")
+            ? "activities"
+            : pathname.startsWith("debug")
+              ? "debug"
+              : "home";
     const title =
       route === "docs"
         ? `${base} • Docs`
@@ -34,8 +34,8 @@ function App() {
           ? `${base} • Facilitator`
           : route === "ecosystem"
             ? `${base} • Ecosystem`
-            : route === "stats"
-              ? `${base} • Stats`
+            : route === "activities"
+              ? `${base} • Activities`
               : route === "debug"
                 ? `${base} • Debug`
                 : `${base} - Turn any x402 payment into an on-chain action`;
@@ -48,16 +48,14 @@ function App() {
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1">
-        {/* Site-wide notice: production launch */}
-        <div className="mx-auto max-w-6xl px-4 pt-4"></div>
         <Routes>
           <Route path="/" element={<Hero />} />
           <Route path="/docs" element={<DocsPage />} />
           <Route path="/docs/:slug" element={<DocsPage />} />
           <Route path="/facilitator" element={<FacilitatorPage />} />
           <Route path="/ecosystem" element={<EcosystemPage />} />
-          <Route path="/stats" element={<StatsPage />} />
-          <Route path="/scan" element={<Navigate to="/stats" replace />} />
+          <Route path="/activities" element={<ActivitiesPage />} />
+          <Route path="/stats" element={<Navigate to="/activities" replace />} />
           <Route path="/debug" element={<DebugPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
