@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Distribution } from "./distribution";
 import { FAQ } from "./faq";
 import { Hero } from "./hero";
+import { TokenMint } from "./token-mint";
 import { ValueCapture } from "./value-capture";
 import { X402ToEarn } from "./x402-to-earn";
 
@@ -57,6 +58,10 @@ export const TokenPage = () => {
         // Wrapper div designed to be embedded. Light theme base.
         <div className="w-full text-slate-900 font-sans selection:bg-yellow-200 selection:text-black">
 
+            <div className="py-20">
+                <TokenMint />
+            </div>
+
             {/* Sticky Internal Navigation */}
             <div className="sticky top-14 z-40 bg-white/80 backdrop-blur-md border-y border-slate-200 shadow-sm">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -85,7 +90,7 @@ export const TokenPage = () => {
 
             {/* Content Sections */}
             <div className="space-y-0">
-                <section id="overview" className="py-24 bg-white border-b border-slate-200">
+                <section id="overview" className="py-10 bg-white border-b border-slate-200">
                     <Hero />
                 </section>
                 <section id="value-capture" className="py-24 bg-slate-50">
