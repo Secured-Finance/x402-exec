@@ -6,6 +6,7 @@ import {
 	X402X_TOKEN_CONFIG,
 } from "@/lib/token-mint-config";
 import { modal as appKitModal } from "@reown/appkit/react";
+import { getNetworkConfig } from "@x402x/core";
 import { X402Client } from "@x402x/client";
 import {
 	createPublicClient,
@@ -16,6 +17,33 @@ import {
 	parseUnits,
 	publicActions,
 } from "viem";
+
+export const USDC_DECIMALS = 6;
+
+const USDC_ADDRESS = getNetworkConfig(TOKEN_MINT_NETWORK).defaultAsset
+	.address as `0x${string}`;
+
+const erc20Abi = [
+	{
+		inputs: [
+			{
+				internalType: "address",
+				name: "account",
+				type: "address",
+			},
+		],
+		name: "balanceOf",
+		outputs: [
+			{
+				internalType: "uint256",
+				name: "",
+				type: "uint256",
+			},
+		],
+		stateMutability: "view",
+		type: "function",
+	},
+] as const;
 
 // Bonding curve helper – mirrors the contract's exponential model approximately:
 // P(x) ≈ P0 * exp(k * x), where x = tokensSold / TOTAL_SALE_SUPPLY (0..1).
@@ -77,7 +105,7 @@ export async function estimateMintTokensForUsdc({
 
 	let amountAtomic: bigint;
 	try {
-		amountAtomic = parseUnits(raw, 6);
+		amountAtomic = parseUnits(raw, USDC_DECIMALS);
 		if (amountAtomic <= 0n) return null;
 	} catch {
 		return null;
@@ -118,8 +146,8 @@ export async function executeTokenMint({
 
 	let amountAtomic: bigint;
 	try {
-		// Interpret user input as human-readable USDC (decimals = 6)
-		amountAtomic = parseUnits(value, 6);
+		// Interpret user input as human-readable USDC (decimals = USDC_DECIMALS)
+		amountAtomic = parseUnits(value, USDC_DECIMALS);
 		if (amountAtomic <= 0n) {
 			throw new Error("USDC amount must > 0");
 		}
@@ -171,4 +199,59 @@ export async function executeTokenMint({
 	});
 
 	return { txHash: result.txHash };
+}
+
+export async function fetchUsdcBalance(
+	address: string | undefined,
+): Promise<bigint | null> {
+	if (!address) return null;
+
+	try {
+		const client = createPublicClient({
+			chain: X402X_MINT_CONFIG.chain,
+			transport: http(),
+		}).extend(publicActions);
+
+		const balance = (await client.readContract({
+			address: USDC_ADDRESS,
+			abi: erc20Abi,
+			functionName: "balanceOf",
+			args: [address as `0x${string}`],
+		})) as bigint;
+
+		return balance;
+	} catch {
+		return null;
+	}
+}
+
+export function formatUsdcBalance(
+	balanceAtomic: bigint | null,
+): string | null {
+	if (balanceAtomic == null) return null;
+
+	const asNumber = Number(formatUnits(balanceAtomic, USDC_DECIMALS));
+	if (!Number.isFinite(asNumber)) return null;
+
+	return asNumber.toLocaleString(undefined, {
+		maximumFractionDigits: USDC_DECIMALS,
+	});
+}
+
+export function isUsdcAmountGreaterThanBalance({
+	amountUsdc,
+	balanceAtomic,
+}: {
+	amountUsdc: string;
+	balanceAtomic: bigint | null;
+}): boolean {
+	const raw = amountUsdc.trim();
+	if (!raw || balanceAtomic == null) return false;
+
+	try {
+		const amountAtomic = parseUnits(raw, USDC_DECIMALS);
+		return amountAtomic > balanceAtomic;
+	} catch {
+		return false;
+	}
 }

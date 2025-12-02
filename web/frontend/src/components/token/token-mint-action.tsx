@@ -1,11 +1,11 @@
 import {
-    AlertCircle,
-    ArrowDown,
-    CheckCircle2,
-    Hammer,
-    Loader2,
-    Wallet,
-    Zap,
+	AlertCircle,
+	ArrowDown,
+	CheckCircle2,
+	Hammer,
+	Loader2,
+	Wallet,
+	Zap,
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,8 @@ type TokenMintActionProps = {
     setUsdcAmount: (value: string) => void;
     estimatedTokens: number | null;
     shortAddress: (addr?: string) => string;
+    formattedUsdcBalance: string | null;
+    hasInsufficientBalance: boolean;
     buttonDisabled: boolean;
     handlePrimaryAction: () => void;
 };
@@ -39,26 +41,30 @@ export const TokenMintAction = ({
     setUsdcAmount,
     estimatedTokens,
     shortAddress,
+    formattedUsdcBalance,
+    hasInsufficientBalance,
     buttonDisabled,
     handlePrimaryAction,
 }: TokenMintActionProps) => {
-    const explorerBaseUrl =
-        X402X_MINT_CONFIG.chain?.blockExplorers?.default?.url?.replace(/\/$/, "");
+	const explorerBaseUrl =
+		X402X_MINT_CONFIG.chain?.blockExplorers?.default?.url?.replace(/\/$/, "");
 
-    const txExplorerUrl =
-        explorerBaseUrl && txHash ? `${explorerBaseUrl}/tx/${txHash}` : undefined;
+	const txExplorerUrl =
+		explorerBaseUrl && txHash ? `${explorerBaseUrl}/tx/${txHash}` : undefined;
 
-    return (
+	const hasInputError = Boolean(error) || hasInsufficientBalance;
+
+	return (
         <div className="p-8 lg:p-12 bg-slate-50/50">
             <div className="h-full flex flex-col">
                 <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex-1 flex flex-col">
-                    <div className="mb-6">
-                        <h3 className="text-lg font-bold text-slate-900 mb-1 flex items-center gap-2">
+                    <div className="mb-6 flex items-center justify-between gap-3">
+                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
                             <Wallet className="text-yellow-500" size={20} />
                             Mint $X402X
                         </h3>
                         {isConnected && (
-                            <p className="text-sm text-slate-400 mt-2">
+                            <p className="text-xs sm:text-sm text-slate-400">
                                 Connected Wallet:{" "}
                                 <span className="font-mono">{shortAddress(address)}</span>
                             </p>
@@ -68,12 +74,22 @@ export const TokenMintAction = ({
                     <div className="space-y-6 flex-1">
                         {/* Input Section */}
                         <div>
-                            <label
-                                htmlFor="amount"
-                                className="block text-xs font-semibold text-slate-600 mb-2"
-                            >
-                                You pay (USDC)
-                            </label>
+                            <div className="mb-2 flex items-center justify-between">
+                                <label
+                                    htmlFor="amount"
+                                    className="text-xs font-semibold text-slate-600"
+                                >
+                                    You pay (USDC)
+                                </label>
+                                {isConnected && (
+                                    <p className="text-[11px] text-slate-400">
+                                        Balance:{" "}
+                                        {formattedUsdcBalance != null
+                                            ? `${formattedUsdcBalance} USDC`
+                                            : "—"}
+                                    </p>
+                                )}
+                            </div>
                             <div className="relative">
                                 <Input
                                     type="number"
@@ -84,19 +100,23 @@ export const TokenMintAction = ({
                                         setUsdcAmount(e.target.value);
                                     }}
                                     placeholder="0.00"
-                                    className={`pr-16 bg-white text-slate-900 ${error
-                                        ? "border-red-300 focus-visible:ring-red-500/60"
-                                        : ""
-                                        }`}
+                                    className={`pr-16 bg-white text-slate-900 ${
+										hasInputError
+											? "border-red-300 focus-visible:ring-red-500/60"
+											: ""
+									}`}
                                 />
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold pointer-events-none">
                                     USDC
                                 </div>
                             </div>
-                            {error && (
+                            {(error || hasInsufficientBalance) && (
                                 <div className="flex items-center gap-1 mt-2 text-red-500 text-xs">
                                     <AlertCircle size={14} />
-                                    <span>{error}</span>
+                                    <span>
+                                        {error ??
+                                            "Insufficient USDC balance for this mint amount."}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -143,7 +163,7 @@ export const TokenMintAction = ({
                         <button
                             type="button"
                             onClick={handlePrimaryAction}
-                            disabled={buttonDisabled}
+                            disabled={buttonDisabled || hasInsufficientBalance}
                             className={`
                     w-full py-4 rounded-lg font-bold text-sm sm:text-base transition-all transform active:scale-[0.98]
                     flex items-center justify-center gap-2

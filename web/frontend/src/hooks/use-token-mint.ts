@@ -4,12 +4,11 @@ import {
 	estimateMintTokensForUsdc,
 	executeTokenMint,
 	fetchMintedTokens,
+	fetchUsdcBalance,
+	formatUsdcBalance,
+	isUsdcAmountGreaterThanBalance,
 } from "@/lib/token-mint";
-import {
-	TOKEN_MINT_NETWORK,
-	X402X_MINT_CONFIG,
-	X402X_TOKEN_CONFIG,
-} from "@/lib/token-mint-config";
+import { X402X_TOKEN_CONFIG } from "@/lib/token-mint-config";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 export type MintStatus = "idle" | "connecting" | "executing" | "success";
@@ -25,6 +24,8 @@ export type UseTokenMintResult = {
 	// On-chain stats
 	mintedTokens: number; // whole tokens already minted (approx)
 	currentPrice: number | null; // USDC per token (approx)
+	formattedUsdcBalance: string | null;
+	hasInsufficientBalance: (amountUsdc: string) => boolean;
 	// UI helpers
 	connectWallet: () => void;
 	estimateTokensForUsdc: (amountUsdc: string) => Promise<number | null>;
@@ -36,9 +37,6 @@ const DEFAULT_TOTAL_ALLOCATION = 1_000_000_000 / 10; // 10% of 1B
 export function useTokenMint(
 	_options: UseTokenMintOptions = {},
 ): UseTokenMintResult {
-	// Minting is only supported on Base testnet (Base Sepolia).
-	const networkKey = TOKEN_MINT_NETWORK;
-	const mintContract = X402X_MINT_CONFIG.address;
 	const totalAllocationTokens =
 		X402X_TOKEN_CONFIG.mintAllocationTokens ?? DEFAULT_TOTAL_ALLOCATION;
 
@@ -48,6 +46,9 @@ export function useTokenMint(
 	const [error, setError] = useState<string | null>(null);
 	const [txHash, setTxHash] = useState<string | null>(null);
 	const [mintedTokens, setMintedTokens] = useState<number>(0);
+	const [usdcBalanceAtomic, setUsdcBalanceAtomic] = useState<bigint | null>(
+		null,
+	);
 
 	const connectWallet = useCallback(() => {
 		setError(null);
@@ -79,6 +80,31 @@ export function useTokenMint(
 		};
 	}, [address]);
 
+	// Read the connected wallet's USDC balance on the mint network.
+	useEffect(() => {
+		let cancelled = false;
+
+		async function loadBalance() {
+			if (!isConnected || !address) {
+				if (!cancelled) {
+					setUsdcBalanceAtomic(null);
+				}
+				return;
+			}
+
+			const balance = await fetchUsdcBalance(address);
+			if (!cancelled) {
+				setUsdcBalanceAtomic(balance);
+			}
+		}
+
+		void loadBalance();
+
+		return () => {
+			cancelled = true;
+		};
+	}, [isConnected, address, status]);
+
 	const currentPrice: number | null = useMemo(() => {
 		const price = calculateBondingCurvePrice(
 			mintedTokens,
@@ -86,6 +112,20 @@ export function useTokenMint(
 		);
 		return price || null;
 	}, [mintedTokens, totalAllocationTokens]);
+
+	const formattedUsdcBalance = useMemo(
+		() => formatUsdcBalance(usdcBalanceAtomic),
+		[usdcBalanceAtomic],
+	);
+
+	const hasInsufficientBalance = useCallback(
+		(amountUsdc: string) =>
+			isUsdcAmountGreaterThanBalance({
+				amountUsdc,
+				balanceAtomic: usdcBalanceAtomic,
+			}),
+		[usdcBalanceAtomic],
+	);
 
 	const estimateTokensForUsdc = useCallback(
 		async (amountUsdc: string): Promise<number | null> => {
@@ -139,6 +179,8 @@ export function useTokenMint(
 		txHash,
 		mintedTokens,
 		currentPrice,
+		formattedUsdcBalance,
+		hasInsufficientBalance,
 		connectWallet,
 		estimateTokensForUsdc,
 		executeMint,

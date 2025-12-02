@@ -16,6 +16,8 @@ export const TokenMint = () => {
         txHash,
         mintedTokens,
         currentPrice,
+        formattedUsdcBalance,
+        hasInsufficientBalance,
         estimateTokensForUsdc,
         connectWallet,
         executeMint,
@@ -88,6 +90,9 @@ export const TokenMint = () => {
     const isConnecting = status === "connecting";
     const isExecuting = status === "executing";
     const isSuccess = status === "success";
+
+    const insufficientBalance = hasInsufficientBalance(usdcAmount);
+
     const buttonDisabled =
         isConnecting || isExecuting || (isConnected && !usdcAmount.trim());
 
@@ -152,6 +157,8 @@ export const TokenMint = () => {
                         setUsdcAmount={setUsdcAmount}
                         estimatedTokens={estimatedTokens}
                         shortAddress={shortAddress}
+                        formattedUsdcBalance={formattedUsdcBalance}
+                        hasInsufficientBalance={insufficientBalance}
                         buttonDisabled={buttonDisabled}
                         handlePrimaryAction={handlePrimaryAction}
                     />
