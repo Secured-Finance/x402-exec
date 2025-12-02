@@ -6,9 +6,9 @@ import DebugPage from "@/pages/debug";
 import DocsPage from "@/pages/docs";
 import EcosystemPage from "@/pages/ecosystem";
 import FacilitatorPage from "@/pages/facilitator";
+import { TokenPage } from "@/pages/token";
 import { useEffect } from "react";
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { TokenPage } from "./components/token";
 
 function App() {
   const location = useLocation();
@@ -56,7 +56,10 @@ function App() {
           <Route path="/facilitator" element={<FacilitatorPage />} />
           <Route path="/ecosystem" element={<EcosystemPage />} />
           <Route path="/activities" element={<ActivitiesPage />} />
-          <Route path="/stats" element={<Navigate to="/activities" replace />} />
+          <Route
+            path="/stats"
+            element={<Navigate to="/activities" replace />}
+          />
           <Route path="/debug" element={<DebugPage />} />
           <Route path="/token" element={<TokenPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
