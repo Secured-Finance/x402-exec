@@ -2,8 +2,8 @@ import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { base, baseSepolia, defineChain, xLayer } from "@reown/appkit/networks";
 import { createAppKit, useAppKit, useAppKitAccount } from "@reown/appkit/react";
 import {
-  createContext,
   type ReactNode,
+  createContext,
   useContext,
   useEffect,
   useState,
@@ -77,7 +77,7 @@ export function ModalAppKitProvider({ children }: ModalAppKitProviderProps) {
   if (!isAppKitCreated) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
       </div>
     );
   }
