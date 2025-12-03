@@ -23,7 +23,7 @@ export const TokenMint = () => {
         executeMint,
     } = useTokenMint();
 
-    const [usdcAmount, setUsdcAmount] = useState("");
+    const [usdcAmount, setUsdcAmount] = useState("10");
 
     const totalAllocation =
         X402X_TOKEN_CONFIG.mintAllocationTokens || 1_000_000_000 / 10;

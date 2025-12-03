@@ -1,14 +1,6 @@
-import {
-	AlertCircle,
-	ArrowDown,
-	CheckCircle2,
-	Hammer,
-	Loader2,
-	Wallet,
-	Zap,
-} from "lucide-react";
+import { AlertCircle, CheckCircle2, Hammer, Loader2, Wallet, Zap } from "lucide-react";
 
-import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { X402X_MINT_CONFIG } from "@/lib/token-mint-config";
 
 type TokenMintActionProps = {
@@ -46,15 +38,25 @@ export const TokenMintAction = ({
     buttonDisabled,
     handlePrimaryAction,
 }: TokenMintActionProps) => {
-	const explorerBaseUrl =
-		X402X_MINT_CONFIG.chain?.blockExplorers?.default?.url?.replace(/\/$/, "");
+    const MIN_USDC_AMOUNT = 1;
+    const MAX_USDC_AMOUNT = 100;
+    const PRESET_AMOUNTS = [1, 5, 10, 25, 50, 100] as const;
 
-	const txExplorerUrl =
-		explorerBaseUrl && txHash ? `${explorerBaseUrl}/tx/${txHash}` : undefined;
+    const explorerBaseUrl =
+        X402X_MINT_CONFIG.chain?.blockExplorers?.default?.url?.replace(/\/$/, "");
 
-	const hasInputError = hasInsufficientBalance;
+    const txExplorerUrl =
+        explorerBaseUrl && txHash ? `${explorerBaseUrl}/tx/${txHash}` : undefined;
 
-	return (
+    const hasInputError = hasInsufficientBalance;
+
+    const numericUsdcAmount = (() => {
+        const parsed = Number(usdcAmount);
+        if (!Number.isFinite(parsed)) return MIN_USDC_AMOUNT;
+        return Math.min(Math.max(parsed, MIN_USDC_AMOUNT), MAX_USDC_AMOUNT);
+    })();
+
+    return (
         <div className="p-8 lg:p-12 bg-slate-50/50">
             <div className="h-full flex flex-col">
                 <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm flex-1 flex flex-col">
@@ -79,7 +81,7 @@ export const TokenMintAction = ({
                                     htmlFor="amount"
                                     className="text-xs font-semibold text-slate-600"
                                 >
-                                    You pay (USDC)
+                                    USDC for Minting
                                 </label>
                                 {isConnected && (
                                     <p className="text-[11px] text-slate-400">
@@ -90,24 +92,52 @@ export const TokenMintAction = ({
                                     </p>
                                 )}
                             </div>
-                            <div className="relative">
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    value={usdcAmount}
-                                    onChange={(e) => {
-                                        setUsdcAmount(e.target.value);
-                                    }}
-                                    placeholder="0.00"
-                                    className={`pr-16 bg-white text-slate-900 ${
-										hasInputError
-											? "border-red-300 focus-visible:ring-red-500/60"
-											: ""
-									}`}
-                                />
-                                <div className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs font-semibold pointer-events-none">
-                                    USDC
+                            <div
+                                className={`rounded-lg border bg-white px-4 py-3 ${hasInputError
+                                    ? "border-red-300 ring-1 ring-red-500/30"
+                                    : "border-slate-200"
+                                    }`}
+                            >
+                                <div className="mb-3 flex items-baseline justify-between">
+                                    <div className="flex items-baseline gap-1">
+                                        <span className="text-2xl font-bold text-slate-900">
+                                            {numericUsdcAmount.toFixed(0)}
+                                        </span>
+                                        <span className="text-xs font-semibold text-slate-500">
+                                            USDC
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <div className="mb-3">
+                                    <Slider
+                                        min={MIN_USDC_AMOUNT}
+                                        max={MAX_USDC_AMOUNT}
+                                        step={1}
+                                        value={[numericUsdcAmount]}
+                                        onValueChange={(value) => {
+                                            const next = value[0];
+                                            if (typeof next === "number") {
+                                                setUsdcAmount(String(next));
+                                            }
+                                        }}
+                                    />
+                                </div>
+
+                                <div className="flex flex-wrap gap-2">
+                                    {PRESET_AMOUNTS.map((amount) => (
+                                        <button
+                                            key={amount}
+                                            type="button"
+                                            onClick={() => setUsdcAmount(String(amount))}
+                                            className={`px-3 py-1 rounded-full border text-xs font-medium transition-colors ${numericUsdcAmount === amount
+                                                ? "bg-yellow-500/10 border-yellow-500 text-yellow-700"
+                                                : "bg-white border-slate-200 text-slate-500 hover:bg-slate-50"
+                                                }`}
+                                        >
+                                            {amount}U
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
                             {hasInsufficientBalance && (
@@ -118,10 +148,6 @@ export const TokenMintAction = ({
                             )}
                         </div>
 
-                        <div className="flex justify-center text-slate-400">
-                            <ArrowDown className="animate-pulse" size={20} />
-                        </div>
-
                         {/* Output Preview */}
                         <div>
                             <div className="flex items-center justify-between mb-2">
@@ -129,7 +155,7 @@ export const TokenMintAction = ({
                                     htmlFor="output"
                                     className="text-xs font-semibold text-slate-600"
                                 >
-                                    You Mint
+                                    You Receive
                                 </label>
                                 <p className="text-[11px] text-slate-400">
                                     Preview only – final amount depends on on-chain execution
