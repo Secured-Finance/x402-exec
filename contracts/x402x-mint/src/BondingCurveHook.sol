@@ -114,11 +114,11 @@ contract BondingCurveHook is ISettlementHook {
 
     function execute(
         bytes32 contextKey,
-        address /* payer */,
+        address payer,
         address token,
         uint256 amount,
         bytes32 /* salt */,
-        address payTo,
+        address /* payTo */,
         address /* facilitator */,
         bytes calldata /* data */
     ) external onlyRouter returns (bytes memory) {
@@ -141,11 +141,11 @@ contract BondingCurveHook is ISettlementHook {
         IERC20(token).safeTransferFrom(settlementRouter, address(this), amount);
 
         // transfer tokens to buyer
-        IERC20(x402xToken).safeTransfer(payTo, tokensToReceive);
+        IERC20(x402xToken).safeTransfer(payer, tokensToReceive);
 
         uint256 newPrice = getCurrentPrice();
 
-        emit TokensPurchased(contextKey, payTo, amount, tokensToReceive, newPrice);
+        emit TokensPurchased(contextKey, payer, amount, tokensToReceive, newPrice);
 
         return abi.encode(tokensToReceive);
     }

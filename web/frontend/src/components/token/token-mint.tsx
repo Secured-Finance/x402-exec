@@ -110,24 +110,6 @@ export const TokenMint = () => {
         void executeMint(usdcAmount);
     };
 
-    const handleLearnMore = () => {
-        if (typeof document === "undefined" || typeof window === "undefined") {
-            return;
-        }
-
-        const element = document.getElementById("overview");
-        if (!element) return;
-
-        const offset = 80;
-        const elementPosition = element.getBoundingClientRect().top;
-        const offsetPosition = elementPosition + window.pageYOffset - offset;
-
-        window.scrollTo({
-            top: offsetPosition,
-            behavior: "smooth",
-        });
-    };
-
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <TokenMintHeader />
@@ -163,7 +145,7 @@ export const TokenMint = () => {
                         handlePrimaryAction={handlePrimaryAction}
                     />
                 </div>
-                <TokenMintFooter onLearnMore={handleLearnMore} />
+                <TokenMintFooter />
             </div>
         </div>
     );

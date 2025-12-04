@@ -7,6 +7,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { FaGithub } from "react-icons/fa6";
 import { Link, useLocation } from "react-router-dom";
+import { Badge } from "../ui/badge";
 
 export function Navbar() {
   const location = useLocation();
@@ -41,6 +42,25 @@ export function Navbar() {
             <NavigationMenuItem>
               <NavigationMenuLink
                 asChild
+                data-active={pathname.startsWith("/token") ? true : undefined}
+              >
+                <Link
+                  to="/token"
+                  className="relative inline-flex items-center rounded-sm px-3 py-1.5 text-sm"
+                >
+                  <span className="font-medium">$X402X</span>
+                  <Badge
+                    variant="outline"
+                    className="pointer-events-none absolute -top-1.5 -right-3 px-1.5 py-[1px] text-[9px] font-semibold uppercase tracking-[0.16em] bg-yellow-400 text-slate-950 border-yellow-500 shadow-[0_0_0_1px_rgba(250,204,21,0.7)] animate-pulse"
+                  >
+                    Minting
+                  </Badge>
+                </Link>
+              </NavigationMenuLink>
+            </NavigationMenuItem>
+            <NavigationMenuItem>
+              <NavigationMenuLink
+                asChild
                 data-active={pathname.startsWith("/docs") ? true : undefined}
               >
                 <Link to="/docs">Docs</Link>
@@ -49,7 +69,9 @@ export function Navbar() {
             <NavigationMenuItem>
               <NavigationMenuLink
                 asChild
-                data-active={pathname.startsWith("/activities") ? true : undefined}
+                data-active={
+                  pathname.startsWith("/activities") ? true : undefined
+                }
               >
                 <Link to="/activities">Activities</Link>
               </NavigationMenuLink>
@@ -74,14 +96,6 @@ export function Navbar() {
                 <Link to="/ecosystem">Ecosystem</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
-            {/* <NavigationMenuItem>
-              <NavigationMenuLink
-                asChild
-                data-active={pathname.startsWith("/token") ? true : undefined}
-              >
-                <Link to="/token">$X402X</Link>
-              </NavigationMenuLink>
-            </NavigationMenuItem> */}
             <NavigationMenuItem>
               <NavigationMenuLink
                 href="https://github.com/nuwa-protocol/x402-exec"

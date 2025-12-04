@@ -25,9 +25,11 @@ function App() {
           ? "ecosystem"
           : pathname.startsWith("activities")
             ? "activities"
-            : pathname.startsWith("debug")
-              ? "debug"
-              : "home";
+            : pathname.startsWith("token")
+              ? "token"
+              : pathname.startsWith("debug")
+                ? "debug"
+                : "home";
     const title =
       route === "docs"
         ? `${base} • Docs`
@@ -37,9 +39,11 @@ function App() {
             ? `${base} • Ecosystem`
             : route === "activities"
               ? `${base} • Activities`
-              : route === "debug"
-                ? `${base} • Debug`
-                : `${base} - Turn any x402 payment into an on-chain action`;
+              : route === "token"
+                ? `${base} • Token Mint`
+                : route === "debug"
+                  ? `${base} • Debug`
+                  : `${base} - Turn any x402 payment into an on-chain action`;
     if (typeof document !== "undefined") {
       document.title = title;
     }
