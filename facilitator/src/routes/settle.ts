@@ -18,6 +18,7 @@ import {
   type Signer,
   type X402Config,
 } from "x402/types";
+import { getSupportedNetworks } from "@x402x/core";
 import { isSettlementMode, settleWithRouter } from "../settlement.js";
 import { getLogger, traced, recordMetric, recordHistogram } from "../telemetry.js";
 import type { PoolManager } from "../pool-manager.js";
@@ -98,8 +99,9 @@ export function createSettleRoutes(
   router.post("/settle", ...(middlewares as any), async (req: Request, res: Response) => {
     try {
       const body: SettleRequest = req.body;
-      const paymentRequirements = PaymentRequirementsSchema.parse(body.paymentRequirements);
-      const paymentPayload = PaymentPayloadSchema.parse(body.paymentPayload);
+      // Use passthrough() to allow custom networks (sepolia, filecoin-calibration)
+      const paymentRequirements = PaymentRequirementsSchema.passthrough().parse(body.paymentRequirements);
+      const paymentPayload = PaymentPayloadSchema.passthrough().parse(body.paymentPayload);
 
       // Extract payer address from payment payload for duplicate detection
       // For EVM exact scheme: paymentPayload.payload.authorization.from
@@ -141,8 +143,10 @@ export function createSettleRoutes(
           );
 
           // Ensure this is an EVM network (Settlement Router is EVM-only)
-          if (!SupportedEVMNetworks.includes(paymentRequirements.network)) {
-            throw new Error("Settlement Router mode is only supported on EVM networks");
+          // Allow custom networks from @x402x/core (sepolia, filecoin-calibration)
+          const supportedNetworks = getSupportedNetworks();
+          if (!supportedNetworks.includes(paymentRequirements.network)) {
+            throw new Error(`Settlement Router mode is only supported on EVM networks. Unsupported network: ${paymentRequirements.network}`);
           }
 
           try {
