@@ -1,4 +1,4 @@
-# @x402x TypeScript SDK
+# @sf-x402 TypeScript SDK
 
 TypeScript SDK for the x402x settlement framework - a programmable payment settlement extension for the x402 protocol.
 
@@ -6,11 +6,11 @@ TypeScript SDK for the x402x settlement framework - a programmable payment settl
 
 This repository contains the following packages:
 
-- **[@x402x/core](./packages/core)**: Core utilities, types, and helper functions
-- **[@x402x/fetch](./packages/fetch)**: Fetch wrapper for automatic 402 handling with settlement support
-- **[@x402x/express](./packages/express)**: Express middleware for creating 402 payment gates
-- **[@x402x/hono](./packages/hono)**: Hono middleware for creating 402 payment gates
-- **[@x402x/react](./packages/react)**: React hooks for payment integration
+- **[@sf-x402/core](./packages/core)**: Core utilities, types, and helper functions
+- **[@sf-x402/fetch](./packages/fetch)**: Fetch wrapper for automatic 402 handling with settlement support
+- **[@sf-x402/express](./packages/express)**: Express middleware for creating 402 payment gates
+- **[@sf-x402/hono](./packages/hono)**: Hono middleware for creating 402 payment gates
+- **[@sf-x402/react](./packages/react)**: React hooks for payment integration
 
 ## Quick Start
 
@@ -19,12 +19,12 @@ This repository contains the following packages:
 #### With Express
 
 ```bash
-npm install @x402x/express @x402x/core
+npm install @sf-x402/express @sf-x402/core
 ```
 
 ```typescript
 import express from 'express';
-import { x402Middleware } from '@x402x/express';
+import { x402Middleware } from '@sf-x402/express';
 
 const app = express();
 
@@ -46,12 +46,12 @@ app.listen(3000);
 #### With Hono
 
 ```bash
-npm install @x402x/hono @x402x/core
+npm install @sf-x402/hono @sf-x402/core
 ```
 
 ```typescript
 import { Hono } from 'hono';
-import { x402Middleware } from '@x402x/hono';
+import { x402Middleware } from '@sf-x402/hono';
 
 const app = new Hono();
 
@@ -72,11 +72,11 @@ export default app;
 #### With React Hooks
 
 ```bash
-npm install @x402x/react
+npm install @sf-x402/react
 ```
 
 ```typescript
-import { useX402Payment } from '@x402x/react';
+import { useX402Payment } from '@sf-x402/react';
 
 function PaymentButton() {
   const { pay, status, error } = useX402Payment();
@@ -101,11 +101,11 @@ function PaymentButton() {
 #### With Fetch Wrapper
 
 ```bash
-npm install @x402x/fetch @x402x/core
+npm install @sf-x402/fetch @sf-x402/core
 ```
 
 ```typescript
-import { x402xFetch } from '@x402x/fetch';
+import { x402xFetch } from '@sf-x402/fetch';
 import { createWalletClient } from 'viem';
 
 const walletClient = createWalletClient({...});
@@ -119,11 +119,11 @@ const data = await response.json();
 ### For Facilitators
 
 ```bash
-npm install @x402x/core
+npm install @sf-x402/core
 ```
 
 ```typescript
-import { isSettlementMode, settleWithRouter } from '@x402x/core';
+import { isSettlementMode, settleWithRouter } from '@sf-x402/core';
 
 // Detect settlement mode
 if (isSettlementMode(paymentRequirements)) {
@@ -135,7 +135,7 @@ if (isSettlementMode(paymentRequirements)) {
 
 ## Features
 
-### ✨ Core Features (@x402x/core)
+### ✨ Core Features (@sf-x402/core)
 
 - 🔐 **Commitment Calculation**: Cryptographically bind settlement parameters
 - 🌐 **Network Support**: Pre-configured for Base Sepolia and X-Layer Testnet
@@ -143,7 +143,7 @@ if (isSettlementMode(paymentRequirements)) {
 - 🛠️ **Utility Functions**: Helper functions for common tasks
 - 📝 **Full TypeScript**: Complete type definitions
 
-### 🔄 Fetch Wrapper (@x402x/fetch)
+### 🔄 Fetch Wrapper (@sf-x402/fetch)
 
 - 🔄 **Automatic 402 Handling**: Transparent payment injection
 - 🎯 **Settlement Mode Detection**: Uses commitment-based nonce when needed
@@ -151,15 +151,15 @@ if (isSettlementMode(paymentRequirements)) {
 - 💰 **Configurable Limits**: Set maximum payment amounts
 - 🚀 **Zero Configuration**: Works out of the box
 
-### 🌐 Server Middleware (@x402x/express, @x402x/hono)
+### 🌐 Server Middleware (@sf-x402/express, @sf-x402/hono)
 
 - 🚀 **Drop-in Middleware**: Easy integration with existing apps
 - 💰 **Facilitator Fees**: Built-in support for facilitator incentives
 - 🔌 **Hook Support**: Works with builtin or custom hooks
 - 🎯 **Zero Configuration**: Sensible defaults for common use cases
-- ⚡ **Edge Runtime**: @x402x/hono supports edge deployments
+- ⚡ **Edge Runtime**: @sf-x402/hono supports edge deployments
 
-### ⚛️ React Integration (@x402x/react)
+### ⚛️ React Integration (@sf-x402/react)
 
 - 🪝 **React Hooks**: `useX402Payment` for easy integration
 - 🔄 **State Management**: Automatic status and error tracking
@@ -173,14 +173,14 @@ if (isSettlementMode(paymentRequirements)) {
 ┌─────────────────────────────────────────────────────────────┐
 │                         Client                               │
 │  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │ @x402x/react │  │ @x402x/fetch │  │   Native     │      │
+│  │ @sf-x402/react │  │ @sf-x402/fetch │  │   Native     │      │
 │  │    Hooks     │─▶│    Wrapper   │─▶│    Fetch     │      │
 │  └──────────────┘  └──────────────┘  └──────────────┘      │
 │                           │                                  │
 │                           │ Uses                             │
 │                           ▼                                  │
 │                    ┌──────────────┐                          │
-│                    │ @x402x/core  │                          │
+│                    │ @sf-x402/core  │                          │
 │                    │  Utilities   │                          │
 │                    └──────────────┘                          │
 └─────────────────────────────────────────────────────────────┘
@@ -189,14 +189,14 @@ if (isSettlementMode(paymentRequirements)) {
 ┌─────────────────────────────────────────────────────────────┐
 │                    Resource Server                           │
 │  ┌────────────────────┐         ┌────────────────────┐      │
-│  │  @x402x/express    │   OR    │   @x402x/hono      │      │
+│  │  @sf-x402/express    │   OR    │   @sf-x402/hono      │      │
 │  │    Middleware      │         │    Middleware      │      │
 │  └────────────────────┘         └────────────────────┘      │
 │           │                              │                   │
 │           │ Uses                         │ Uses              │
 │           ▼                              ▼                   │
 │                    ┌──────────────┐                          │
-│                    │ @x402x/core  │                          │
+│                    │ @sf-x402/core  │                          │
 │                    │  Utilities   │                          │
 │                    └──────────────┘                          │
 └─────────────────────────────────────────────────────────────┘
@@ -205,7 +205,7 @@ if (isSettlementMode(paymentRequirements)) {
 ┌─────────────────────────────────────────────────────────────┐
 │                       Facilitator                            │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │              @x402x/core Utilities                   │   │
+│  │              @sf-x402/core Utilities                   │   │
 │  │  • isSettlementMode                                  │   │
 │  │  • settleWithRouter                                  │   │
 │  │  • validateSettlementRouter                          │   │
@@ -226,7 +226,7 @@ Following the official x402 library design, we split functionality into separate
 1. **Separation of Concerns**: Server middleware, client fetch, and React hooks have different dependencies
 2. **Bundle Size**: Users only install what they need (e.g., React apps don't need Express)
 3. **Peer Dependencies**: Express and Hono are optional peer dependencies
-4. **Flexible Deployment**: Edge runtimes can use @x402x/hono without Node.js dependencies
+4. **Flexible Deployment**: Edge runtimes can use @sf-x402/hono without Node.js dependencies
 5. **Maintainability**: Clear boundaries make the codebase easier to maintain
 
 ## Development
@@ -255,8 +255,8 @@ pnpm run build:sdk
 
 ```bash
 # From project root
-pnpm --filter @x402x/core run build
-pnpm --filter @x402x/fetch run build
+pnpm --filter @sf-x402/core run build
+pnpm --filter @sf-x402/fetch run build
 
 # Or from package directory
 cd typescript/packages/core

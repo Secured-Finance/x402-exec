@@ -1,5 +1,5 @@
 {
-  "name": "@x402x/client",
+  "name": "@sf-x402/client",
   "version": "0.3.0",
   "description": "Client SDK for x402x Serverless Mode - execute on-chain contracts directly via facilitator",
   "type": "module",
@@ -42,9 +42,9 @@
   "author": "Nuwa Protocol",
   "license": "Apache-2.0",
   "dependencies": {
-    "@x402x/core": "workspace:*",
+    "@sf-x402/core": "workspace:*",
     "viem": "2.40.3",
-    "x402": "npm:@x402x/x402@^0.6.6-patch.3"
+    "x402": "npm:@sf-x402/x402@^0.6.6-patch.3"
   },
   "peerDependencies": {
     "react": "^18.0.0",

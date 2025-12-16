@@ -10,5 +10,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ["@x402x/core", "hono"],
+  external: ["@sf-x402/core", "hono"],
 });

@@ -1,11 +1,11 @@
-# @x402x/fetch
+# @sf-x402/fetch
 
 Fetch wrapper for x402x settlement framework - automatically handles 402 Payment Required responses with settlement mode support.
 
 ## Installation
 
 ```bash
-npm install @x402x/fetch @x402x/core
+npm install @sf-x402/fetch @sf-x402/core
 ```
 
 ## Features
@@ -19,7 +19,7 @@ npm install @x402x/fetch @x402x/core
 ## Quick Start
 
 ```typescript
-import { x402xFetch } from "@x402x/fetch";
+import { x402xFetch } from "@sf-x402/fetch";
 import { createWalletClient, custom } from "viem";
 
 // Create wallet client (using wagmi, viem, etc.)
@@ -77,7 +77,7 @@ const fetchWithPay = x402xFetch(fetch, walletClient, BigInt(1 * 10 ** 6));
 ### With Wagmi
 
 ```typescript
-import { x402xFetch } from '@x402x/fetch';
+import { x402xFetch } from '@sf-x402/fetch';
 import { useWalletClient } from 'wagmi';
 
 function MyComponent() {
@@ -99,7 +99,7 @@ function MyComponent() {
 ### With Error Handling
 
 ```typescript
-import { x402xFetch } from "@x402x/fetch";
+import { x402xFetch } from "@sf-x402/fetch";
 
 async function fetchPaidContent(walletClient) {
   const fetchWithPay = x402xFetch(fetch, walletClient);
@@ -128,7 +128,7 @@ async function fetchPaidContent(walletClient) {
 ### Multiple Requests
 
 ```typescript
-import { x402xFetch } from "@x402x/fetch";
+import { x402xFetch } from "@sf-x402/fetch";
 
 async function fetchMultipleResources(walletClient) {
   const fetchWithPay = x402xFetch(fetch, walletClient);
@@ -147,7 +147,7 @@ async function fetchMultipleResources(walletClient) {
 ### With Custom Headers
 
 ```typescript
-import { x402xFetch } from "@x402x/fetch";
+import { x402xFetch } from "@sf-x402/fetch";
 
 async function fetchWithAuth(walletClient, authToken) {
   const fetchWithPay = x402xFetch(fetch, walletClient);
@@ -195,8 +195,8 @@ The wrapper may throw the following errors:
 Full TypeScript support with type definitions included.
 
 ```typescript
-import { x402xFetch } from "@x402x/fetch";
-import type { Signer } from "@x402x/core";
+import { x402xFetch } from "@sf-x402/fetch";
+import type { Signer } from "@sf-x402/core";
 
 const fetchWithPay: (input: RequestInfo, init?: RequestInit) => Promise<Response> = x402xFetch(
   fetch,
@@ -206,8 +206,8 @@ const fetchWithPay: (input: RequestInfo, init?: RequestInit) => Promise<Response
 
 ## Related Packages
 
-- [`@x402x/core`](../core): Core utilities and types
-- [`@x402x/react`](../react): React hooks for payments
+- [`@sf-x402/core`](../core): Core utilities and types
+- [`@sf-x402/react`](../react): React hooks for payments
 - [`x402-fetch`](https://npmjs.com/package/x402-fetch): Standard x402 fetch wrapper
 
 ## License

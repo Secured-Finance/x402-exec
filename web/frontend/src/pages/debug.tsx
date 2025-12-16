@@ -4,7 +4,7 @@ import {
 } from "@/components/debug/debug-appkit-provider";
 import { HookDataComposer } from "@/components/debug/hook-data-composer";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X402Client } from "@x402x/client";
+import { X402Client } from "@sf-x402/client";
 import { AlertCircle, CheckCircle, Loader2, Wallet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";

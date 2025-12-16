@@ -12,7 +12,7 @@
 import { config as loadEnv } from "dotenv";
 import type { X402Config } from "x402/types";
 import { evm } from "x402/types";
-import { getSupportedNetworks, getNetworkConfig, isNetworkSupported } from "@x402x/core";
+import { getSupportedNetworks, getNetworkConfig, isNetworkSupported } from "@sf-x402/core";
 import type { GasCostConfig } from "./gas-cost.js";
 import type { DynamicGasPriceConfig } from "./dynamic-gas-price.js";
 import type { TokenPriceConfig } from "./token-price.js";

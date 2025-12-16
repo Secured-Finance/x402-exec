@@ -10,7 +10,7 @@ Official website for x402x (short for x402-exec): an extension to the x402 proto
 
 ## Components
 
-- Extension SDK: `@x402x` (drop-in replacement for current x402 SDK)
+- Extension SDK: `@sf-x402` (drop-in replacement for current x402 SDK)
 - Smart contract framework: programmable settlement router plus Hook interfaces
 - Extended facilitator: multi-chain, incentivized settlement helper (we operate and host one)
 

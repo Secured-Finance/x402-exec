@@ -108,7 +108,7 @@ export function validateHex(hex: string, name: string, expectedLength?: number):
  * Validate amount format - must be atomic units (positive integer string)
  *
  * This function validates that the amount is a valid atomic unit string.
- * For converting USD amounts to atomic units, use parseDefaultAssetAmount from @x402x/core.
+ * For converting USD amounts to atomic units, use parseDefaultAssetAmount from @sf-x402/core.
  *
  * @param amount - Amount in atomic units (must be a positive integer string)
  * @param name - Parameter name for error messages
@@ -139,7 +139,7 @@ export function validateAmount(amount: string | number, name: string): void {
   if (!/^\d+$/.test(amountStr)) {
     throw new ValidationError(
       `${name} must be a positive integer string (atomic units). ` +
-        `Use parseDefaultAssetAmount() from @x402x/core to convert USD amounts.`,
+        `Use parseDefaultAssetAmount() from @sf-x402/core to convert USD amounts.`,
     );
   }
 

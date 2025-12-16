@@ -19,12 +19,12 @@ A script to publish all TypeScript packages to npm at once.
 
 The script publishes packages according to their dependencies:
 
-1. `@x402x/core` - Core utility library
-2. `@x402x/fetch` - Fetch wrapper (depends on core)
-3. `@x402x/express` - Express integration (depends on core)
-4. `@x402x/hono` - Hono integration (depends on core)
-5. `@x402x/client` - Client SDK (depends on core)
-6. `@x402x/react` - React hooks (depends on core, fetch)
+1. `@sf-x402/core` - Core utility library
+2. `@sf-x402/fetch` - Fetch wrapper (depends on core)
+3. `@sf-x402/express` - Express integration (depends on core)
+4. `@sf-x402/hono` - Hono integration (depends on core)
+5. `@sf-x402/client` - Client SDK (depends on core)
+6. `@sf-x402/react` - React hooks (depends on core, fetch)
 
 ### Usage
 
@@ -107,8 +107,8 @@ If an error occurs during publishing:
 
 ```bash
 # Rollback example
-npm unpublish @x402x/core@1.0.1 --force
-npm unpublish @x402x/fetch@1.0.1 --force
+npm unpublish @sf-x402/core@1.0.1 --force
+npm unpublish @sf-x402/fetch@1.0.1 --force
 # ... execute for each published package
 ```
 

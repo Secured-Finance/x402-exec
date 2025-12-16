@@ -1,13 +1,13 @@
 /**
- * @x402x/client - Client SDK for x402x Serverless Mode
+ * @sf-x402/client - Client SDK for x402x Serverless Mode
  *
  * This package provides a simple, type-safe SDK for executing on-chain contracts
  * directly via facilitator without needing a resource server.
  *
  * @example High-level API
  * ```typescript
- * import { X402Client } from '@x402x/client';
- * import { TransferHook } from '@x402x/core';
+ * import { X402Client } from '@sf-x402/client';
+ * import { TransferHook } from '@sf-x402/core';
  *
  * const client = new X402Client({
  *   wallet: walletClient,
@@ -28,7 +28,7 @@
  *   prepareSettlement,
  *   signAuthorization,
  *   settle
- * } from '@x402x/client';
+ * } from '@sf-x402/client';
  *
  * const settlement = await prepareSettlement({...});
  * const signed = await signAuthorization(wallet, settlement);
@@ -37,7 +37,7 @@
  *
  * @example React Hooks
  * ```typescript
- * import { useX402Client, useExecute } from '@x402x/client';
+ * import { useX402Client, useExecute } from '@sf-x402/client';
  *
  * const client = useX402Client({
  *   facilitatorUrl: 'https://facilitator.x402x.dev'
@@ -47,7 +47,7 @@
  * await execute({ hook: '0x...', amount: '1000000', ... });
  * ```
  *
- * @module @x402x/client
+ * @module @sf-x402/client
  */
 
 // Export main client class and constants
@@ -66,15 +66,15 @@ export {
   normalizeAddress,
 } from "./core/utils.js";
 
-// Re-export new amount utilities from @x402x/core (recommended)
-export { parseDefaultAssetAmount, formatDefaultAssetAmount, AmountError } from "@x402x/core";
+// Re-export new amount utilities from @sf-x402/core (recommended)
+export { parseDefaultAssetAmount, formatDefaultAssetAmount, AmountError } from "@sf-x402/core";
 
 // Export React hooks (optional, requires React peer dependency)
 export { useX402Client } from "./hooks/useX402Client.js";
 export { useExecute } from "./hooks/useExecute.js";
 
 // Re-export core types for convenience
-export type { FeeCalculationResult } from "@x402x/core";
+export type { FeeCalculationResult } from "@sf-x402/core";
 
 // Export types
 export type {

@@ -42,8 +42,8 @@ export interface UseExecuteReturn {
  *
  * @example
  * ```typescript
- * import { useExecute } from '@x402x/client';
- * import { TransferHook } from '@x402x/core';
+ * import { useExecute } from '@sf-x402/client';
+ * import { TransferHook } from '@sf-x402/core';
  *
  * function PayButton() {
  *   const { execute, status, error, result } = useExecute({
@@ -129,7 +129,7 @@ export function useExecute(config?: UseX402ClientConfig): UseExecuteReturn {
  *
  * @example
  * ```typescript
- * import { useExecute } from '@x402x/client';
+ * import { useExecute } from '@sf-x402/client';
  *
  * function PayButton({ facilitatorUrl }: { facilitatorUrl: string }) {
  *   const { execute, status, error } = useExecute({ facilitatorUrl });

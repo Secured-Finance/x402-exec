@@ -16,7 +16,7 @@ import {
   type X402Config,
   evm,
 } from "x402/types";
-import { getSupportedNetworks, getNetworkConfig } from "@x402x/core";
+import { getSupportedNetworks, getNetworkConfig } from "@sf-x402/core";
 import { createPublicClient, http, publicActions } from "viem";
 import { getLogger, recordMetric, recordHistogram } from "../telemetry.js";
 import type { PoolManager } from "../pool-manager.js";
@@ -105,7 +105,7 @@ export function createVerifyRoutes(
       }
 
       // Verify that this is an EVM network
-      // Allow custom networks from @x402x/core (sepolia, filecoin-calibration)
+      // Allow custom networks from @sf-x402/core (sepolia, filecoin-calibration)
       const supportedNetworks = getSupportedNetworks();
       if (!supportedNetworks.includes(paymentRequirements.network)) {
         throw new Error(
@@ -114,13 +114,13 @@ export function createVerifyRoutes(
       }
 
       // Create connected client for EVM network with custom RPC URL support
-      // For custom networks (sepolia, filecoin-calibration), use @x402x/core config
+      // For custom networks (sepolia, filecoin-calibration), use @sf-x402/core config
       let chain;
       try {
         chain = evm.getChainFromNetwork(paymentRequirements.network);
       } catch (error) {
         // If x402 doesn't know about this network, it's a custom one
-        // Get chain config from @x402x/core and construct viem chain
+        // Get chain config from @sf-x402/core and construct viem chain
         const networkConfig = getNetworkConfig(paymentRequirements.network);
         const nativeToken = networkConfig.metadata?.nativeToken || "ETH";
         chain = {

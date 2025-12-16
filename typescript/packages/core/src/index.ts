@@ -1,5 +1,5 @@
 /**
- * @x402x/core
+ * @sf-x402/core
  *
  * Core utilities for x402x settlement framework
  *
@@ -11,7 +11,7 @@
  *   getNetworkConfig,
  *   TransferHook,
  *   addSettlementExtra
- * } from '@x402x/core';
+ * } from '@sf-x402/core';
  *
  * // Generate payment requirements with settlement extension
  * const config = getNetworkConfig('base-sepolia');

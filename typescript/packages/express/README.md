@@ -1,4 +1,4 @@
-# @x402x/express
+# @sf-x402/express
 
 Express middleware for the x402x settlement framework. Provides full x402 payment protocol support with x402x settlement extensions.
 
@@ -16,18 +16,18 @@ Express middleware for the x402x settlement framework. Provides full x402 paymen
 ## Installation
 
 ```bash
-npm install @x402x/express
+npm install @sf-x402/express
 # or
-pnpm add @x402x/express
+pnpm add @sf-x402/express
 # or
-yarn add @x402x/express
+yarn add @sf-x402/express
 ```
 
 ## Quick Start
 
 ```typescript
 import express from "express";
-import { paymentMiddleware } from "@x402x/express";
+import { paymentMiddleware } from "@sf-x402/express";
 
 const app = express();
 
@@ -136,7 +136,7 @@ app.get("/api/basic", (req, res) => {
 
 ```typescript
 // Use TransferHook for revenue split (built-in)
-import { TransferHook } from "@x402x/core";
+import { TransferHook } from "@sf-x402/core";
 
 app.post(
   "/api/referral",
@@ -184,7 +184,7 @@ app.post(
 The middleware extends Express `Request` with an `x402` property containing payment details:
 
 ```typescript
-import type { X402Request } from '@x402x/express';
+import type { X402Request } from '@sf-x402/express';
 
 app.post('/api/payment',
   paymentMiddleware(...),
@@ -290,7 +290,7 @@ This middleware is fully compatible with the official x402 Express middleware AP
 import { paymentMiddleware } from "x402-express";
 
 // After (x402x)
-import { paymentMiddleware } from "@x402x/express";
+import { paymentMiddleware } from "@sf-x402/express";
 
 // Same API! 🎉
 ```
@@ -308,10 +308,10 @@ See the [showcase server](../../examples/showcase/server) for complete examples 
 
 ## Related Packages
 
-- [`@x402x/core`](../core) - Core utilities and types
-- [`@x402x/hono`](../hono) - Hono middleware (alternative to Express)
-- [`@x402x/fetch`](../fetch) - Client-side fetch wrapper
-- [`@x402x/react`](../react) - React hooks for payments
+- [`@sf-x402/core`](../core) - Core utilities and types
+- [`@sf-x402/hono`](../hono) - Hono middleware (alternative to Express)
+- [`@sf-x402/fetch`](../fetch) - Client-side fetch wrapper
+- [`@sf-x402/react`](../react) - React hooks for payments
 
 ## License
 

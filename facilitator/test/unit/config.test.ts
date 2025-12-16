@@ -7,8 +7,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { loadConfig } from "../../src/config.js";
 
-// Mock @x402x/core to return test networks
-vi.mock("@x402x/core", () => ({
+// Mock @sf-x402/core to return test networks
+vi.mock("@sf-x402/core", () => ({
   getSupportedNetworks: vi.fn(() => ["base-sepolia", "base", "x-layer-testnet", "x-layer"]),
   getNetworkConfig: vi.fn((network: string) => {
     const configs: Record<string, any> = {

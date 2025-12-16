@@ -1,6 +1,6 @@
 // @ts-nocheck
 // This file is for display purposes only and is not compiled
-import { X402Client } from "@x402x/client";
+import { X402Client } from "@sf-x402/client";
 import { encodeAbiParameters } from "viem";
 
 // 1. Configure NFT mint (simplified - no merchant field)
