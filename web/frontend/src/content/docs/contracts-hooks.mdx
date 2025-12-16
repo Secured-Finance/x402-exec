@@ -75,7 +75,7 @@ contract MyHook is ISettlementHook {
   for revenue splits (bips out of 10000)
 
 ```transfer-hook.ts
-import { TransferHook } from "@sf-x402/core";
+import { TransferHook } from "@secured-finance/core";
 const hook = TransferHook.getAddress("base-sepolia");
 const hookData = TransferHook.encode([{ recipient: "0xAlice...", bips: 3000 }]);
 ```

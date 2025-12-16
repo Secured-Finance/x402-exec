@@ -1,7 +1,7 @@
 // @ts-nocheck
 // This file is for display purposes only and is not compiled
-import { X402Client } from "@sf-x402/client";
-import { TransferHook } from "@sf-x402/core";
+import { X402Client } from "@secured-finance/client";
+import { TransferHook } from "@secured-finance/core";
 
 // 1. Define split configuration
 const splits = [

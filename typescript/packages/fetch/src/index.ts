@@ -9,8 +9,8 @@
 
 import type { Hex } from "viem";
 import { getAddress } from "viem";
-import type { PaymentRequirements, Signer } from "@sf-x402/core";
-import { calculateCommitment, getNetworkConfig } from "@sf-x402/core";
+import type { PaymentRequirements, Signer } from "@secured-finance/core";
+import { calculateCommitment, getNetworkConfig } from "@secured-finance/core";
 import type { MultiNetworkSigner, X402Config, Network } from "x402/types";
 import { ChainIdToNetwork, isMultiNetworkSigner, isSvmSignerWallet, evm } from "x402/types";
 import { createPaymentHeader, selectPaymentRequirements } from "x402/client";
@@ -160,7 +160,7 @@ async function createStandardPaymentHeader(
  *
  * @example
  * ```typescript
- * import { wrapFetchWithPayment } from '@sf-x402/fetch';
+ * import { wrapFetchWithPayment } from '@secured-finance/fetch';
  * import { useWalletClient } from 'wagmi';
  *
  * const { data: walletClient } = useWalletClient();

@@ -28,7 +28,7 @@ vi.mock("../../../src/settlement.js", () => ({
   validateTokenAddress: vi.fn(), // Mock the new function
 }));
 
-vi.mock("@sf-x402/core", () => ({
+vi.mock("@secured-finance/core", () => ({
   getNetworkConfig: vi.fn(() => ({
     usdc: "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
   })),

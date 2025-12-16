@@ -1,9 +1,9 @@
-# @sf-x402/client
+# @secured-finance/client
 
 > **Client SDK for x402x Serverless Mode** - Execute on-chain contracts directly via facilitator without needing a resource server.
 
-[![npm version](https://img.shields.io/npm/v/@sf-x402/client.svg)](https://www.npmjs.com/package/@sf-x402/client)
-[![License](https://img.shields.io/npm/l/@sf-x402/client.svg)](https://github.com/nuwa-protocol/x402-exec/blob/main/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@secured-finance/client.svg)](https://www.npmjs.com/package/@secured-finance/client)
+[![License](https://img.shields.io/npm/l/@secured-finance/client.svg)](https://github.com/nuwa-protocol/x402-exec/blob/main/LICENSE)
 
 ## What is x402x Serverless Mode?
 
@@ -41,10 +41,10 @@ Client → Facilitator → Smart Contract (Hook)
 - Encode payment payloads
 - Call facilitator APIs
 
-### After (@sf-x402/client)
+### After (@secured-finance/client)
 
 ```typescript
-import { parseDefaultAssetAmount } from "@sf-x402/core";
+import { parseDefaultAssetAmount } from "@secured-finance/core";
 
 const atomicAmount = parseDefaultAssetAmount("1", network); // '1000000'
 const client = new X402Client({ wallet, network, facilitatorUrl });
@@ -64,18 +64,18 @@ const result = await client.execute({
 ### Installation
 
 ```bash
-npm install @sf-x402/client @sf-x402/core
+npm install @secured-finance/client @secured-finance/core
 # or
-pnpm add @sf-x402/client @sf-x402/core
+pnpm add @secured-finance/client @secured-finance/core
 # or
-yarn add @sf-x402/client @sf-x402/core
+yarn add @secured-finance/client @secured-finance/core
 ```
 
 ### Basic Usage (React + wagmi)
 
 ```typescript
-import { X402Client } from '@sf-x402/client';
-import { TransferHook, parseDefaultAssetAmount } from '@sf-x402/core';
+import { X402Client } from '@secured-finance/client';
+import { TransferHook, parseDefaultAssetAmount } from '@secured-finance/core';
 import { useWalletClient } from 'wagmi';
 import { publicActions } from 'viem';
 
@@ -119,10 +119,10 @@ The `amount` parameter in `client.execute()` and `prepareSettlement()` **must be
 
 ### Converting USD Amounts to Atomic Units
 
-Use `parseDefaultAssetAmount()` from `@sf-x402/core` to convert USD amounts:
+Use `parseDefaultAssetAmount()` from `@secured-finance/core` to convert USD amounts:
 
 ```typescript
-import { parseDefaultAssetAmount, formatDefaultAssetAmount } from "@sf-x402/core";
+import { parseDefaultAssetAmount, formatDefaultAssetAmount } from "@secured-finance/core";
 
 // Convert USD to atomic units
 const atomicAmount = parseDefaultAssetAmount("1", "base-sepolia"); // '1000000' (1 USDC)
@@ -142,8 +142,8 @@ const displayAmount = formatDefaultAssetAmount("1000000", "base-sepolia"); // '1
 ### Example
 
 ```typescript
-import { X402Client } from "@sf-x402/client";
-import { parseDefaultAssetAmount } from "@sf-x402/core";
+import { X402Client } from "@secured-finance/client";
+import { parseDefaultAssetAmount } from "@secured-finance/core";
 
 const client = new X402Client({ wallet, network: "base-sepolia" });
 
@@ -177,7 +177,7 @@ class X402Client {
 **Example:**
 
 ```typescript
-import { X402Client } from "@sf-x402/client";
+import { X402Client } from "@secured-finance/client";
 
 // Uses default facilitator at https://facilitator.x402x.dev/
 const client = new X402Client({
@@ -195,7 +195,7 @@ const client = new X402Client({
 });
 
 // Convert USD amount to atomic units
-import { parseDefaultAssetAmount } from "@sf-x402/core";
+import { parseDefaultAssetAmount } from "@secured-finance/core";
 const atomicAmount = parseDefaultAssetAmount("1", "base-sepolia"); // '1000000'
 
 const result = await client.execute({
@@ -215,7 +215,7 @@ const result = await client.execute({
 Automatically creates an X402Client using wagmi's wallet connection.
 
 ```typescript
-import { useX402Client } from '@sf-x402/client';
+import { useX402Client } from '@secured-finance/client';
 
 function MyComponent() {
   // Uses default facilitator at https://facilitator.x402x.dev/
@@ -239,8 +239,8 @@ function MyComponent() {
 Provides automatic state management for settlements.
 
 ```typescript
-import { useExecute } from '@sf-x402/client';
-import { parseDefaultAssetAmount } from '@sf-x402/core';
+import { useExecute } from '@secured-finance/client';
+import { parseDefaultAssetAmount } from '@secured-finance/core';
 
 function PayButton() {
   // Uses default facilitator at https://facilitator.x402x.dev/
@@ -285,7 +285,7 @@ Understanding the x402 protocol terminology used in this SDK:
 **Verify** (from x402 protocol) - Validate a payment payload without executing it on-chain. This is useful for pre-validation before actual settlement.
 
 - In x402 protocol: `POST /verify` endpoint
-- In @sf-x402/core: `verify()` function
+- In @secured-finance/core: `verify()` function
 - Use case: Check if payment is valid before committing resources
 
 ### settle
@@ -293,15 +293,15 @@ Understanding the x402 protocol terminology used in this SDK:
 **Settle** (from x402 protocol) - Execute a payment on-chain by submitting it to the blockchain. This is the actual payment execution step.
 
 - In x402 protocol: `POST /settle` endpoint
-- In @sf-x402/core: `settle()` function
-- In @sf-x402/client: `settle()` function (convenience wrapper)
+- In @secured-finance/core: `settle()` function
+- In @secured-finance/client: `settle()` function (convenience wrapper)
 - Use case: Submit signed payment for blockchain execution
 
 ### execute
 
 **Execute** (high-level API) - Complete end-to-end payment flow including preparation, signing, settlement, and confirmation.
 
-- In @sf-x402/client: `X402Client.execute()` method
+- In @secured-finance/client: `X402Client.execute()` method
 - Flow: `prepare → sign → settle → wait for confirmation`
 - Use case: One-line payment execution for most developers
 
@@ -332,8 +332,8 @@ For users who need full control over the settlement flow.
 Prepares settlement data for signing.
 
 ```typescript
-import { prepareSettlement } from "@sf-x402/client";
-import { parseDefaultAssetAmount } from "@sf-x402/core";
+import { prepareSettlement } from "@secured-finance/client";
+import { parseDefaultAssetAmount } from "@secured-finance/core";
 
 // Convert USD amount to atomic units
 const atomicAmount = parseDefaultAssetAmount("1", "base-sepolia"); // '1000000'
@@ -354,7 +354,7 @@ const settlement = await prepareSettlement({
 Signs EIP-3009 authorization.
 
 ```typescript
-import { signAuthorization } from "@sf-x402/client";
+import { signAuthorization } from "@secured-finance/client";
 
 const signed = await signAuthorization(walletClient, settlement);
 ```
@@ -364,7 +364,7 @@ const signed = await signAuthorization(walletClient, settlement);
 Submits signed authorization to facilitator.
 
 ```typescript
-import { settle } from "@sf-x402/client";
+import { settle } from "@secured-finance/client";
 
 const result = await settle("https://facilitator.x402x.dev", signed);
 ```
@@ -376,8 +376,8 @@ const result = await settle("https://facilitator.x402x.dev", signed);
 ### Example 1: Simple Payment
 
 ```typescript
-import { X402Client } from "@sf-x402/client";
-import { TransferHook, parseDefaultAssetAmount } from "@sf-x402/core";
+import { X402Client } from "@secured-finance/client";
+import { TransferHook, parseDefaultAssetAmount } from "@secured-finance/core";
 
 // Uses default facilitator at https://facilitator.x402x.dev/
 const client = new X402Client({
@@ -403,8 +403,8 @@ console.log("Transaction:", result.txHash);
 TransferHook supports distributing funds to multiple recipients by percentage:
 
 ```typescript
-import { X402Client } from "@sf-x402/client";
-import { TransferHook, parseDefaultAssetAmount, type Split } from "@sf-x402/core";
+import { X402Client } from "@secured-finance/client";
+import { TransferHook, parseDefaultAssetAmount, type Split } from "@secured-finance/core";
 
 const client = new X402Client({
   wallet: walletClient,
@@ -448,8 +448,8 @@ console.log("Distributed transfer:", result.txHash);
 ### Example 3: NFT Minting (React)
 
 ```typescript
-import { useExecute } from '@sf-x402/client';
-import { NFTMintHook, parseDefaultAssetAmount } from '@sf-x402/core';
+import { useExecute } from '@secured-finance/client';
+import { NFTMintHook, parseDefaultAssetAmount } from '@secured-finance/core';
 
 function MintNFT() {
   // Uses default facilitator
@@ -483,8 +483,8 @@ function MintNFT() {
 ### Example 4: Revenue Split (Low-Level API)
 
 ```typescript
-import { prepareSettlement, signAuthorization, settle } from "@sf-x402/client";
-import { calculateFacilitatorFee, TransferHook, parseDefaultAssetAmount } from "@sf-x402/core";
+import { prepareSettlement, signAuthorization, settle } from "@secured-finance/client";
+import { calculateFacilitatorFee, TransferHook, parseDefaultAssetAmount } from "@secured-finance/core";
 
 // 1. Query minimum fee
 const hookData = TransferHook.encode([
@@ -526,8 +526,8 @@ console.log("Transaction:", result.transaction);
 
 ```typescript
 import { ref } from "vue";
-import { X402Client } from "@sf-x402/client";
-import { TransferHook, parseDefaultAssetAmount } from "@sf-x402/core";
+import { X402Client } from "@secured-finance/client";
+import { TransferHook, parseDefaultAssetAmount } from "@secured-finance/core";
 
 export function usePayment() {
   const status = ref("idle");
@@ -581,7 +581,7 @@ import {
   FacilitatorError,
   TransactionError,
   ValidationError,
-} from "@sf-x402/client";
+} from "@secured-finance/client";
 
 try {
   await client.execute(params);
@@ -615,7 +615,7 @@ import type {
   SignedAuthorization,
   FeeCalculationResult,
   ExecuteStatus,
-} from "@sf-x402/client";
+} from "@secured-finance/client";
 ```
 
 ---
@@ -658,9 +658,9 @@ function Component() {
 ### After
 
 ```typescript
-// 10 lines with @sf-x402/client (no facilitatorUrl needed!)
-import { useExecute } from "@sf-x402/client";
-import { TransferHook, parseDefaultAssetAmount } from "@sf-x402/core";
+// 10 lines with @secured-finance/client (no facilitatorUrl needed!)
+import { useExecute } from "@secured-finance/client";
+import { TransferHook, parseDefaultAssetAmount } from "@secured-finance/core";
 
 function Component() {
   // Uses default facilitator automatically
@@ -683,8 +683,8 @@ function Component() {
 
 ## Related Packages
 
-- [@sf-x402/core](../core) - Core utilities and commitment calculation
-- [@sf-x402/facilitator](../../facilitator) - Facilitator server implementation
+- [@secured-finance/core](../core) - Core utilities and commitment calculation
+- [@secured-finance/facilitator](../../facilitator) - Facilitator server implementation
 - [x402](https://github.com/coinbase/x402) - Base x402 protocol
 
 ---

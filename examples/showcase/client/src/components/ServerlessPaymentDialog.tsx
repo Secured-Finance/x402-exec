@@ -5,9 +5,9 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAccount, useWalletClient } from "wagmi";
-import { TransferHook, calculateFacilitatorFee } from "@sf-x402/core";
-import { useX402Client, X402Client } from "@sf-x402/client";
-import type { FeeCalculationResult } from "@sf-x402/client";
+import { TransferHook, calculateFacilitatorFee } from "@secured-finance/core";
+import { useX402Client, X402Client } from "@secured-finance/client";
+import type { FeeCalculationResult } from "@secured-finance/client";
 import { useNetworkSwitch } from "../hooks/useNetworkSwitch";
 import { WalletSelector } from "./WalletSelector";
 import { publicActions } from "viem";

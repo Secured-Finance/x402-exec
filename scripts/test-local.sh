@@ -160,13 +160,13 @@ if [ "$RUN_SDK" = true ]; then
     
     # 步骤 4: 运行 SDK 测试
     print_section "步骤 4: 运行 SDK 测试"
-    print_info "运行 @x402x/* 包的测试..."
-    pnpm -r --filter "@x402x/*" test
+    print_info "运行 @sf-x402/* 包的测试..."
+    pnpm -r --filter "@sf-x402/*" test
     print_success "SDK 测试通过"
     
     if [ "$RUN_COVERAGE" = true ]; then
         print_info "生成 SDK 覆盖率报告..."
-        pnpm -r --filter "@x402x/*" test:coverage || print_warning "覆盖率报告生成失败（非致命错误）"
+        pnpm -r --filter "@sf-x402/*" test:coverage || print_warning "覆盖率报告生成失败（非致命错误）"
     fi
 else
     print_info "跳过 SDK 测试 (使用 --no-sdk)"

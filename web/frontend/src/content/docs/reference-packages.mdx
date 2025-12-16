@@ -6,7 +6,7 @@ navOrder: 10
 status: stable
 ---
 
-## @sf-x402/core
+## @secured-finance/core
 
 Core utilities and network configuration.
 
@@ -20,10 +20,10 @@ Core utilities and network configuration.
 Example:
 
 ```core-example.ts
-import { addSettlementExtra, TransferHook, calculateCommitment } from "@sf-x402/core";
+import { addSettlementExtra, TransferHook, calculateCommitment } from "@secured-finance/core";
 ```
 
-## @sf-x402/fetch
+## @secured-finance/fetch
 
 Fetch wrapper that completes 402 flows automatically and supports settlement mode.
 
@@ -37,7 +37,7 @@ const fetchWithPay = wrapFetchWithPayment(fetch, walletClient);
 const res = await fetchWithPay("/api/protected");
 ```
 
-## @sf-x402/hono
+## @secured-finance/hono
 
 Hono middleware for protecting routes and settling via facilitator.
 
@@ -48,7 +48,7 @@ Hono middleware for protecting routes and settling via facilitator.
 app.use("/api/*", paymentMiddleware("0xRecipient...", { price: "$0.10", network: "base-sepolia" }, { url }));
 ```
 
-## @sf-x402/express
+## @secured-finance/express
 
 Express middleware mirroring the Hono API.
 
@@ -59,7 +59,7 @@ Express middleware mirroring the Hono API.
 app.use(paymentMiddleware("0xRecipient...", { price: "$0.10", network: "base-sepolia" }, { url }));
 ```
 
-## @sf-x402/react
+## @secured-finance/react
 
 React helpers for client apps.
 
@@ -70,7 +70,7 @@ const { pay, status } = useX402Payment();
 await pay("/api/premium");
 ```
 
-## @sf-x402/client
+## @secured-finance/client
 
 Serverless client SDK for talking to the facilitator directly.
 

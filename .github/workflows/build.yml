@@ -64,12 +64,12 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Run tests
-        run: pnpm -r --filter "@x402x/*" test
+        run: pnpm -r --filter "@sf-x402/*" test
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
       - name: Run tests with coverage
-        run: pnpm -r --filter "@x402x/*" test:coverage
+        run: pnpm -r --filter "@sf-x402/*" test:coverage
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 

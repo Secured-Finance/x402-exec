@@ -1,4 +1,4 @@
-import { getNetworkConfig, getSupportedNetworks } from "@sf-x402/core";
+import { getNetworkConfig, getSupportedNetworks } from "@secured-finance/core";
 
 export const FACILITATOR_HOSTED_URL = "https://facilitator.x402x.dev/" as const;
 const ISSUE_DEFAULT_TITLE =

@@ -1,4 +1,4 @@
-# @sf-x402/core
+# @secured-finance/core
 
 Core utilities for the x402x settlement framework - a lightweight library that extends x402 with programmable settlement capabilities.
 
@@ -13,11 +13,11 @@ Core utilities for the x402x settlement framework - a lightweight library that e
 ## Installation
 
 ```bash
-npm install @sf-x402/core
+npm install @secured-finance/core
 # or
-pnpm add @sf-x402/core
+pnpm add @secured-finance/core
 # or
-yarn add @sf-x402/core
+yarn add @secured-finance/core
 ```
 
 ## Quick Start
@@ -25,7 +25,7 @@ yarn add @sf-x402/core
 ### Resource Server (Generating PaymentRequirements)
 
 ```typescript
-import { addSettlementExtra, TransferHook, getNetworkConfig } from "@sf-x402/core";
+import { addSettlementExtra, TransferHook, getNetworkConfig } from "@secured-finance/core";
 
 // Base PaymentRequirements (standard x402)
 const baseRequirements = {
@@ -56,7 +56,7 @@ res.status(402).json({
 
 ```typescript
 import express from "express";
-import { x402Middleware } from "@sf-x402/core/middleware/express";
+import { x402Middleware } from "@secured-finance/core/middleware/express";
 
 const app = express();
 
@@ -79,7 +79,7 @@ app.post(
 
 ```typescript
 import { settle } from "x402/facilitator";
-import { isSettlementMode, settleWithRouter, getNetworkConfig } from "@sf-x402/core/facilitator";
+import { isSettlementMode, settleWithRouter, getNetworkConfig } from "@secured-finance/core/facilitator";
 
 // Detect settlement mode
 if (isSettlementMode(paymentRequirements)) {
@@ -173,7 +173,7 @@ The core package provides client-side functions to interact with facilitator HTT
 Verify a payment payload with the facilitator without executing it. This calls the facilitator's `/verify` endpoint.
 
 ```typescript
-import { verify } from "@sf-x402/core";
+import { verify } from "@secured-finance/core";
 
 const result = await verify("https://facilitator.x402x.dev", paymentPayload, paymentRequirements);
 
@@ -199,7 +199,7 @@ interface VerifyResponse {
 Settle a payment with the facilitator. This calls the facilitator's `/settle` endpoint to execute the payment on-chain.
 
 ```typescript
-import { settle } from "@sf-x402/core";
+import { settle } from "@secured-finance/core";
 
 const result = await settle(
   "https://facilitator.x402x.dev",
@@ -234,7 +234,7 @@ interface SettleResponse {
 Calculate recommended facilitator fee for a specific hook.
 
 ```typescript
-import { calculateFacilitatorFee } from "@sf-x402/core";
+import { calculateFacilitatorFee } from "@secured-finance/core";
 
 const feeResult = await calculateFacilitatorFee(
   "https://facilitator.x402x.dev",
@@ -254,7 +254,7 @@ console.log(`Fee: ${feeResult.facilitatorFee} (${feeResult.facilitatorFeeUSD} US
 
 ### Facilitator Functions
 
-See `@sf-x402/core/facilitator` for detailed facilitator utilities.
+See `@secured-finance/core/facilitator` for detailed facilitator utilities.
 
 ## Supported Networks
 

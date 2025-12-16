@@ -238,7 +238,7 @@ publish_package() {
         return 1
     fi
 
-    print_step "Publishing @x402x/$package_name..."
+    print_step "Publishing @sf-x402/$package_name..."
 
     cd "$package_dir"
 
@@ -328,7 +328,7 @@ for package in "${PACKAGES[@]}"; do
         if [ "$DRY_RUN" != "true" ]; then
             print_warning "To rollback published packages, run these commands:"
             for pub_pkg in "${published_packages[@]}"; do
-                echo "  npm unpublish @x402x/$pub_pkg@$VERSION --force"
+                echo "  npm unpublish @sf-x402/$pub_pkg@$VERSION --force"
             done
             echo ""
             print_warning "Note: Unpublishing should only be done immediately after publish"
@@ -345,18 +345,18 @@ echo ""
 print_info "Published packages:"
 for package in "${PACKAGES[@]}"; do
     if [ -n "$VERSION" ]; then
-        echo "  - @x402x/$package@$VERSION"
+        echo "  - @sf-x402/$package@$VERSION"
     else
         # Get actual version from package.json
         pkg_version=$(node -p "require('./typescript/packages/$package/package.json').version")
-        echo "  - @x402x/$package@$pkg_version"
+        echo "  - @sf-x402/$package@$pkg_version"
     fi
 done
 
 echo ""
 print_info "View published packages:"
 for package in "${PACKAGES[@]}"; do
-    echo "  https://www.npmjs.com/package/@x402x/$package"
+    echo "  https://www.npmjs.com/package/@sf-x402/$package"
 done
 
 print_info "✅ Batch publish completed!"

@@ -10,5 +10,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ["react", "wagmi", "@sf-x402/core"],
+  external: ["react", "wagmi", "@secured-finance/core"],
 });

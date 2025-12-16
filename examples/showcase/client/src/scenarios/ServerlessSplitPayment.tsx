@@ -10,7 +10,7 @@
 
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { TransferHook } from "@sf-x402/core";
+import { TransferHook } from "@secured-finance/core";
 import { ServerlessPaymentDialog } from "../components/ServerlessPaymentDialog";
 import { ScenarioCard } from "../components/ScenarioCard";
 import { PaymentButton } from "../components/PaymentButton";

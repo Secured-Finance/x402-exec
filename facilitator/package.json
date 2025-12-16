@@ -1,5 +1,5 @@
 {
-  "name": "@sf-x402/facilitator",
+  "name": "@secured-finance/facilitator",
   "version": "1.0.0",
   "description": "X402 Facilitator - Production-ready implementation for x402 payment facilitation with SettlementRouter support",
   "type": "module",
@@ -53,7 +53,7 @@
     "@opentelemetry/sdk-node": "^0.52.0",
     "@opentelemetry/sdk-trace-node": "^1.25.0",
     "@opentelemetry/semantic-conventions": "^1.25.0",
-    "@sf-x402/core": "workspace:*",
+    "@secured-finance/core": "workspace:*",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.18.2",

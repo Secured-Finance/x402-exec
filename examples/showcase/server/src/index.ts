@@ -13,8 +13,8 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
-import { paymentMiddleware, type X402Context } from "@sf-x402/hono";
-import { getSupportedNetworks } from "@sf-x402/core";
+import { paymentMiddleware, type X402Context } from "@secured-finance/hono";
+import { getSupportedNetworks } from "@secured-finance/core";
 import { appConfig } from "./config.js";
 import * as premiumDownload from "./scenarios/premium-download.js";
 

@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import { useAccount, useWalletClient } from "wagmi";
 import { publicActions } from "viem";
-import { wrapFetchWithPayment } from "@sf-x402/fetch";
+import { wrapFetchWithPayment } from "@secured-finance/fetch";
 
 /**
  * Hook options
@@ -30,7 +30,7 @@ export type PaymentStatus = "idle" | "paying" | "success" | "error";
  *
  * @example
  * ```typescript
- * import { useX402Payment } from '@sf-x402/react';
+ * import { useX402Payment } from '@secured-finance/react';
  *
  * function MyComponent() {
  *   const { status, error, result, pay, reset } = useX402Payment();

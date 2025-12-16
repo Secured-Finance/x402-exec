@@ -1,5 +1,5 @@
 {
-  "name": "@sf-x402/hono",
+  "name": "@secured-finance/hono",
   "version": "0.3.0",
   "description": "Hono middleware for x402x settlement framework",
   "main": "./dist/index.js",
@@ -37,7 +37,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@solana/kit": "^2.3.0",
-    "@sf-x402/core": "workspace:*",
+    "@secured-finance/core": "workspace:*",
     "viem": "2.40.3",
     "x402": "npm:@x402x/x402@^0.6.6-patch.3"
   },

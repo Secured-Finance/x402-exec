@@ -8,7 +8,7 @@
 import { Router, Request, Response } from "express";
 import type { SupportedPaymentKind } from "x402/types";
 import type { PoolManager } from "../pool-manager.js";
-import { getSupportedNetworks } from "@sf-x402/core";
+import { getSupportedNetworks } from "@secured-finance/core";
 
 /**
  * Dependencies required by supported routes

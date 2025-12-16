@@ -131,8 +131,8 @@ export class AccountPool {
       chain = evm.getChainFromNetwork(network);
       rpcUrl = finalConfig.rpcUrl || chain.rpcUrls?.default?.http?.[0];
     } catch (error) {
-      // Custom network not in x402 - construct from @sf-x402/core config
-      const { getNetworkConfig } = await import("@sf-x402/core");
+      // Custom network not in x402 - construct from @secured-finance/core config
+      const { getNetworkConfig } = await import("@secured-finance/core");
       const networkConfig = getNetworkConfig(network);
       const nativeToken = networkConfig.metadata?.nativeToken || 'ETH';
 

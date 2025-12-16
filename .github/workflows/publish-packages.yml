@@ -39,7 +39,7 @@ jobs:
         with:
           node-version: '20'
           registry-url: 'https://npm.pkg.github.com'
-          scope: '@sf-x402'
+          scope: '@secured-finance'
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -48,32 +48,32 @@ jobs:
       # Build packages in dependency order
       - name: Build core
         if: inputs.package == 'core' || inputs.package == 'all' || inputs.package == 'client' || inputs.package == 'express' || inputs.package == 'hono' || inputs.package == 'fetch' || inputs.package == 'react'
-        run: pnpm --filter "@sf-x402/core" build
+        run: pnpm --filter "@secured-finance/core" build
         working-directory: ./typescript
 
       - name: Build fetch
         if: inputs.package == 'fetch' || inputs.package == 'all' || inputs.package == 'react'
-        run: pnpm --filter "@sf-x402/fetch" build
+        run: pnpm --filter "@secured-finance/fetch" build
         working-directory: ./typescript
 
       - name: Build client
         if: inputs.package == 'client' || inputs.package == 'all'
-        run: pnpm --filter "@sf-x402/client" build
+        run: pnpm --filter "@secured-finance/client" build
         working-directory: ./typescript
 
       - name: Build express
         if: inputs.package == 'express' || inputs.package == 'all'
-        run: pnpm --filter "@sf-x402/express" build
+        run: pnpm --filter "@secured-finance/express" build
         working-directory: ./typescript
 
       - name: Build hono
         if: inputs.package == 'hono' || inputs.package == 'all'
-        run: pnpm --filter "@sf-x402/hono" build
+        run: pnpm --filter "@secured-finance/hono" build
         working-directory: ./typescript
 
       - name: Build react
         if: inputs.package == 'react' || inputs.package == 'all'
-        run: pnpm --filter "@sf-x402/react" build
+        run: pnpm --filter "@secured-finance/react" build
         working-directory: ./typescript
 
       # Bump versions

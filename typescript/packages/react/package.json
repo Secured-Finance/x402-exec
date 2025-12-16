@@ -1,5 +1,5 @@
 {
-  "name": "@sf-x402/react",
+  "name": "@secured-finance/react",
   "version": "0.3.0",
   "description": "React hooks for x402x settlement framework",
   "main": "./dist/index.js",
@@ -36,8 +36,8 @@
   "author": "Nuwa Protocol",
   "license": "Apache-2.0",
   "dependencies": {
-    "@sf-x402/core": "workspace:*",
-    "@sf-x402/fetch": "workspace:*"
+    "@secured-finance/core": "workspace:*",
+    "@secured-finance/fetch": "workspace:*"
   },
   "devDependencies": {
     "@testing-library/react": "^14.0.0",

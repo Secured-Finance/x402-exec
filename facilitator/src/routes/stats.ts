@@ -12,7 +12,7 @@
 
 import { Router, Request, Response } from "express";
 import { createPublicClient, http, decodeEventLog } from "viem";
-import { getNetworkConfig, getSupportedNetworks } from "@sf-x402/core";
+import { getNetworkConfig, getSupportedNetworks } from "@secured-finance/core";
 import type { DynamicGasPriceConfig } from "../dynamic-gas-price.js";
 import { getLogger } from "../telemetry.js";
 

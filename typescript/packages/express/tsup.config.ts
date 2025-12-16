@@ -10,5 +10,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ["@sf-x402/core", "express"],
+  external: ["@secured-finance/core", "express"],
 });

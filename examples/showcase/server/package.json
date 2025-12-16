@@ -13,8 +13,8 @@
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",
-    "@sf-x402/core": "workspace:*",
-    "@sf-x402/hono": "workspace:*",
+    "@secured-finance/core": "workspace:*",
+    "@secured-finance/hono": "workspace:*",
     "dotenv": "^16.4.5",
     "ethers": "^6.13.0",
     "hono": "^4.5.0",

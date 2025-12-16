@@ -6,7 +6,7 @@
  */
 
 import type { Address, Hex, TransactionReceipt } from "viem";
-import { calculateFacilitatorFee, type FeeCalculationResult, TransferHook } from "@sf-x402/core";
+import { calculateFacilitatorFee, type FeeCalculationResult, TransferHook } from "@secured-finance/core";
 import type { X402ClientConfig, ExecuteParams, ExecuteResult } from "./types.js";
 import { prepareSettlement, DEFAULT_FACILITATOR_URL } from "./core/prepare.js";
 import { signAuthorization } from "./core/sign.js";
@@ -41,8 +41,8 @@ interface InternalConfig extends X402ClientConfig {
  *
  * @example
  * ```typescript
- * import { X402Client } from '@sf-x402/client';
- * import { TransferHook } from '@sf-x402/core';
+ * import { X402Client } from '@secured-finance/client';
+ * import { TransferHook } from '@secured-finance/core';
  * import { useWalletClient } from 'wagmi';
  *
  * const { data: wallet } = useWalletClient();
@@ -116,7 +116,7 @@ export class X402Client {
    *
    * @example Simple transfer (uses TransferHook by default)
    * ```typescript
-   * import { parseDefaultAssetAmount } from '@sf-x402/core';
+   * import { parseDefaultAssetAmount } from '@secured-finance/core';
    *
    * // Convert USD amount to atomic units
    * const atomicAmount = parseDefaultAssetAmount('1', 'base-sepolia'); // '1000000'
@@ -130,7 +130,7 @@ export class X402Client {
    *
    * @example Custom hook
    * ```typescript
-   * import { parseDefaultAssetAmount } from '@sf-x402/core';
+   * import { parseDefaultAssetAmount } from '@secured-finance/core';
    *
    * const atomicAmount = parseDefaultAssetAmount('5', 'base-sepolia'); // '5000000'
    *

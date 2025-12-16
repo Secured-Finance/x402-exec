@@ -16,7 +16,7 @@ COPY typescript/packages ./typescript/packages
 COPY facilitator/package.json ./facilitator/
 
 # Install only the workspace packages needed for facilitator builds
-RUN pnpm install --frozen-lockfile --filter "." --filter "@x402x/*"
+RUN pnpm install --frozen-lockfile --filter "." --filter "@sf-x402/*"
 
 # ==============================================================================
 # Stage 2: Build
@@ -46,7 +46,7 @@ COPY facilitator ./facilitator
 RUN pnpm run build:sdk
 
 # Build facilitator
-RUN pnpm --filter='@x402x/facilitator' build
+RUN pnpm --filter='@sf-x402/facilitator' build
 
 # ==============================================================================
 # Stage 3: Production Runtime
@@ -77,7 +77,7 @@ COPY --from=builder /app/typescript/packages/react/package.json ./typescript/pac
 COPY facilitator/package.json ./facilitator/
 
 # Install production dependencies for facilitator and its SDK runtime
-RUN pnpm install --frozen-lockfile --prod --filter "@x402x/*"
+RUN pnpm install --frozen-lockfile --prod --filter "@sf-x402/*"
 
 # Copy built SDK packages from builder (with correct directory structure)
 COPY --from=builder /app/typescript/packages/core/dist ./typescript/packages/core/dist

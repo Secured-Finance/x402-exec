@@ -19,7 +19,7 @@ import {
   parseSettlementExtra as parseSettlementExtraCore,
   getNetworkConfig,
   calculateCommitment,
-} from "@sf-x402/core";
+} from "@secured-finance/core";
 import type { Address, Hex } from "viem";
 import { parseErc6492Signature } from "viem/utils";
 import { getLogger } from "./telemetry.js";
@@ -34,7 +34,7 @@ const logger = getLogger();
 /**
  * Check if a payment request requires SettlementRouter mode
  *
- * Re-exported from @sf-x402/core for convenience.
+ * Re-exported from @secured-finance/core for convenience.
  *
  * @param paymentRequirements - The payment requirements from the 402 response
  * @returns True if settlement mode is required (extra.settlementRouter exists)
@@ -137,7 +137,7 @@ export function validateTokenAddress(network: string, tokenAddress: string): voi
 /**
  * Parse and validate settlement extra parameters
  *
- * Uses @sf-x402/core's parseSettlementExtra for validation.
+ * Uses @secured-finance/core's parseSettlementExtra for validation.
  *
  * @param extra - Extra field from PaymentRequirements
  * @returns Parsed settlement extra parameters
@@ -263,7 +263,7 @@ export async function settleWithRouter(
       chain = evm.getChainFromNetwork(network);
       rpcUrl = dynamicGasPriceConfig?.rpcUrls[network] || chain.rpcUrls?.default?.http?.[0];
     } catch (error) {
-      // Custom network not in x402 - construct from @sf-x402/core config
+      // Custom network not in x402 - construct from @secured-finance/core config
       const networkConfig = getNetworkConfig(network);
       const nativeToken = networkConfig.metadata?.nativeToken || "ETH";
 

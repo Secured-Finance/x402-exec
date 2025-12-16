@@ -4,7 +4,7 @@
  * Extends core types with facilitator-specific monitoring and metrics
  */
 
-import type { SettleResponse } from "@sf-x402/core";
+import type { SettleResponse } from "@secured-finance/core";
 import type { GasMetrics } from "./gas-metrics.js";
 
 /**
@@ -37,6 +37,6 @@ export interface SettlementConfig {
 /**
  * Error thrown when settlement extra parameters are invalid
  *
- * Re-exported from @sf-x402/core for convenience
+ * Re-exported from @secured-finance/core for convenience
  */
-export { SettlementExtraError } from "@sf-x402/core";
+export { SettlementExtraError } from "@secured-finance/core";

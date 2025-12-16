@@ -6,7 +6,7 @@
  */
 
 import { getLogger } from "./telemetry.js";
-import { getNetworkConfig } from "@sf-x402/core";
+import { getNetworkConfig } from "@secured-finance/core";
 import { getGasPrice, type DynamicGasPriceConfig } from "./dynamic-gas-price.js";
 import { getTokenPrice, type TokenPriceConfig } from "./token-price.js";
 

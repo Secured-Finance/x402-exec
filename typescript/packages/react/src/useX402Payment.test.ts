@@ -8,7 +8,7 @@ vi.mock("wagmi", () => ({
   useWalletClient: vi.fn(),
 }));
 
-vi.mock("@sf-x402/fetch", () => ({
+vi.mock("@secured-finance/fetch", () => ({
   wrapFetchWithPayment: vi.fn(),
 }));
 
@@ -21,7 +21,7 @@ vi.mock("viem", () => ({
 }));
 
 import { useAccount, useWalletClient } from "wagmi";
-import { wrapFetchWithPayment } from "@sf-x402/fetch";
+import { wrapFetchWithPayment } from "@secured-finance/fetch";
 import { publicActions } from "viem";
 
 describe("useX402Payment", () => {

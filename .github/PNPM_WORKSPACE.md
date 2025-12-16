@@ -55,17 +55,17 @@ pnpm install
 
 2. **Add dependencies to a specific package**: Use `--filter`
    ```bash
-   # Add dependency to @sf-x402/react
-   pnpm add react --filter @sf-x402/react
+   # Add dependency to @secured-finance/react
+   pnpm add react --filter @secured-finance/react
    
-   # Add dev dependency to @sf-x402/hono
-   pnpm add -D vitest --filter @sf-x402/hono
+   # Add dev dependency to @secured-finance/hono
+   pnpm add -D vitest --filter @secured-finance/hono
    ```
 
 3. **Run subpackage scripts**: Use `--filter`
    ```bash
-   pnpm --filter @sf-x402/react build
-   pnpm --filter @sf-x402/hono test
+   pnpm --filter @secured-finance/react build
+   pnpm --filter @secured-finance/hono test
    ```
 
 4. **Install all package dependencies**

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { wrapFetchWithPayment } from "./index";
 
 // Mock dependencies
-vi.mock("@sf-x402/core", () => ({
+vi.mock("@secured-finance/core", () => ({
   calculateCommitment: vi.fn(() => "0x" + "c".repeat(64)),
   getNetworkConfig: vi.fn((network: string) => {
     if (network === "base-sepolia") {
@@ -45,7 +45,7 @@ vi.mock("x402/types", async () => {
   };
 });
 
-import { calculateCommitment } from "@sf-x402/core";
+import { calculateCommitment } from "@secured-finance/core";
 import { createPaymentHeader, selectPaymentRequirements } from "x402/client";
 
 describe("wrapFetchWithPayment", () => {
