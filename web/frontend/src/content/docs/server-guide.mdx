@@ -13,7 +13,7 @@ The middlewares generate PaymentRequirements (including settlement `extra`), ver
 
 ```hono.ts
 import { Hono } from "hono";
-import { paymentMiddleware } from "@x402x/hono";
+import { paymentMiddleware } from "@sf-x402/hono";
 
 const app = new Hono();
 
@@ -41,7 +41,7 @@ app.get("/api/premium", (c) => {
 
 ```express.ts
 import express from "express";
-import { paymentMiddleware } from "@x402x/express";
+import { paymentMiddleware } from "@sf-x402/express";
 
 const app = express();
 

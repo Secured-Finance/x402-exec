@@ -15,10 +15,10 @@ import { CodeTabs } from "@/components/ui/shadcn-io/code-tabs";
 
 <CodeTabs
   codes={{
-    npm: "npm install @x402x/client @x402x/core viem",
-    pnpm: "pnpm add @x402x/client @x402x/core viem",
-    yarn: "yarn add @x402x/client @x402x/core viem",
-    bun: "bun add @x402x/client @x402x/core viem",
+    npm: "npm install @sf-x402/client @sf-x402/core viem",
+    pnpm: "pnpm add @sf-x402/client @sf-x402/core viem",
+    yarn: "yarn add @sf-x402/client @sf-x402/core viem",
+    bun: "bun add @sf-x402/client @sf-x402/core viem",
   }}
   lang="bash"
 />
@@ -26,8 +26,8 @@ import { CodeTabs } from "@/components/ui/shadcn-io/code-tabs";
 ## High‑Level API
 
 ```client.ts
-import { X402Client } from "@x402x/client";
-import { TransferHook } from "@x402x/core";
+import { X402Client } from "@sf-x402/client";
+import { TransferHook } from "@sf-x402/core";
 
 const client = new X402Client({
   wallet,                // viem wallet client (e.g. from wagmi)
@@ -66,8 +66,8 @@ See the [Facilitator Fee documentation](./facilitator-fee.mdx) for detailed info
 ## Low‑Level Primitives
 
 ```low-level.ts
-import { prepareSettlement, signAuthorization, settle } from "@x402x/client";
-import { TransferHook } from "@x402x/core";
+import { prepareSettlement, signAuthorization, settle } from "@sf-x402/client";
+import { TransferHook } from "@sf-x402/core";
 
 const settlement = await prepareSettlement({
   wallet,
@@ -93,7 +93,7 @@ console.log('Settlement result:', {
 ## React Hook
 
 ```react-hook.ts
-import { useX402Payment } from "@x402x/react";
+import { useX402Payment } from "@sf-x402/react";
 
 const { pay, status, error } = useX402Payment();
 await pay("/api/premium-content");

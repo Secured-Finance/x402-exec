@@ -64,7 +64,7 @@ graph TD
 The client automatically queries and includes the minimum facilitator fee:
 
 ```typescript
-import { X402Client } from "@x402x/client";
+import { X402Client } from "@sf-x402/client";
 
 const client = new X402Client({
   wallet,
@@ -86,7 +86,7 @@ const result = await client.execute({
 For consistent UX, you can query and specify fees explicitly:
 
 ```typescript
-import { X402Client, TransferHook } from "@x402x/client";
+import { X402Client, TransferHook } from "@sf-x402/client";
 
 // Query current fee
 const feeResult = await client.calculateFee(

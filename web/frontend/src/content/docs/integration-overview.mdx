@@ -32,10 +32,10 @@ This adds optional `paymentRequirements` to `PaymentPayload`, enabling stateless
 
 ## 2) Generate PaymentRequirements With Settlement Extra
 
-Use `@x402x/core` to fill the required fields consistently.
+Use `@sf-x402/core` to fill the required fields consistently.
 
 ```payment-requirements.ts
-import { addSettlementExtra, getNetworkConfig, TransferHook } from "@x402x/core";
+import { addSettlementExtra, getNetworkConfig, TransferHook } from "@sf-x402/core";
 
 const base = {
   scheme: "exact",
@@ -68,16 +68,16 @@ For more information about facilitator fees, how they're calculated, and how to 
 - Standard x402 mode: random 32‑byte nonce; `to = payTo`
 - Settlement mode: nonce = commitment over all settlement params; `to = settlementRouter`
 
-You can use `@x402x/fetch` to handle both modes automatically.
+You can use `@sf-x402/fetch` to handle both modes automatically.
 
 ```client-fetch.ts
-import { wrapFetchWithPayment } from "@x402x/fetch";
+import { wrapFetchWithPayment } from "@sf-x402/fetch";
 
 const fetchWithPay = wrapFetchWithPayment(fetch, walletClient);
 const res = await fetchWithPay("/api/premium");
 ```
 
-Or roll your own using `@x402x/core/calculateCommitment` and EIP‑712.
+Or roll your own using `@sf-x402/core/calculateCommitment` and EIP‑712.
 
 ## 4) Facilitator Integration
 
