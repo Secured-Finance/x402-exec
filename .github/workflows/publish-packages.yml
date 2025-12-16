@@ -1,0 +1,196 @@
+name: Publish x402 Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Which package to publish'
+        required: true
+        type: choice
+        options:
+          - core
+          - client
+          - express
+          - hono
+          - fetch
+          - react
+          - all
+      version_bump:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@sf-x402'
+
+      - name: Install dependencies
+        run: pnpm install
+        working-directory: ./typescript
+
+      # Build packages in dependency order
+      - name: Build core
+        if: inputs.package == 'core' || inputs.package == 'all' || inputs.package == 'client' || inputs.package == 'express' || inputs.package == 'hono' || inputs.package == 'fetch' || inputs.package == 'react'
+        run: pnpm --filter "@sf-x402/core" build
+        working-directory: ./typescript
+
+      - name: Build fetch
+        if: inputs.package == 'fetch' || inputs.package == 'all' || inputs.package == 'react'
+        run: pnpm --filter "@sf-x402/fetch" build
+        working-directory: ./typescript
+
+      - name: Build client
+        if: inputs.package == 'client' || inputs.package == 'all'
+        run: pnpm --filter "@sf-x402/client" build
+        working-directory: ./typescript
+
+      - name: Build express
+        if: inputs.package == 'express' || inputs.package == 'all'
+        run: pnpm --filter "@sf-x402/express" build
+        working-directory: ./typescript
+
+      - name: Build hono
+        if: inputs.package == 'hono' || inputs.package == 'all'
+        run: pnpm --filter "@sf-x402/hono" build
+        working-directory: ./typescript
+
+      - name: Build react
+        if: inputs.package == 'react' || inputs.package == 'all'
+        run: pnpm --filter "@sf-x402/react" build
+        working-directory: ./typescript
+
+      # Bump versions
+      - name: Bump core version
+        if: inputs.package == 'core' || inputs.package == 'all'
+        run: pnpm version ${{ inputs.version_bump }} --no-git-tag-version
+        working-directory: ./typescript/packages/core
+
+      - name: Bump client version
+        if: inputs.package == 'client' || inputs.package == 'all'
+        run: pnpm version ${{ inputs.version_bump }} --no-git-tag-version
+        working-directory: ./typescript/packages/client
+
+      - name: Bump express version
+        if: inputs.package == 'express' || inputs.package == 'all'
+        run: pnpm version ${{ inputs.version_bump }} --no-git-tag-version
+        working-directory: ./typescript/packages/express
+
+      - name: Bump hono version
+        if: inputs.package == 'hono' || inputs.package == 'all'
+        run: pnpm version ${{ inputs.version_bump }} --no-git-tag-version
+        working-directory: ./typescript/packages/hono
+
+      - name: Bump fetch version
+        if: inputs.package == 'fetch' || inputs.package == 'all'
+        run: pnpm version ${{ inputs.version_bump }} --no-git-tag-version
+        working-directory: ./typescript/packages/fetch
+
+      - name: Bump react version
+        if: inputs.package == 'react' || inputs.package == 'all'
+        run: pnpm version ${{ inputs.version_bump }} --no-git-tag-version
+        working-directory: ./typescript/packages/react
+
+      # Configure packages for GitHub Packages
+      - name: Configure core for GitHub Packages
+        if: inputs.package == 'core' || inputs.package == 'all'
+        run: |
+          cat package.json | jq '.publishConfig = {"registry": "https://npm.pkg.github.com", "access": "public"}' > package.json.tmp
+          mv package.json.tmp package.json
+        working-directory: ./typescript/packages/core
+
+      - name: Configure client for GitHub Packages
+        if: inputs.package == 'client' || inputs.package == 'all'
+        run: |
+          cat package.json | jq '.publishConfig = {"registry": "https://npm.pkg.github.com", "access": "public"}' > package.json.tmp
+          mv package.json.tmp package.json
+        working-directory: ./typescript/packages/client
+
+      - name: Configure express for GitHub Packages
+        if: inputs.package == 'express' || inputs.package == 'all'
+        run: |
+          cat package.json | jq '.publishConfig = {"registry": "https://npm.pkg.github.com", "access": "public"}' > package.json.tmp
+          mv package.json.tmp package.json
+        working-directory: ./typescript/packages/express
+
+      - name: Configure hono for GitHub Packages
+        if: inputs.package == 'hono' || inputs.package == 'all'
+        run: |
+          cat package.json | jq '.publishConfig = {"registry": "https://npm.pkg.github.com", "access": "public"}' > package.json.tmp
+          mv package.json.tmp package.json
+        working-directory: ./typescript/packages/hono
+
+      - name: Configure fetch for GitHub Packages
+        if: inputs.package == 'fetch' || inputs.package == 'all'
+        run: |
+          cat package.json | jq '.publishConfig = {"registry": "https://npm.pkg.github.com", "access": "public"}' > package.json.tmp
+          mv package.json.tmp package.json
+        working-directory: ./typescript/packages/fetch
+
+      - name: Configure react for GitHub Packages
+        if: inputs.package == 'react' || inputs.package == 'all'
+        run: |
+          cat package.json | jq '.publishConfig = {"registry": "https://npm.pkg.github.com", "access": "public"}' > package.json.tmp
+          mv package.json.tmp package.json
+        working-directory: ./typescript/packages/react
+
+      # Publish packages
+      - name: Publish core
+        if: inputs.package == 'core' || inputs.package == 'all'
+        run: pnpm publish --no-git-checks --access public
+        working-directory: ./typescript/packages/core
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish fetch
+        if: inputs.package == 'fetch' || inputs.package == 'all'
+        run: pnpm publish --no-git-checks --access public
+        working-directory: ./typescript/packages/fetch
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish client
+        if: inputs.package == 'client' || inputs.package == 'all'
+        run: pnpm publish --no-git-checks --access public
+        working-directory: ./typescript/packages/client
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish express
+        if: inputs.package == 'express' || inputs.package == 'all'
+        run: pnpm publish --no-git-checks --access public
+        working-directory: ./typescript/packages/express
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish hono
+        if: inputs.package == 'hono' || inputs.package == 'all'
+        run: pnpm publish --no-git-checks --access public
+        working-directory: ./typescript/packages/hono
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Publish react
+        if: inputs.package == 'react' || inputs.package == 'all'
+        run: pnpm publish --no-git-checks --access public
+        working-directory: ./typescript/packages/react
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
