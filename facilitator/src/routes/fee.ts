@@ -7,7 +7,7 @@
 import { Router, Request, Response } from "express";
 import { getLogger, traced, recordMetric } from "../telemetry.js";
 import { calculateMinFacilitatorFee, type GasCostConfig } from "../gas-cost.js";
-import { getNetworkConfig } from "@secured-finance/core";
+import { getNetworkConfig } from "@secured-finance/x402-core";
 import type { DynamicGasPriceConfig } from "../dynamic-gas-price.js";
 import type { TokenPriceConfig } from "../token-price.js";
 import type { PoolManager } from "../pool-manager.js";

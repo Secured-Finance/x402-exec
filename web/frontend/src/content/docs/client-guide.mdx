@@ -15,10 +15,10 @@ import { CodeTabs } from "@/components/ui/shadcn-io/code-tabs";
 
 <CodeTabs
   codes={{
-    npm: "npm install @secured-finance/client @secured-finance/core viem",
-    pnpm: "pnpm add @secured-finance/client @secured-finance/core viem",
-    yarn: "yarn add @secured-finance/client @secured-finance/core viem",
-    bun: "bun add @secured-finance/client @secured-finance/core viem",
+    npm: "npm install @secured-finance/x402-client @secured-finance/x402-core viem",
+    pnpm: "pnpm add @secured-finance/x402-client @secured-finance/x402-core viem",
+    yarn: "yarn add @secured-finance/x402-client @secured-finance/x402-core viem",
+    bun: "bun add @secured-finance/x402-client @secured-finance/x402-core viem",
   }}
   lang="bash"
 />
@@ -26,8 +26,8 @@ import { CodeTabs } from "@/components/ui/shadcn-io/code-tabs";
 ## High‑Level API
 
 ```client.ts
-import { X402Client } from "@secured-finance/client";
-import { TransferHook } from "@secured-finance/core";
+import { X402Client } from "@secured-finance/x402-client";
+import { TransferHook } from "@secured-finance/x402-core";
 
 const client = new X402Client({
   wallet,                // viem wallet client (e.g. from wagmi)
@@ -66,8 +66,8 @@ See the [Facilitator Fee documentation](./facilitator-fee.mdx) for detailed info
 ## Low‑Level Primitives
 
 ```low-level.ts
-import { prepareSettlement, signAuthorization, settle } from "@secured-finance/client";
-import { TransferHook } from "@secured-finance/core";
+import { prepareSettlement, signAuthorization, settle } from "@secured-finance/x402-client";
+import { TransferHook } from "@secured-finance/x402-core";
 
 const settlement = await prepareSettlement({
   wallet,
@@ -93,7 +93,7 @@ console.log('Settlement result:', {
 ## React Hook
 
 ```react-hook.ts
-import { useX402Payment } from "@secured-finance/react";
+import { useX402Payment } from "@secured-finance/x402-react";
 
 const { pay, status, error } = useX402Payment();
 await pay("/api/premium-content");

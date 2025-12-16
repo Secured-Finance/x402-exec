@@ -16,7 +16,7 @@ import { TransactionResult } from "../components/TransactionResult";
 import { CodeBlock } from "../components/CodeBlock";
 import { usePaymentFlow } from "../hooks/usePaymentFlow";
 import { useAllNetworksRewardTokenData } from "../hooks/useRewardTokenData";
-import { RewardHook } from "@secured-finance/core";
+import { RewardHook } from "@secured-finance/x402-core";
 import { type Network, NETWORK_UI_CONFIG } from "../config";
 import pointsRewardCode from "../code-examples/points-reward.ts?raw";
 

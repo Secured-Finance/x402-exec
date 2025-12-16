@@ -15,7 +15,7 @@ import {
   type Signer,
   type X402Config,
 } from "x402/types";
-import { getSupportedNetworks } from "@secured-finance/core";
+import { getSupportedNetworks } from "@secured-finance/x402-core";
 import { isSettlementMode, settleWithRouter } from "../settlement.js";
 import { getLogger, traced, recordMetric, recordHistogram } from "../telemetry.js";
 import type { PoolManager } from "../pool-manager.js";
@@ -156,7 +156,7 @@ export function createSettleRoutes(
           );
 
           // Ensure this is an EVM network (Settlement Router is EVM-only)
-          // Allow custom networks from @secured-finance/core (sepolia, filecoin-calibration)
+          // Allow custom networks from @secured-finance/x402-core (sepolia, filecoin-calibration)
           const supportedNetworks = getSupportedNetworks();
           if (!supportedNetworks.includes(paymentRequirements.network)) {
             throw new Error(

@@ -1,13 +1,13 @@
 /**
- * @secured-finance/client - Client SDK for x402x Serverless Mode
+ * @secured-finance/x402-client - Client SDK for x402x Serverless Mode
  *
  * This package provides a simple, type-safe SDK for executing on-chain contracts
  * directly via facilitator without needing a resource server.
  *
  * @example High-level API
  * ```typescript
- * import { X402Client } from '@secured-finance/client';
- * import { TransferHook } from '@secured-finance/core';
+ * import { X402Client } from '@secured-finance/x402-client';
+ * import { TransferHook } from '@secured-finance/x402-core';
  *
  * const client = new X402Client({
  *   wallet: walletClient,
@@ -28,7 +28,7 @@
  *   prepareSettlement,
  *   signAuthorization,
  *   settle
- * } from '@secured-finance/client';
+ * } from '@secured-finance/x402-client';
  *
  * const settlement = await prepareSettlement({...});
  * const signed = await signAuthorization(wallet, settlement);
@@ -37,7 +37,7 @@
  *
  * @example React Hooks
  * ```typescript
- * import { useX402Client, useExecute } from '@secured-finance/client';
+ * import { useX402Client, useExecute } from '@secured-finance/x402-client';
  *
  * const client = useX402Client({
  *   facilitatorUrl: 'https://facilitator.x402x.dev'
@@ -47,7 +47,7 @@
  * await execute({ hook: '0x...', amount: '1000000', ... });
  * ```
  *
- * @module @secured-finance/client
+ * @module @secured-finance/x402-client
  */
 
 // Export main client class and constants
@@ -66,15 +66,15 @@ export {
   normalizeAddress,
 } from "./core/utils.js";
 
-// Re-export new amount utilities from @secured-finance/core (recommended)
-export { parseDefaultAssetAmount, formatDefaultAssetAmount, AmountError } from "@secured-finance/core";
+// Re-export new amount utilities from @secured-finance/x402-core (recommended)
+export { parseDefaultAssetAmount, formatDefaultAssetAmount, AmountError } from "@secured-finance/x402-core";
 
 // Export React hooks (optional, requires React peer dependency)
 export { useX402Client } from "./hooks/useX402Client.js";
 export { useExecute } from "./hooks/useExecute.js";
 
 // Re-export core types for convenience
-export type { FeeCalculationResult } from "@secured-finance/core";
+export type { FeeCalculationResult } from "@secured-finance/x402-core";
 
 // Export types
 export type {

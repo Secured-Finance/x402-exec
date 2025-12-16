@@ -42,8 +42,8 @@ export interface UseExecuteReturn {
  *
  * @example
  * ```typescript
- * import { useExecute } from '@secured-finance/client';
- * import { TransferHook } from '@secured-finance/core';
+ * import { useExecute } from '@secured-finance/x402-client';
+ * import { TransferHook } from '@secured-finance/x402-core';
  *
  * function PayButton() {
  *   const { execute, status, error, result } = useExecute({
@@ -129,7 +129,7 @@ export function useExecute(config?: UseX402ClientConfig): UseExecuteReturn {
  *
  * @example
  * ```typescript
- * import { useExecute } from '@secured-finance/client';
+ * import { useExecute } from '@secured-finance/x402-client';
  *
  * function PayButton({ facilitatorUrl }: { facilitatorUrl: string }) {
  *   const { execute, status, error } = useExecute({ facilitatorUrl });

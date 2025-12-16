@@ -310,7 +310,7 @@ export interface SettleResponse {
  *
  * @example
  * ```typescript
- * import { verify } from '@secured-finance/core';
+ * import { verify } from '@secured-finance/x402-core';
  *
  * const result = await verify(
  *   'https://facilitator.x402x.dev',
@@ -391,7 +391,7 @@ export async function verify(
  *
  * @example
  * ```typescript
- * import { settle } from '@secured-finance/core';
+ * import { settle } from '@secured-finance/x402-core';
  *
  * const result = await settle(
  *   'https://facilitator.x402x.dev',

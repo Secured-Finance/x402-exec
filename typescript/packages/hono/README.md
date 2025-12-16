@@ -1,11 +1,11 @@
-# @secured-finance/hono
+# @secured-finance/x402-hono
 
 Hono middleware for x402x settlement framework - easily add 402 payment gates to your Hono routes with dynamic facilitator fee calculation.
 
 ## Installation
 
 ```bash
-npm install @secured-finance/hono @secured-finance/core
+npm install @secured-finance/x402-hono @secured-finance/x402-core
 ```
 
 ## Features
@@ -22,7 +22,7 @@ npm install @secured-finance/hono @secured-finance/core
 
 ```typescript
 import { Hono } from "hono";
-import { paymentMiddleware } from "@secured-finance/hono";
+import { paymentMiddleware } from "@secured-finance/x402-hono";
 
 const app = new Hono();
 
@@ -124,7 +124,7 @@ Hono middleware function compatible with Hono v4+
 
 ```typescript
 import { Hono } from "hono";
-import { paymentMiddleware } from "@secured-finance/hono";
+import { paymentMiddleware } from "@secured-finance/x402-hono";
 
 const app = new Hono();
 
@@ -204,7 +204,7 @@ app.use(
 
 ```typescript
 import { Hono } from "hono";
-import { x402Middleware } from "@secured-finance/hono";
+import { x402Middleware } from "@secured-finance/x402-hono";
 
 const app = new Hono();
 
@@ -247,7 +247,7 @@ app.post(
 
 ```typescript
 import { Hono } from "hono";
-import { x402Middleware } from "@secured-finance/hono";
+import { x402Middleware } from "@secured-finance/x402-hono";
 
 const app = new Hono();
 
@@ -300,7 +300,7 @@ app.get("/api/content/:id", async (c, next) => {
 ```typescript
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { x402Middleware } from "@secured-finance/hono";
+import { x402Middleware } from "@secured-finance/x402-hono";
 
 const app = new Hono();
 
@@ -333,7 +333,7 @@ The middleware works seamlessly with x402x client libraries:
 ```typescript
 // Server (Hono)
 import { Hono } from 'hono';
-import { x402Middleware } from '@secured-finance/hono';
+import { x402Middleware } from '@secured-finance/x402-hono';
 
 const app = new Hono();
 
@@ -347,7 +347,7 @@ app.get('/api/data',
 );
 
 // Client (React)
-import { useX402Payment } from '@secured-finance/react';
+import { useX402Payment } from '@secured-finance/x402-react';
 
 function DataFetcher() {
   const { pay } = useX402Payment();
@@ -366,7 +366,7 @@ function DataFetcher() {
 Full TypeScript support with type definitions included.
 
 ```typescript
-import type { X402MiddlewareOptions } from "@secured-finance/hono";
+import type { X402MiddlewareOptions } from "@secured-finance/x402-hono";
 
 const options: X402MiddlewareOptions = {
   network: "base-sepolia",
@@ -377,10 +377,10 @@ const options: X402MiddlewareOptions = {
 
 ## Related Packages
 
-- [`@secured-finance/core`](../core): Core utilities and types
-- [`@secured-finance/express`](../express): Express middleware
-- [`@secured-finance/fetch`](../fetch): Fetch wrapper for clients
-- [`@secured-finance/react`](../react): React hooks
+- [`@secured-finance/x402-core`](../core): Core utilities and types
+- [`@secured-finance/x402-express`](../express): Express middleware
+- [`@secured-finance/x402-fetch`](../fetch): Fetch wrapper for clients
+- [`@secured-finance/x402-react`](../react): React hooks
 
 ## License
 

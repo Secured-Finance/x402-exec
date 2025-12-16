@@ -48,32 +48,32 @@ jobs:
       # Build packages in dependency order
       - name: Build core
         if: inputs.package == 'core' || inputs.package == 'all' || inputs.package == 'client' || inputs.package == 'express' || inputs.package == 'hono' || inputs.package == 'fetch' || inputs.package == 'react'
-        run: pnpm --filter "@secured-finance/core" build
+        run: pnpm --filter "@secured-finance/x402-core" build
         working-directory: ./typescript
 
       - name: Build fetch
         if: inputs.package == 'fetch' || inputs.package == 'all' || inputs.package == 'react'
-        run: pnpm --filter "@secured-finance/fetch" build
+        run: pnpm --filter "@secured-finance/x402-fetch" build
         working-directory: ./typescript
 
       - name: Build client
         if: inputs.package == 'client' || inputs.package == 'all'
-        run: pnpm --filter "@secured-finance/client" build
+        run: pnpm --filter "@secured-finance/x402-client" build
         working-directory: ./typescript
 
       - name: Build express
         if: inputs.package == 'express' || inputs.package == 'all'
-        run: pnpm --filter "@secured-finance/express" build
+        run: pnpm --filter "@secured-finance/x402-express" build
         working-directory: ./typescript
 
       - name: Build hono
         if: inputs.package == 'hono' || inputs.package == 'all'
-        run: pnpm --filter "@secured-finance/hono" build
+        run: pnpm --filter "@secured-finance/x402-hono" build
         working-directory: ./typescript
 
       - name: Build react
         if: inputs.package == 'react' || inputs.package == 'all'
-        run: pnpm --filter "@secured-finance/react" build
+        run: pnpm --filter "@secured-finance/x402-react" build
         working-directory: ./typescript
 
       # Bump versions

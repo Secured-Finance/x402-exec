@@ -40,7 +40,7 @@ const AUTHORIZATION_TYPES = {
  *
  * @example
  * ```typescript
- * import { signAuthorization } from '@secured-finance/client';
+ * import { signAuthorization } from '@secured-finance/x402-client';
  *
  * const signed = await signAuthorization(walletClient, settlement);
  * console.log('Signature:', signed.signature);

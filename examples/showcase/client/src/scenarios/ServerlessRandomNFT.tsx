@@ -16,7 +16,7 @@ import { TransactionResult } from "../components/TransactionResult";
 import { CodeBlock } from "../components/CodeBlock";
 import { usePaymentFlow } from "../hooks/usePaymentFlow";
 import { useAllNetworksNFTData } from "../hooks/useNFTData";
-import { NFTMintHook } from "@secured-finance/core";
+import { NFTMintHook } from "@secured-finance/x402-core";
 import { type Network, NETWORK_UI_CONFIG } from "../config";
 import nftMintCode from "../code-examples/nft-mint.ts?raw";
 

@@ -1,9 +1,9 @@
 /**
- * Type definitions for @secured-finance/client
+ * Type definitions for @secured-finance/x402-client
  */
 
 import type { Address, Hex, WalletClient, TransactionReceipt } from "viem";
-import type { NetworkConfig } from "@secured-finance/core";
+import type { NetworkConfig } from "@secured-finance/x402-core";
 import type { PaymentRequirements, PaymentPayload } from "x402/types";
 
 /**
@@ -55,11 +55,11 @@ export interface ExecuteParams {
    * Payment amount in atomic units (smallest unit of the asset).
    *
    * Must be a positive integer string. For USDC (6 decimals), use parseDefaultAssetAmount()
-   * from @secured-finance/core to convert USD amounts to atomic units.
+   * from @secured-finance/x402-core to convert USD amounts to atomic units.
    *
    * @example
    * ```typescript
-   * import { parseDefaultAssetAmount } from '@secured-finance/core';
+   * import { parseDefaultAssetAmount } from '@secured-finance/x402-core';
    * const atomicAmount = parseDefaultAssetAmount('1', 'base-sepolia'); // '1000000'
    * await client.execute({ amount: atomicAmount, payTo: '0x...' });
    * ```
@@ -151,7 +151,7 @@ export interface PrepareParams {
    * Payment amount in atomic units (smallest unit of the asset).
    *
    * Must be a positive integer string. For USDC (6 decimals), use parseDefaultAssetAmount()
-   * from @secured-finance/core to convert USD amounts to atomic units.
+   * from @secured-finance/x402-core to convert USD amounts to atomic units.
    */
   amount: string;
   /** Primary recipient address */

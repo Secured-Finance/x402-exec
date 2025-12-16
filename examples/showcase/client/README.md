@@ -251,7 +251,7 @@ The showcase client uses environment variables for configuration. All client-sid
 | `VITE_FACILITATOR_URL`  | Facilitator service URL             | `https://facilitator.x402x.dev` |
 | `VITE_SERVER_URL`       | Server URL for Server Mode examples | Empty (uses proxy)              |
 
-**Note**: Demo hook contract addresses are now configured centrally in `@secured-finance/core` and do not require environment variables. Adding new networks with demo hooks only requires updating the core package.
+**Note**: Demo hook contract addresses are now configured centrally in `@secured-finance/x402-core` and do not require environment variables. Adding new networks with demo hooks only requires updating the core package.
 
 ### File Priority
 
@@ -264,7 +264,7 @@ Vite loads environment files in this order (later files override earlier ones):
 
 ### Important Notes
 
-- **Demo Hooks**: Demo hook addresses are now centrally managed in `@secured-finance/core`. If a demo hook is not deployed on a network, calling `RewardHook.getAddress()` or `NFTMintHook.getAddress()` will throw an error with a helpful message.
+- **Demo Hooks**: Demo hook addresses are now centrally managed in `@secured-finance/x402-core`. If a demo hook is not deployed on a network, calling `RewardHook.getAddress()` or `NFTMintHook.getAddress()` will throw an error with a helpful message.
 - **Local Development**: Use `.env.local` to override values without affecting the committed `.env` file.
 - **Security**: Never commit sensitive data (API keys, private keys) to `.env` files. Use `.env.local` for secrets.
 

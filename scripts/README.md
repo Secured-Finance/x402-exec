@@ -19,12 +19,12 @@ A script to publish all TypeScript packages to npm at once.
 
 The script publishes packages according to their dependencies:
 
-1. `@secured-finance/core` - Core utility library
-2. `@secured-finance/fetch` - Fetch wrapper (depends on core)
-3. `@secured-finance/express` - Express integration (depends on core)
-4. `@secured-finance/hono` - Hono integration (depends on core)
-5. `@secured-finance/client` - Client SDK (depends on core)
-6. `@secured-finance/react` - React hooks (depends on core, fetch)
+1. `@secured-finance/x402-core` - Core utility library
+2. `@secured-finance/x402-fetch` - Fetch wrapper (depends on core)
+3. `@secured-finance/x402-express` - Express integration (depends on core)
+4. `@secured-finance/x402-hono` - Hono integration (depends on core)
+5. `@secured-finance/x402-client` - Client SDK (depends on core)
+6. `@secured-finance/x402-react` - React hooks (depends on core, fetch)
 
 ### Usage
 
@@ -107,8 +107,8 @@ If an error occurs during publishing:
 
 ```bash
 # Rollback example
-npm unpublish @secured-finance/core@1.0.1 --force
-npm unpublish @secured-finance/fetch@1.0.1 --force
+npm unpublish @secured-finance/x402-core@1.0.1 --force
+npm unpublish @secured-finance/x402-fetch@1.0.1 --force
 # ... execute for each published package
 ```
 

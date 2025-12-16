@@ -7,8 +7,8 @@
 import type { PoolManager } from "./pool-manager.js";
 import { isEvmSignerWallet } from "x402/types";
 import { getLogger } from "./telemetry.js";
-import { getNetworkConfig } from "@secured-finance/core";
-import { SETTLEMENT_ROUTER_ABI } from "@secured-finance/core";
+import { getNetworkConfig } from "@secured-finance/x402-core";
+import { SETTLEMENT_ROUTER_ABI } from "@secured-finance/x402-core";
 import type { Address, Hex } from "viem";
 
 const logger = getLogger();

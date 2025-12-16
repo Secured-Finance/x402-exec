@@ -27,10 +27,10 @@ importers:
       '@radix-ui/react-tabs':
         specifier: ^1.1.13
         version: 1.1.13(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@secured-finance/client':
+      '@secured-finance/x402-client':
         specifier: workspace:*
         version: link:../../../typescript/packages/client
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../../../typescript/packages/core
       '@tanstack/react-query':
@@ -109,10 +109,10 @@ importers:
       '@hono/node-server':
         specifier: ^1.12.0
         version: 1.19.6(hono@4.10.7)
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../../../typescript/packages/core
-      '@secured-finance/hono':
+      '@secured-finance/x402-hono':
         specifier: workspace:*
         version: link:../../../typescript/packages/hono
       dotenv:
@@ -179,7 +179,7 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: ^1.25.0
         version: 1.38.0
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../typescript/packages/core
       '@supabase/supabase-js':
@@ -276,7 +276,7 @@ importers:
 
   typescript/packages/client:
     dependencies:
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../core
       react:
@@ -347,7 +347,7 @@ importers:
 
   typescript/packages/express:
     dependencies:
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../core
       '@solana/kit':
@@ -390,7 +390,7 @@ importers:
 
   typescript/packages/fetch:
     dependencies:
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../core
       viem:
@@ -424,7 +424,7 @@ importers:
 
   typescript/packages/hono:
     dependencies:
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../core
       '@solana/kit':
@@ -464,10 +464,10 @@ importers:
 
   typescript/packages/react:
     dependencies:
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../core
-      '@secured-finance/fetch':
+      '@secured-finance/x402-fetch':
         specifier: workspace:*
         version: link:../fetch
     devDependencies:
@@ -688,10 +688,10 @@ importers:
       '@reown/appkit-adapter-wagmi':
         specifier: ^1.8.14
         version: 1.8.14(417aa62ce8f565a25c3cfe1ee88be0a9)
-      '@secured-finance/client':
+      '@secured-finance/x402-client':
         specifier: workspace:*
         version: link:../../typescript/packages/client
-      '@secured-finance/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../../typescript/packages/core
       '@tailwindcss/vite':

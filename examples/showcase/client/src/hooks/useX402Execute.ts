@@ -1,12 +1,12 @@
 /**
  * Serverless x402x Payment Hook
  *
- * Simplified payment hook using @secured-finance/client SDK for direct facilitator interaction.
+ * Simplified payment hook using @secured-finance/x402-client SDK for direct facilitator interaction.
  * This replaces the manual 402 flow with a clean, type-safe API.
  */
 
 import { useState } from "react";
-import { useX402Client, type ExecuteParams, type ExecuteResult } from "@secured-finance/client";
+import { useX402Client, type ExecuteParams, type ExecuteResult } from "@secured-finance/x402-client";
 import { useNetworkSwitch } from "./useNetworkSwitch";
 import type { Network } from "../config";
 import { getFacilitatorUrl } from "../config";

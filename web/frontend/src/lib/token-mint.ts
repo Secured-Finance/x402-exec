@@ -6,8 +6,8 @@ import {
 	X402X_TOKEN_CONFIG,
 } from "@/lib/token-mint-config";
 import { modal as appKitModal } from "@reown/appkit/react";
-import { getNetworkConfig } from "@secured-finance/core";
-import { X402Client } from "@secured-finance/client";
+import { getNetworkConfig } from "@secured-finance/x402-core";
+import { X402Client } from "@secured-finance/x402-client";
 import {
 	createPublicClient,
 	createWalletClient,

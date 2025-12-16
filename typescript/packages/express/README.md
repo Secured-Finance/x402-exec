@@ -1,4 +1,4 @@
-# @secured-finance/express
+# @secured-finance/x402-express
 
 Express middleware for the x402x settlement framework. Provides full x402 payment protocol support with x402x settlement extensions.
 
@@ -16,18 +16,18 @@ Express middleware for the x402x settlement framework. Provides full x402 paymen
 ## Installation
 
 ```bash
-npm install @secured-finance/express
+npm install @secured-finance/x402-express
 # or
-pnpm add @secured-finance/express
+pnpm add @secured-finance/x402-express
 # or
-yarn add @secured-finance/express
+yarn add @secured-finance/x402-express
 ```
 
 ## Quick Start
 
 ```typescript
 import express from "express";
-import { paymentMiddleware } from "@secured-finance/express";
+import { paymentMiddleware } from "@secured-finance/x402-express";
 
 const app = express();
 
@@ -136,7 +136,7 @@ app.get("/api/basic", (req, res) => {
 
 ```typescript
 // Use TransferHook for revenue split (built-in)
-import { TransferHook } from "@secured-finance/core";
+import { TransferHook } from "@secured-finance/x402-core";
 
 app.post(
   "/api/referral",
@@ -184,7 +184,7 @@ app.post(
 The middleware extends Express `Request` with an `x402` property containing payment details:
 
 ```typescript
-import type { X402Request } from '@secured-finance/express';
+import type { X402Request } from '@secured-finance/x402-express';
 
 app.post('/api/payment',
   paymentMiddleware(...),
@@ -290,7 +290,7 @@ This middleware is fully compatible with the official x402 Express middleware AP
 import { paymentMiddleware } from "x402-express";
 
 // After (x402x)
-import { paymentMiddleware } from "@secured-finance/express";
+import { paymentMiddleware } from "@secured-finance/x402-express";
 
 // Same API! 🎉
 ```
@@ -308,10 +308,10 @@ See the [showcase server](../../examples/showcase/server) for complete examples 
 
 ## Related Packages
 
-- [`@secured-finance/core`](../core) - Core utilities and types
-- [`@secured-finance/hono`](../hono) - Hono middleware (alternative to Express)
-- [`@secured-finance/fetch`](../fetch) - Client-side fetch wrapper
-- [`@secured-finance/react`](../react) - React hooks for payments
+- [`@secured-finance/x402-core`](../core) - Core utilities and types
+- [`@secured-finance/x402-hono`](../hono) - Hono middleware (alternative to Express)
+- [`@secured-finance/x402-fetch`](../fetch) - Client-side fetch wrapper
+- [`@secured-finance/x402-react`](../react) - React hooks for payments
 
 ## License
 

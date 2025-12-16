@@ -43,7 +43,7 @@ const CHAIN_ID_TO_NETWORK: Record<number, string> = {
  *
  * @example
  * ```typescript
- * import { useX402Client } from '@secured-finance/client';
+ * import { useX402Client } from '@secured-finance/x402-client';
  *
  * function MyComponent() {
  *   // Use default facilitator

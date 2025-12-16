@@ -32,7 +32,7 @@ import {
   TransferHook,
   calculateFacilitatorFee,
   type FeeCalculationResult,
-} from "@secured-finance/core";
+} from "@secured-finance/x402-core";
 import type { Address } from "viem";
 import type { Address as SolanaAddress } from "@solana/kit";
 
@@ -136,7 +136,7 @@ export type X402xRoutesConfig = X402xRouteConfig | Record<string, X402xRouteConf
  * Simple usage - single network with default TransferHook:
  * ```typescript
  * import { Hono } from 'hono';
- * import { paymentMiddleware } from '@secured-finance/hono';
+ * import { paymentMiddleware } from '@secured-finance/x402-hono';
  *
  * const app = new Hono();
  *
@@ -318,12 +318,12 @@ export function paymentMiddleware(
       const networks = Array.isArray(networkConfig) ? networkConfig : [networkConfig];
 
       for (const network of networks) {
-        // Only support networks from @secured-finance/core (includes custom networks)
+        // Only support networks from @secured-finance/x402-core (includes custom networks)
         if (!getSupportedNetworks().includes(network)) {
           continue;
         }
 
-        // Get network config from @secured-finance/core
+        // Get network config from @secured-finance/x402-core
         const x402xConfig = getNetworkConfig(network);
 
         // Try standard processPriceToAtomicAmount, but handle custom networks
@@ -338,7 +338,7 @@ export function paymentMiddleware(
           baseAmount = atomicAmountForAsset.maxAmountRequired;
           asset = atomicAmountForAsset.asset;
         } catch (error) {
-          // For custom networks not in x402, manually calculate from @secured-finance/core config
+          // For custom networks not in x402, manually calculate from @secured-finance/x402-core config
           const parsedPrice = typeof price === 'string' && price.startsWith('$')
             ? parseFloat(price.slice(1))
             : typeof price === 'number' ? price : parseFloat(String(price));

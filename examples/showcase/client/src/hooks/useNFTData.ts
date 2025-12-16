@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPublicClient, http, type Address } from "viem";
 import { NETWORKS, type Network } from "../config";
-import { getNetworkConfig } from "@secured-finance/core";
+import { getNetworkConfig } from "@secured-finance/x402-core";
 
 const NFT_ABI = [
   {

@@ -10,5 +10,5 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   treeshake: true,
-  external: ["@secured-finance/core", "hono"],
+  external: ["@secured-finance/x402-core", "hono"],
 });

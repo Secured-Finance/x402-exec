@@ -1,5 +1,5 @@
 {
-  "name": "@secured-finance/core",
+  "name": "@secured-finance/x402-core",
   "version": "0.3.0",
   "description": "Core utilities for x402x settlement framework",
   "main": "./dist/index.js",
