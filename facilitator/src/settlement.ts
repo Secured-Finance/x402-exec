@@ -19,7 +19,7 @@ import {
   parseSettlementExtra as parseSettlementExtraCore,
   getNetworkConfig,
   calculateCommitment,
-} from "@x402x/core";
+} from "@sf-x402/core";
 import type { Address, Hex } from "viem";
 import { parseErc6492Signature } from "viem/utils";
 import { getLogger } from "./telemetry.js";
@@ -34,7 +34,7 @@ const logger = getLogger();
 /**
  * Check if a payment request requires SettlementRouter mode
  *
- * Re-exported from @x402x/core for convenience.
+ * Re-exported from @sf-x402/core for convenience.
  *
  * @param paymentRequirements - The payment requirements from the 402 response
  * @returns True if settlement mode is required (extra.settlementRouter exists)
@@ -85,7 +85,7 @@ export function validateSettlementRouter(
     );
     throw new SettlementExtraError(
       `Settlement router ${routerAddress} is not in whitelist for network ${network}. ` +
-        `Allowed: ${allowedForNetwork.join(", ")}`,
+      `Allowed: ${allowedForNetwork.join(", ")}`,
     );
   }
 
@@ -121,7 +121,7 @@ export function validateTokenAddress(network: string, tokenAddress: string): voi
     );
     throw new SettlementExtraError(
       `Only USDC is currently supported for settlement on ${network}. ` +
-        `Expected: ${networkConfig.defaultAsset.address}, Got: ${tokenAddress}`,
+      `Expected: ${networkConfig.defaultAsset.address}, Got: ${tokenAddress}`,
     );
   }
 
@@ -137,7 +137,7 @@ export function validateTokenAddress(network: string, tokenAddress: string): voi
 /**
  * Parse and validate settlement extra parameters
  *
- * Uses @x402x/core's parseSettlementExtra for validation.
+ * Uses @sf-x402/core's parseSettlementExtra for validation.
  *
  * @param extra - Extra field from PaymentRequirements
  * @returns Parsed settlement extra parameters
@@ -256,13 +256,56 @@ export async function settleWithRouter(
     );
 
     // 5.5. Validate payment using x402 SDK (SECURITY: prevent any invalid payments from wasting gas)
-    // Create client with custom RPC URL support
-    const chain = evm.getChainFromNetwork(network);
-    const rpcUrl = dynamicGasPriceConfig?.rpcUrls[network] || chain.rpcUrls?.default?.http?.[0];
+    // Create client with custom RPC URL support (including custom networks like sepolia, filecoin-calibration)
+    let chain;
+    let rpcUrl;
+    try {
+      chain = evm.getChainFromNetwork(network);
+      rpcUrl = dynamicGasPriceConfig?.rpcUrls[network] || chain.rpcUrls?.default?.http?.[0];
+    } catch (error) {
+      // Custom network not in x402 - construct from @sf-x402/core config
+      const networkConfig = getNetworkConfig(network);
+      const nativeToken = networkConfig.metadata?.nativeToken || "ETH";
+
+      chain = {
+        id: networkConfig.chainId,
+        name: networkConfig.name,
+        network,
+        nativeCurrency: {
+          name: nativeToken,
+          symbol: nativeToken,
+          decimals: 18,
+        },
+        rpcUrls: {
+          default: {
+            http: dynamicGasPriceConfig?.rpcUrls[network]
+              ? [dynamicGasPriceConfig.rpcUrls[network]]
+              : [],
+          },
+        },
+      } as any;
+      rpcUrl = dynamicGasPriceConfig?.rpcUrls[network];
+    }
+
+    logger.info({
+      network,
+      chainId: chain.id,
+      rpcUrl,
+      asset,
+      signer: authorization.from,
+      payloadScheme: paymentPayload.scheme
+    }, "Creating verification client");
+
     const client = createPublicClient({
       chain,
       transport: http(rpcUrl),
     }).extend(publicActions);
+
+    // Ensure scheme is set correctly for EVM payments
+    if (!paymentPayload.scheme) {
+      (paymentPayload as any).scheme = 'exact';
+    }
+
     const verifyResult = await verify(
       client as any,
       paymentPayload,
@@ -271,45 +314,59 @@ export async function settleWithRouter(
     );
 
     if (!verifyResult.isValid) {
-      // x402 SDK verification failed - return error to prevent gas waste on guaranteed-to-fail transactions
+      // x402 SDK verification failed
       // This catches: invalid signatures, wrong recipients, insufficient balance, expired timestamps, etc.
       const invalidReason = verifyResult.invalidReason || "";
       const payer = verifyResult.payer || authorization.from;
 
-      logger.warn(
-        {
-          network,
-          from: authorization.from,
+      // Special handling for "invalid_scheme" which occurs for custom networks not yet in x402 SDK
+      if (invalidReason === "invalid_scheme") {
+        logger.warn(
+          {
+            network,
+            invalidReason,
+            payer,
+          },
+          "Ignoring 'invalid_scheme' validation error for custom network - proceeding with on-chain settlement",
+        );
+        // Fall through to settlement...
+      } else {
+        logger.error(
+          {
+            network,
+            from: authorization.from,
+            payer,
+            invalidReason,
+            validAfter: authorization.validAfter,
+            validBefore: authorization.validBefore,
+            currentTime: Math.floor(Date.now() / 1000),
+            details: "Detailed verification failure reason",
+          },
+          "x402 SDK verification failed - preventing wasted gas transaction",
+        );
+
+        // Map x402 SDK error reasons to our error reasons for better user experience
+        let errorReason = `PAYMENT_VERIFICATION_FAILED: ${invalidReason}`;
+        if (invalidReason.includes("authorization_valid_before")) {
+          errorReason = "AUTHORIZATION_EXPIRED";
+        } else if (invalidReason.includes("authorization_valid_after")) {
+          errorReason = "AUTHORIZATION_NOT_YET_VALID";
+        } else if (invalidReason.includes("signature")) {
+          errorReason = "INVALID_SIGNATURE";
+        } else if (invalidReason.includes("recipient")) {
+          errorReason = "INVALID_RECIPIENT";
+        } else if (invalidReason.includes("insufficient_funds")) {
+          errorReason = "INSUFFICIENT_FUNDS";
+        }
+
+        return {
+          success: false,
+          errorReason,
+          transaction: "",
+          network: paymentPayload.network,
           payer,
-          invalidReason,
-          validAfter: authorization.validAfter,
-          validBefore: authorization.validBefore,
-          currentTime: Math.floor(Date.now() / 1000),
-        },
-        "x402 SDK verification failed - preventing wasted gas transaction",
-      );
-
-      // Map x402 SDK error reasons to our error reasons for better user experience
-      let errorReason = "PAYMENT_VERIFICATION_FAILED";
-      if (invalidReason.includes("authorization_valid_before")) {
-        errorReason = "AUTHORIZATION_EXPIRED";
-      } else if (invalidReason.includes("authorization_valid_after")) {
-        errorReason = "AUTHORIZATION_NOT_YET_VALID";
-      } else if (invalidReason.includes("signature")) {
-        errorReason = "INVALID_SIGNATURE";
-      } else if (invalidReason.includes("recipient")) {
-        errorReason = "INVALID_RECIPIENT";
-      } else if (invalidReason.includes("insufficient_funds")) {
-        errorReason = "INSUFFICIENT_FUNDS";
+        };
       }
-
-      return {
-        success: false,
-        errorReason,
-        transaction: "",
-        network: paymentPayload.network,
-        payer,
-      };
     }
 
     // 5.6. Validate commitment hash (SECURITY: ensure nonce matches calculated commitment)

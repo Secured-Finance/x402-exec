@@ -13,8 +13,8 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
-import { paymentMiddleware, type X402Context } from "@x402x/hono";
-import { getSupportedNetworks } from "@x402x/core";
+import { paymentMiddleware, type X402Context } from "@sf-x402/hono";
+import { getSupportedNetworks } from "@sf-x402/core";
 import { appConfig } from "./config.js";
 import * as premiumDownload from "./scenarios/premium-download.js";
 
@@ -38,6 +38,8 @@ app.use(
   cors({
     origin: "*",
     credentials: false,
+    allowHeaders: ["Content-Type", "X-PAYMENT"],
+    exposeHeaders: ["X-PAYMENT"],
   }),
 );
 
@@ -81,6 +83,15 @@ app.get("/api/premium-download/info", (c) => {
 
 app.post(
   "/api/purchase-download",
+  async (c, next) => {
+    // Debug: log X-PAYMENT header
+    const xPayment = c.req.header("X-PAYMENT");
+    console.log("[Debug] X-PAYMENT header:", xPayment ? "PRESENT" : "NOT FOUND");
+    if (xPayment) {
+      console.log("[Debug] X-PAYMENT length:", xPayment.length);
+    }
+    await next();
+  },
   paymentMiddleware(
     appConfig.resourceServerAddress,
     {

@@ -1,11 +1,11 @@
 /**
- * @x402x/react
+ * @sf-x402/react
  *
  * React hooks for x402x settlement framework
  *
  * @example
  * ```typescript
- * import { useX402Payment } from '@x402x/react';
+ * import { useX402Payment } from '@sf-x402/react';
  *
  * function PaymentButton() {
  *   const { pay, status, error } = useX402Payment();

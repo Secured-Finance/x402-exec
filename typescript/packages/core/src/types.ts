@@ -1,5 +1,5 @@
 /**
- * Type definitions for @x402x/core
+ * Type definitions for @sf-x402/core
  */
 
 import type { PaymentRequirements, PaymentPayload, Signer } from "x402/types";

@@ -22,6 +22,8 @@ usage() {
     echo "Usage: $0 [NETWORK] [OPTIONS]"
     echo ""
     echo "Networks:"
+    echo "  sepolia           Ethereum Sepolia Testnet (Chain ID: 11155111)"
+    echo "  filecoin-calibration Filecoin Calibration Testnet (Chain ID: 314159)"
     echo "  base-sepolia      Base Sepolia Testnet (Chain ID: 84532)"
     echo "  base              Base Mainnet (Chain ID: 8453)"
     echo "  xlayer-testnet    X-Layer Testnet (Chain ID: 1952)"
@@ -74,7 +76,7 @@ WITH_HOOKS=false  # Flag for --with-hooks option
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        base-sepolia|base|xlayer-testnet|xlayer|skale-base-sepolia)
+        sepolia|base-sepolia|base|xlayer-testnet|xlayer|skale-base-sepolia|filecoin-calibration)
             NETWORK=$1
             shift
             ;;
@@ -148,6 +150,12 @@ echo ""
 # Map network to environment variable prefixes
 get_env_prefix() {
     case $1 in
+        sepolia)
+            echo "SEPOLIA"
+            ;;
+        filecoin-calibration)
+            echo "FILECOIN_CALIBRATION"
+            ;;
         base-sepolia)
             echo "BASE_SEPOLIA"
             ;;
@@ -169,6 +177,12 @@ get_env_prefix() {
 # Get network display name and chain ID
 get_network_info() {
     case $1 in
+        sepolia)
+            echo "Ethereum Sepolia Testnet|11155111"
+            ;;
+        filecoin-calibration)
+            echo "Filecoin Calibration Testnet|314159"
+            ;;
         base-sepolia)
             echo "Base Sepolia Testnet|84532"
             ;;
@@ -190,6 +204,12 @@ get_network_info() {
 # Get default RPC URL for network
 get_default_rpc_url() {
     case $1 in
+        sepolia)
+            echo "https://rpc.sepolia.org"
+            ;;
+        filecoin-calibration)
+            echo "https://api.calibration.node.glif.io"
+            ;;
         base-sepolia)
             echo "https://sepolia.base.org"
             ;;
@@ -330,9 +350,17 @@ export SETTLEMENT_ROUTER_ADDRESS="$SETTLEMENT_ROUTER"
 
 # Determine additional flags based on network
 LEGACY_FLAG=""
+GAS_LIMIT_FLAG=""
 if [ "$NETWORK" = "skale-base-sepolia" ]; then
     LEGACY_FLAG="--legacy"
     print_info "Using legacy gas pricing for SKALE network"
+fi
+
+# Filecoin requires higher gas limits due to on-chain storage
+if [ "$NETWORK" = "filecoin-calibration" ]; then
+    GAS_LIMIT_FLAG="--skip-simulation"
+    export ETH_GAS=10000000
+    print_info "Using fixed gas limit (10M) for Filecoin network"
 fi
 
 # Deploy SettlementRouter
@@ -342,12 +370,23 @@ if [ "$DEPLOY_MODE" = "settlement" ] || [ "$DEPLOY_MODE" = "all" ]; then
     echo "========================================="
     echo ""
     
-    forge script script/DeploySettlement.s.sol:DeploySettlement \
-        --rpc-url $RPC_URL \
-        --broadcast \
-        $LEGACY_FLAG \
-        $VERIFY_FLAG \
-        -vvv
+    if [ "$NETWORK" = "filecoin-calibration" ]; then
+        # Filecoin requires explicit high gas limit
+        forge script script/DeploySettlement.s.sol:DeploySettlement \
+            --rpc-url $RPC_URL \
+            --broadcast \
+            --gas-limit 10000000 \
+            --skip-simulation \
+            $VERIFY_FLAG \
+            -vvv
+    else
+        forge script script/DeploySettlement.s.sol:DeploySettlement \
+            --rpc-url $RPC_URL \
+            --broadcast \
+            $LEGACY_FLAG \
+            $VERIFY_FLAG \
+            -vvv
+    fi
     
     print_success "SettlementRouter deployed!"
     echo ""
@@ -407,6 +446,7 @@ if [ "$DEPLOY_MODE" = "showcase" ] || [ "$DEPLOY_MODE" = "referral" ] || [ "$DEP
         --rpc-url $RPC_URL \
         --broadcast \
         $LEGACY_FLAG \
+        $GAS_LIMIT_FLAG \
         $VERIFY_FLAG \
         -vv
     
@@ -441,6 +481,7 @@ if [ "$DEPLOY_MODE" = "hooks" ] || [ "$DEPLOY_MODE" = "transfer" ] || [ "$WITH_H
             --rpc-url $RPC_URL \
             --broadcast \
             $LEGACY_FLAG \
+            $GAS_LIMIT_FLAG \
             $VERIFY_FLAG \
             -vvv
         
@@ -492,6 +533,12 @@ echo ""
 
 # Display block explorer link
 case $NETWORK in
+    sepolia)
+        echo "View contracts: https://sepolia.etherscan.io/"
+        ;;
+    filecoin-calibration)
+        echo "View contracts: https://calibration.filscan.io/"
+        ;;
     base-sepolia)
         echo "View contracts: https://sepolia.basescan.org/"
         ;;

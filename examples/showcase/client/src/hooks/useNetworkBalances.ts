@@ -1,6 +1,6 @@
 /**
  * Network Balances Hook
- * Query USDC balances across multiple networks
+ * Query token balances across multiple networks (USDC, JPYC, USDFC, etc.)
  */
 
 import { useState, useEffect } from "react";
@@ -27,7 +27,7 @@ export interface NetworkBalance {
 }
 
 /**
- * Query USDC balances across all supported networks
+ * Query token balances across all supported networks
  */
 export function useNetworkBalances(address: string | undefined) {
   const [balances, setBalances] = useState<Record<Network, NetworkBalance>>({
@@ -61,6 +61,20 @@ export function useNetworkBalances(address: string | undefined) {
     },
     "x-layer": {
       network: "x-layer",
+      balance: "0",
+      raw: 0n,
+      loading: true,
+      error: null,
+    },
+    sepolia: {
+      network: "sepolia",
+      balance: "0",
+      raw: 0n,
+      loading: true,
+      error: null,
+    },
+    "filecoin-calibration": {
+      network: "filecoin-calibration",
       balance: "0",
       raw: 0n,
       loading: true,
@@ -107,6 +121,20 @@ export function useNetworkBalances(address: string | undefined) {
           loading: false,
           error: null,
         },
+        sepolia: {
+          network: "sepolia",
+          balance: "0",
+          raw: 0n,
+          loading: false,
+          error: null,
+        },
+        "filecoin-calibration": {
+          network: "filecoin-calibration",
+          balance: "0",
+          raw: 0n,
+          loading: false,
+          error: null,
+        },
       });
       return;
     }
@@ -130,7 +158,7 @@ export function useNetworkBalances(address: string | undefined) {
 
         return {
           network,
-          balance: formatUnits(balance, 6), // USDC has 6 decimals
+          balance: formatUnits(balance, config.decimals), // Use network-specific decimals (6 for USDC, 18 for JPYC/USDFC)
           raw: balance,
           loading: false,
           error: null,

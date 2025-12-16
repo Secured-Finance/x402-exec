@@ -66,7 +66,7 @@ export function PremiumDownload() {
         <>
           <p>
             Purchase the exclusive <strong>"x402 Protocol Whitepaper"</strong> PDF for{" "}
-            <strong>$0.10 USDC</strong>. This content requires server-side processing for secure
+            <strong>$0.10 JPYC</strong>. This content requires server-side processing for secure
             delivery.
           </p>
 
@@ -95,7 +95,7 @@ export function PremiumDownload() {
                 🖥️ <strong>Server Mode</strong>: Backend controls payment requirements
               </li>
               <li style={{ margin: "8px 0", lineHeight: 1.6 }}>
-                💰 <strong>Real Payment</strong>: Actual USDC payment (not returned in this demo)
+                💰 <strong>Real Payment</strong>: Actual JPYC payment (not returned in this demo)
               </li>
             </ul>
           </div>
@@ -169,7 +169,7 @@ export function PremiumDownload() {
                 <strong>Size:</strong> ~2.5 MB
               </li>
               <li style={{ marginBottom: "5px" }}>
-                <strong>Price:</strong> $0.10 USDC
+                <strong>Price:</strong> $0.10 JPYC
               </li>
             </ul>
           </div>
@@ -267,8 +267,8 @@ export function PremiumDownload() {
         isOpen={showPaymentDialog}
         onClose={() => setShowPaymentDialog(false)}
         amount="$0.10"
-        currency="USDC"
-        endpoint="/api/purchase-download"
+        currency="JPYC"
+        endpoint="http://localhost:3001/api/purchase-download"
         getRequestBody={(userAddress) => ({
           walletAddress: userAddress,
           contentId: "x402-whitepaper",

@@ -17,6 +17,14 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:3001",
         changeOrigin: true,
+        // configure: (proxy, _options) => {
+        //   proxy.on('proxyReq', (proxyReq, req, _res) => {
+        //     // Forward the X-PAYMENT header
+        //     if (req.headers['x-payment']) {
+        //       proxyReq.setHeader('X-PAYMENT', req.headers['x-payment']);
+        //     }
+        //   });
+        // },
       },
     },
   },

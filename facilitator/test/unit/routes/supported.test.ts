@@ -12,8 +12,8 @@ import {
   type SupportedRouteDependencies,
 } from "../../../src/routes/supported.js";
 
-// Mock @x402x/core to return supported networks
-vi.mock("@x402x/core", () => ({
+// Mock @sf-x402/core to return supported networks
+vi.mock("@sf-x402/core", () => ({
   getSupportedNetworks: vi.fn(() => ["base-sepolia", "x-layer-testnet"]),
 }));
 

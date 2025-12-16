@@ -1,5 +1,5 @@
 {
-  "name": "@x402x/scanner-backend",
+  "name": "@sf-x402/scanner-backend",
   "version": "1.0.0",
   "description": "x402 Scanner Backend - Blockchain indexer and query service",
   "type": "module",

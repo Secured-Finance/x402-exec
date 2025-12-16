@@ -1,7 +1,7 @@
 // @ts-nocheck
 // This file is for display purposes only and is not compiled
 import { Hono } from "hono";
-import { paymentMiddleware } from "@x402x/hono";
+import { paymentMiddleware } from "@sf-x402/hono";
 
 const app = new Hono();
 

@@ -1,12 +1,12 @@
 /**
  * Serverless x402x Payment Hook
  *
- * Simplified payment hook using @x402x/client SDK for direct facilitator interaction.
+ * Simplified payment hook using @sf-x402/client SDK for direct facilitator interaction.
  * This replaces the manual 402 flow with a clean, type-safe API.
  */
 
 import { useState } from "react";
-import { useX402Client, type ExecuteParams, type ExecuteResult } from "@x402x/client";
+import { useX402Client, type ExecuteParams, type ExecuteResult } from "@sf-x402/client";
 import { useNetworkSwitch } from "./useNetworkSwitch";
 import type { Network } from "../config";
 import { getFacilitatorUrl } from "../config";
