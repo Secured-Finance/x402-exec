@@ -38,6 +38,8 @@ app.use(
   cors({
     origin: "*",
     credentials: false,
+    allowHeaders: ["Content-Type", "X-PAYMENT"],
+    exposeHeaders: ["X-PAYMENT"],
   }),
 );
 
@@ -81,6 +83,15 @@ app.get("/api/premium-download/info", (c) => {
 
 app.post(
   "/api/purchase-download",
+  async (c, next) => {
+    // Debug: log X-PAYMENT header
+    const xPayment = c.req.header("X-PAYMENT");
+    console.log("[Debug] X-PAYMENT header:", xPayment ? "PRESENT" : "NOT FOUND");
+    if (xPayment) {
+      console.log("[Debug] X-PAYMENT length:", xPayment.length);
+    }
+    await next();
+  },
   paymentMiddleware(
     appConfig.resourceServerAddress,
     {

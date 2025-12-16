@@ -11,15 +11,39 @@
  */
 
 import { Chain } from "viem";
+import { sepolia } from "viem/chains";
 import { evm } from "x402/types";
 
 // Re-export chains from evm namespace
 const { xLayerTestnet, xLayer, skaleBaseSepolia } = evm;
 
+// Define Filecoin Calibration chain (not in viem/chains)
+const filecoinCalibration: Chain = {
+  id: 314159,
+  name: "Filecoin Calibration",
+  nativeCurrency: {
+    decimals: 18,
+    name: "Filecoin",
+    symbol: "FIL",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://api.calibration.node.glif.io/rpc/v1"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Filecoin Calibration Explorer",
+      url: "https://filecoin.blockscout.com",
+    },
+  },
+  testnet: true,
+};
+
 /**
  * Supported network identifiers
  */
-export type Network = "base-sepolia" | "x-layer-testnet" | "skale-base-sepolia" | "base" | "x-layer";
+export type Network = "base-sepolia" | "x-layer-testnet" | "skale-base-sepolia" | "base" | "x-layer" | "sepolia" | "filecoin-calibration";
 
 /**
  * UI-specific network configuration
@@ -44,6 +68,7 @@ export interface NetworkConfig {
   faucetUrl: string;
   explorerUrl: string;
   usdcAddress: string;
+  decimals: number; // Token decimals (6 for USDC, 18 for JPYC/USDFC)
 }
 
 /**
@@ -76,6 +101,16 @@ export const NETWORK_UI_CONFIG: Record<string, NetworkUIConfig> = {
     displayName: "X Layer",
     faucetUrl: "https://www.okx.com/xlayer/bridge",
   },
+  "sepolia": {
+    icon: "💴",
+    displayName: "Sepolia (JPYC)",
+    faucetUrl: "https://sepoliafaucet.com/",
+  },
+  "filecoin-calibration": {
+    icon: "🎞️",
+    displayName: "Filecoin Calibration (USDFC)",
+    faucetUrl: "https://faucet.calibration.fildev.network/",
+  }
 };
 
 /**
@@ -84,9 +119,40 @@ export const NETWORK_UI_CONFIG: Record<string, NetworkUIConfig> = {
  * @returns Complete network configuration
  */
 export function getNetworkConfig(network: Network): NetworkConfig {
+  const uiConfig = NETWORK_UI_CONFIG[network];
+
+  // Handle custom networks that aren't in x402 package
+  if (network === "sepolia") {
+    return {
+      chainId: sepolia.id,
+      name: network,
+      chain: sepolia,
+      displayName: uiConfig.displayName,
+      icon: uiConfig.icon,
+      faucetUrl: uiConfig.faucetUrl,
+      usdcAddress: "0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29", // JPYC address
+      explorerUrl: sepolia.blockExplorers?.default.url || "",
+      decimals: 18, // JPYC has 18 decimals
+    };
+  }
+
+  if (network === "filecoin-calibration") {
+    return {
+      chainId: filecoinCalibration.id,
+      name: network,
+      chain: filecoinCalibration,
+      displayName: uiConfig.displayName,
+      icon: uiConfig.icon,
+      faucetUrl: uiConfig.faucetUrl,
+      usdcAddress: "0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0", // USDFC address
+      explorerUrl: filecoinCalibration.blockExplorers?.default.url || "",
+      decimals: 18, // USDFC has 18 decimals
+    };
+  }
+
+  // Handle standard x402 networks
   const chain = evm.getChainFromNetwork(network) as Chain;
   const chainConfig = evm.config[chain.id.toString()];
-  const uiConfig = NETWORK_UI_CONFIG[network];
 
   if (!chainConfig) {
     throw new Error(`No chain config found for network: ${network} (chain ID: ${chain.id})`);
@@ -98,6 +164,7 @@ export function getNetworkConfig(network: Network): NetworkConfig {
     chain,
     usdcAddress: chainConfig.usdcAddress as string,
     explorerUrl: chain.blockExplorers?.default.url || "",
+    decimals: 6, // Standard x402 networks use USDC with 6 decimals
     ...uiConfig,
   };
 }
@@ -112,6 +179,8 @@ export const NETWORKS: Record<Network, NetworkConfig> = {
   "skale-base-sepolia": getNetworkConfig("skale-base-sepolia"),
   base: getNetworkConfig("base"),
   "x-layer": getNetworkConfig("x-layer"),
+  "sepolia": getNetworkConfig("sepolia"),
+  "filecoin-calibration": getNetworkConfig("filecoin-calibration"),
 };
 
 /**
@@ -184,10 +253,15 @@ export function getServerUrl(): string {
 
 /**
  * Build API endpoint URL
- * @param path - API path (e.g., '/api/health' or 'api/health')
+ * @param path - API path (e.g., '/api/health' or 'api/health') or full URL (e.g., 'http://localhost:3001/api/health')
  * @returns Full URL or relative path
  */
 export function buildApiUrl(path: string): string {
+  // If path is already a full URL, return it as-is
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+
   const serverUrl = getServerUrl();
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
@@ -204,4 +278,4 @@ export const config = {
 
 
 // Re-export chains for wagmi config
-export { xLayerTestnet, xLayer, skaleBaseSepolia };
+export { xLayerTestnet, xLayer, skaleBaseSepolia, sepolia, filecoinCalibration };

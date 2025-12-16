@@ -151,7 +151,7 @@ export const networks: Record<string, NetworkConfig> = {
     settlementRouter: "0x876308C01deCdbae46E353C81d869f102Ec1DFB3",
     defaultAsset: {
       address: "0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29",
-      decimals: 18, // JPYC has 6 decimals (like USDC)
+      decimals: 18, // JPYC has 18 decimals
       eip712: {
         name: "JPY Coin",
         version: "1",

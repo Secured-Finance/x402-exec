@@ -124,11 +124,35 @@ export class AccountPool {
       "Initializing account pool",
     );
 
-    // Get chain definition from x402 evm module
-    const chain = evm.getChainFromNetwork(network);
+    // Get chain definition - try x402, fall back to custom network config
+    let chain;
+    let rpcUrl;
+    try {
+      chain = evm.getChainFromNetwork(network);
+      rpcUrl = finalConfig.rpcUrl || chain.rpcUrls?.default?.http?.[0];
+    } catch (error) {
+      // Custom network not in x402 - construct from @x402x/core config
+      const { getNetworkConfig } = await import("@x402x/core");
+      const networkConfig = getNetworkConfig(network);
+      const nativeToken = networkConfig.metadata?.nativeToken || 'ETH';
 
-    // Determine RPC URL: config > chain default
-    const rpcUrl = finalConfig.rpcUrl || chain.rpcUrls?.default?.http?.[0];
+      chain = {
+        id: networkConfig.chainId,
+        name: networkConfig.name,
+        network,
+        nativeCurrency: {
+          name: nativeToken,
+          symbol: nativeToken,
+          decimals: 18,
+        },
+        rpcUrls: {
+          default: {
+            http: finalConfig.rpcUrl ? [finalConfig.rpcUrl] : [],
+          },
+        },
+      };
+      rpcUrl = finalConfig.rpcUrl;
+    }
 
     logger.info(
       {

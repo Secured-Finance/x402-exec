@@ -70,9 +70,10 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         });
       }
 
-      // Validate network is supported
+      // Validate network is supported and get config
+      let networkConfig;
       try {
-        getNetworkConfig(network);
+        networkConfig = getNetworkConfig(network);
       } catch (error) {
         return res.status(400).json({
           error: "Invalid network",
@@ -81,8 +82,8 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         });
       }
 
-      // Get token decimals (USDC has 6 decimals)
-      const tokenDecimals = 6;
+      // Get token decimals from network config
+      const tokenDecimals = networkConfig.defaultAsset.decimals;
 
       // Calculate minimum facilitator fee
       let feeCalculation;
@@ -135,8 +136,12 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         hookAllowed: String(feeCalculation.hookAllowed),
       });
 
-      // Get token info
-      const networkConfig = getNetworkConfig(network);
+      // Get token symbol from network config (e.g., JPYC for Sepolia, USDFC for Filecoin)
+      const tokenSymbol = networkConfig.defaultAsset.eip712.name.includes("JPY")
+        ? "JPYC"
+        : networkConfig.defaultAsset.eip712.name.includes("Filecoin")
+          ? "USDFC"
+          : "USDC";
 
       // Calculate fee validity period (60 seconds recommended)
       const validitySeconds = 60;
@@ -156,7 +161,7 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         validitySeconds,
         token: {
           address: networkConfig.defaultAsset.address,
-          symbol: "USDC",
+          symbol: tokenSymbol,
           decimals: tokenDecimals,
         },
         // Note: breakdown and prices removed to avoid exposing internal cost structure

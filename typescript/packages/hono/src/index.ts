@@ -21,7 +21,6 @@ import {
   PaymentRequirements,
   Resource,
   settleResponseHeader,
-  SupportedEVMNetworks,
   type Money,
   type Network,
 } from "x402/types";
@@ -29,6 +28,7 @@ import { useFacilitator } from "x402/verify";
 import {
   addSettlementExtra,
   getNetworkConfig,
+  getSupportedNetworks,
   TransferHook,
   calculateFacilitatorFee,
   type FeeCalculationResult,
@@ -288,8 +288,19 @@ export function paymentMiddleware(
           });
         }
       } catch (error) {
-        // Decoding failed, will handle below
+        // Decoding failed - try manual decode for custom networks
         console.error("[x402x Middleware] Failed to decode payment:", error);
+
+        // Manual decode: base64 decode and JSON parse the X-PAYMENT header
+        try {
+          const paymentJson = JSON.parse(Buffer.from(payment, 'base64').toString('utf-8'));
+          decodedPayment = paymentJson as PaymentPayload;
+          decodedPayment.x402Version = x402Version;
+          clientSubmittedRequirements = decodedPayment.paymentRequirements;
+          console.log("[x402x Middleware] Manual decode successful for custom network:", clientSubmittedRequirements?.network);
+        } catch (manualError) {
+          console.error("[x402x Middleware] Manual decode also failed:", manualError);
+        }
       }
     }
 
@@ -307,19 +318,40 @@ export function paymentMiddleware(
       const networks = Array.isArray(networkConfig) ? networkConfig : [networkConfig];
 
       for (const network of networks) {
-        // Only support EVM networks for now
-        if (!SupportedEVMNetworks.includes(network)) {
+        // Only support networks from @x402x/core (includes custom networks)
+        if (!getSupportedNetworks().includes(network)) {
           continue;
         }
 
-        const atomicAmountForAsset = processPriceToAtomicAmount(price, network);
-        if ("error" in atomicAmountForAsset) {
-          throw new Error(atomicAmountForAsset.error);
+        // Get network config from @x402x/core
+        const x402xConfig = getNetworkConfig(network);
+
+        // Try standard processPriceToAtomicAmount, but handle custom networks
+        let baseAmount: string;
+        let asset: any;
+
+        try {
+          const atomicAmountForAsset = processPriceToAtomicAmount(price, network);
+          if ("error" in atomicAmountForAsset) {
+            throw new Error(atomicAmountForAsset.error);
+          }
+          baseAmount = atomicAmountForAsset.maxAmountRequired;
+          asset = atomicAmountForAsset.asset;
+        } catch (error) {
+          // For custom networks not in x402, manually calculate from @x402x/core config
+          const parsedPrice = typeof price === 'string' && price.startsWith('$')
+            ? parseFloat(price.slice(1))
+            : typeof price === 'number' ? price : parseFloat(String(price));
+
+          baseAmount = BigInt(Math.floor(parsedPrice * Math.pow(10, x402xConfig.defaultAsset.decimals))).toString();
+          asset = {
+            address: x402xConfig.defaultAsset.address,
+            decimals: x402xConfig.defaultAsset.decimals,
+            eip712: x402xConfig.defaultAsset.eip712,
+          };
         }
-        const { maxAmountRequired: baseAmount, asset } = atomicAmountForAsset;
 
         const resourceUrl: Resource = resource || (c.req.url as Resource);
-        const x402xConfig = getNetworkConfig(network);
 
         // Resolve hook and hookData (support function or string)
         const resolvedHook =
