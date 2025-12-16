@@ -47,9 +47,11 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@sf-x402'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
@@ -65,7 +67,7 @@ jobs:
         env:
           NODE_OPTIONS: --max-old-space-size=4096
 
-      - name: Publish to npm (manual trigger)
+      - name: Publish to GitHub Packages (manual trigger)
         if: >
           github.event_name == 'workflow_dispatch' &&
           inputs.publish_version != ''
@@ -74,8 +76,8 @@ jobs:
             "${{ inputs.publish_version }}" \
             "${{ inputs.publish_tag }}"
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create GitHub Release (manual trigger)
         if: >
@@ -88,14 +90,14 @@ jobs:
           tag_name: x402-${{ inputs.publish_version }}
           release_name: X402 ${{ inputs.publish_version }}
           body: |
-            Automated release of @x402x/x402@${{ inputs.publish_version }}
+            Automated release of @sf-x402/x402@${{ inputs.publish_version }}
 
             ## Changes
             - See commit history for details
 
             ## Installation
             ```bash
-            npm install x402@npm:@x402x/x402@${{ inputs.publish_version }}
+            npm install x402@npm:@sf-x402/x402@${{ inputs.publish_version }}
             ```
 
             ## Usage

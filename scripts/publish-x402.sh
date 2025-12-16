@@ -1,5 +1,5 @@
 #!/bin/bash
-# Publish @x402x/x402 to npm
+# Publish @sf-x402/x402 to npm
 # Usage: ./scripts/publish-x402.sh [version] [tag]
 # Example: ./scripts/publish-x402.sh 0.6.6-patch.1 latest
 
@@ -50,11 +50,11 @@ print_info "Current directory: $(pwd)"
 cp package.json package.json.backup
 
 # Temporarily change package name for publishing
-print_info "Temporarily changing package name to @x402x/x402 for publishing..."
+print_info "Temporarily changing package name to @sf-x402/x402 for publishing..."
 node -e "
 const fs = require('fs');
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-pkg.name = '@x402x/x402';
+pkg.name = '@sf-x402/x402';
 pkg.repository = {
   type: 'git',
   url: 'https://github.com/nuwa-protocol/x402-exec.git',
@@ -143,13 +143,13 @@ else
     fi
 fi
 
-# Publish to npm
-print_info "Publishing to npm..."
+# Publish to GitHub Packages
+print_info "Publishing to GitHub Packages..."
 if [ "$TAG" = "latest" ]; then
-    npm publish --access public
+    npm publish --registry=https://npm.pkg.github.com --access public
     PUBLISH_EXIT_CODE=$?
 else
-    npm publish --access public --tag "$TAG"
+    npm publish --registry=https://npm.pkg.github.com --access public --tag "$TAG"
     PUBLISH_EXIT_CODE=$?
 fi
 
@@ -166,7 +166,7 @@ if [ $PUBLISH_EXIT_CODE -eq 0 ]; then
     print_info '  }'
     print_info ""
     print_info "View the published package:"
-    print_info "  https://www.npmjs.com/package/$PACKAGE_NAME"
+    print_info "  https://github.com/Secured-Finance/x402-exec/packages"
     
     # Restore original package.json
     print_info ""
