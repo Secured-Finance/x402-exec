@@ -40,6 +40,8 @@ const DEFAULT_COIN_IDS: Record<string, string> = {
   base: "ethereum",
   "x-layer-testnet": "okb",
   "x-layer": "okb",
+  sepolia: "ethereum", // Using ETH price for Sepolia testnet
+  "filecoin-calibration": "filecoin", // Native token FIL, not payment token USDFC
 };
 
 /**
@@ -202,6 +204,8 @@ export function clearTokenPriceCache(network?: string): void {
 
 /**
  * Get token price cache statistics
+ *
+ * @returns token price cache
  */
 export function getTokenPriceCacheStats() {
   const stats: Record<string, { price: number; age: number }> = {};

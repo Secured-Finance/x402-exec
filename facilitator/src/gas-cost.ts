@@ -23,6 +23,7 @@ export interface GasCostConfig {
   minGasLimit: number; // Minimum gas limit to ensure transaction can execute (default: 150000)
   maxGasLimit: number; // Absolute upper limit for gas to defend against malicious hooks (default: 5000000)
   dynamicGasLimitMargin: number; // Profit margin reserved when calculating dynamic limit (0-1, default: 0.2 = 20%)
+  networkMinGasLimit: Record<string, number>; // Network-specific minimum gas limits (overrides minGasLimit)
 
   // Gas Overhead Configuration
   hookGasOverhead: Record<string, number>; // Additional gas required by different hook types
@@ -87,7 +88,7 @@ export function isHookAllowed(network: string, hook: string, config: GasCostConf
  * @param hook - Hook address
  * @returns Hook type identifier
  */
-function getHookType(network: string, hook: string): string {
+export function getHookType(network: string, hook: string): string {
   try {
     const networkConfig = getNetworkConfig(network);
     const hookLower = hook.toLowerCase();
@@ -137,9 +138,12 @@ export function getGasLimit(network: string, hook: string, config: GasCostConfig
   // Determine hook type
   const hookType = getHookType(network, hook);
 
+  // Get network-specific minimum gas limit if available, otherwise use default
+  const minGasLimit = config.networkMinGasLimit[network] || config.minGasLimit;
+
   // Calculate gas limit
   const overhead = config.hookGasOverhead[hookType] || config.hookGasOverhead.custom || 100000;
-  const gasLimit = config.minGasLimit + overhead;
+  const gasLimit = minGasLimit + overhead;
 
   // Validate against maximum
   if (gasLimit > config.maxGasLimit) {
@@ -153,7 +157,7 @@ export function getGasLimit(network: string, hook: string, config: GasCostConfig
       network,
       hook,
       hookType,
-      minGasLimit: config.minGasLimit,
+      minGasLimit,
       overhead,
       gasLimit,
     },
@@ -252,21 +256,26 @@ export function convertUsdToToken(usdAmount: string, decimals: number): string {
  * ```
  */
 export function calculateEffectiveGasLimit(
+  network: string,
   facilitatorFee: string,
   gasPrice: string,
   nativeTokenPrice: number,
   config: GasCostConfig,
+  tokenDecimals: number = 6,
 ): number {
-  // Convert facilitator fee to USD (assuming 6 decimals for USDC)
-  const feeUSD = parseFloat(facilitatorFee) / 1e6;
+  // Convert facilitator fee to USD
+  const feeUSD = parseFloat(facilitatorFee) / Math.pow(10, tokenDecimals);
 
   // Calculate available amount for gas (after reserving profit margin)
   const availableForGasUSD = feeUSD * (1 - config.dynamicGasLimitMargin);
 
+  // Get network-specific minimum gas limit if available, otherwise use default
+  const minGasLimit = config.networkMinGasLimit[network] || config.minGasLimit;
+
   // Protect against invalid token price (zero or negative)
   // If price is invalid, return minimum gas limit as safety fallback
   if (nativeTokenPrice <= 0 || !Number.isFinite(nativeTokenPrice)) {
-    return config.minGasLimit;
+    return minGasLimit;
   }
 
   // Calculate how much gas we can afford
@@ -284,7 +293,7 @@ export function calculateEffectiveGasLimit(
   // 2. Not more than maximum (absolute safety cap)
   // 3. Not more than affordable (profit protection)
   const effectiveGasLimit = Math.max(
-    config.minGasLimit,
+    minGasLimit,
     Math.min(maxAffordableGas, config.maxGasLimit),
   );
 

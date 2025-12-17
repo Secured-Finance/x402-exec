@@ -6,6 +6,7 @@
 
 import type { Request, Response, NextFunction } from "express";
 import type { PaymentRequirements } from "x402/types";
+import { getNetworkConfig } from "@secured-finance/x402-core";
 import { getLogger } from "../telemetry.js";
 import { calculateMinFacilitatorFee, type GasCostConfig } from "../gas-cost.js";
 import { isSettlementMode, validateTokenAddress } from "../settlement.js";
@@ -94,10 +95,9 @@ export function createFeeValidationMiddleware(
         });
       }
 
-      // Get token decimals
-      //const networkConfig = getNetworkConfig(network);
-      // TODO: In future, fetch token decimals dynamically from network config.
-      const tokenDecimals = 6; // USDC has 6 decimals (networkConfig.defaultAsset.decimals would have this info)
+      // Get token decimals from network config
+      const networkConfig = getNetworkConfig(network);
+      const tokenDecimals = networkConfig.defaultAsset.decimals;
 
       // Calculate minimum required fee
       let feeCalculation;

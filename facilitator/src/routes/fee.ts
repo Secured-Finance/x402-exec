@@ -136,12 +136,8 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         hookAllowed: String(feeCalculation.hookAllowed),
       });
 
-      // Get token symbol from network config (e.g., JPYC for Sepolia, USDFC for Filecoin)
-      const tokenSymbol = networkConfig.defaultAsset.eip712.name.includes("JPY")
-        ? "JPYC"
-        : networkConfig.defaultAsset.eip712.name.includes("Filecoin")
-          ? "USDFC"
-          : "USDC";
+      // Get token symbol from network config
+      const tokenSymbol = networkConfig.defaultAsset.symbol;
 
       // Calculate fee validity period (60 seconds recommended)
       const validitySeconds = 60;

@@ -9,7 +9,8 @@
 
 import { verify } from "x402/facilitator";
 import { evm } from "x402/types";
-import type { PaymentPayload, PaymentRequirements, Signer, X402Config } from "x402/types";
+import type { PaymentPayload, Signer, X402Config } from "x402/types";
+import type { PaymentRequirements } from "@secured-finance/x402-core";
 import { isEvmSignerWallet } from "x402/types";
 import { createPublicClient, http, publicActions } from "viem";
 import {
@@ -25,7 +26,7 @@ import { parseErc6492Signature } from "viem/utils";
 import { getLogger } from "./telemetry.js";
 import { calculateGasMetrics } from "./gas-metrics.js";
 import type { SettleResponseWithMetrics } from "./settlement-types.js";
-import { calculateEffectiveGasLimit, type GasCostConfig } from "./gas-cost.js";
+import { calculateEffectiveGasLimit, getHookType, type GasCostConfig } from "./gas-cost.js";
 import { getGasPrice, type DynamicGasPriceConfig } from "./dynamic-gas-price.js";
 import type { BalanceChecker } from "./balance-check.js";
 
@@ -429,29 +430,43 @@ export async function settleWithRouter(
         // Get current gas price for the network
         const gasPrice = await getGasPrice(network, gasCostConfig, dynamicGasPriceConfig);
 
-        // Get native token price
+        // Get native token price and token decimals
         const nativePrice = nativeTokenPrices?.[network] || 0;
+        const tokenDecimals = getNetworkConfig(network).defaultAsset.decimals;
 
         // Calculate effective gas limit with triple constraints
         const calculatedLimit = calculateEffectiveGasLimit(
+          network,
           extra.facilitatorFee,
           gasPrice,
           nativePrice,
           gasCostConfig,
+          tokenDecimals,
         );
 
-        effectiveGasLimit = BigInt(calculatedLimit);
+        // IMPORTANT: Add hook-specific gas overhead on top of calculated limit
+        // This ensures we have enough gas for hook execution, not just base settlement
+        const hookType = getHookType(network, extra.hook);
+        const hookOverhead = gasCostConfig.hookGasOverhead[hookType] || gasCostConfig.hookGasOverhead.custom || 100000;
+        const finalLimit = calculatedLimit + hookOverhead;
+
+        effectiveGasLimit = BigInt(finalLimit);
         gasLimitMode = gasCostConfig.dynamicGasLimitMargin > 0 ? "dynamic" : "static";
 
         logger.debug(
           {
             network,
+            hook: extra.hook,
+            hookType,
             facilitatorFee: extra.facilitatorFee,
             gasPrice,
             nativePrice,
-            effectiveGasLimit: calculatedLimit,
+            calculatedLimit,
+            hookOverhead,
+            effectiveGasLimit: finalLimit,
             mode: gasLimitMode,
             minGasLimit: gasCostConfig.minGasLimit,
+            networkMinGasLimit: gasCostConfig.networkMinGasLimit[network],
             maxGasLimit: gasCostConfig.maxGasLimit,
             dynamicMargin: gasCostConfig.dynamicGasLimitMargin,
           },
@@ -537,7 +552,8 @@ export async function settleWithRouter(
       );
     }
 
-    const tx = await walletClient.writeContract({
+    // Prepare transaction parameters with explicit gas limit
+    const txParams: any = {
       address: extra.settlementRouter as Address,
       abi: SETTLEMENT_ROUTER_ABI,
       functionName: "settleAndExecute",
@@ -555,9 +571,31 @@ export async function settleWithRouter(
         extra.hook as Address,
         extra.hookData as Hex,
       ],
-      // Add gas limit if configured (for security against malicious hooks)
-      ...(effectiveGasLimit ? { gas: effectiveGasLimit } : {}),
-    });
+    };
+
+    // Add gas limit if configured (for security against malicious hooks)
+    if (effectiveGasLimit) {
+      txParams.gas = effectiveGasLimit;
+      logger.info(
+        {
+          network,
+          gasLimit: effectiveGasLimit.toString(),
+          gasLimitMode,
+        },
+        "Setting explicit gas limit for settlement transaction",
+      );
+    } else {
+      logger.warn(
+        {
+          network,
+          hasGasCostConfig: !!gasCostConfig,
+          hasDynamicGasPriceConfig: !!dynamicGasPriceConfig,
+        },
+        "No gas limit calculated - transaction will use default estimation",
+      );
+    }
+
+    const tx = await walletClient.writeContract(txParams);
 
     // 8. Wait for transaction confirmation
     const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
@@ -574,13 +612,14 @@ export async function settleWithRouter(
 
     // 9. Calculate gas metrics
     const nativePrice = nativeTokenPrices?.[network] || 0;
+    const tokenDecimals = getNetworkConfig(network).defaultAsset.decimals;
     const gasMetrics = calculateGasMetrics(
       receipt,
       extra.facilitatorFee,
       extra.hook,
       network,
       nativePrice.toString(),
-      6, // USDC decimals (all current settlements use USDC)
+      tokenDecimals,
     );
 
     // 10. Log settlement success with gas metrics
