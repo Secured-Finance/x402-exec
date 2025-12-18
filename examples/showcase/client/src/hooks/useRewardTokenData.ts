@@ -54,45 +54,21 @@ export interface RewardTokenNetworkData {
 
 export function useAllNetworksRewardTokenData(userAddress?: Address) {
   const [data, setData] = useState<Record<Network, RewardTokenNetworkData>>({
-    "base-sepolia": {
-      network: "base-sepolia",
+    sepolia: {
+      network: "sepolia",
       userBalance: "0",
       contractBalance: "0",
       totalSupply: "0",
-      loading: true,
-      error: null,
+      loading: false,
+      error: "Reward token not available on this network",
     },
-    "x-layer-testnet": {
-      network: "x-layer-testnet",
+    "filecoin-calibration": {
+      network: "filecoin-calibration",
       userBalance: "0",
       contractBalance: "0",
       totalSupply: "0",
-      loading: true,
-      error: null,
-    },
-    "skale-base-sepolia": {
-      network: "skale-base-sepolia",
-      userBalance: "0",
-      contractBalance: "0",
-      totalSupply: "0",
-      loading: true,
-      error: null,
-    },
-    base: {
-      network: "base",
-      userBalance: "0",
-      contractBalance: "0",
-      totalSupply: "0",
-      loading: true,
-      error: null,
-    },
-    "x-layer": {
-      network: "x-layer",
-      userBalance: "0",
-      contractBalance: "0",
-      totalSupply: "0",
-      loading: true,
-      error: null,
+      loading: false,
+      error: "Reward token not available on this network",
     },
   });
 

@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useAccount, useWalletClient } from "wagmi";
-import { TransferHook, calculateFacilitatorFee } from "@secured-finance/x402-core";
+import { TransferHook, calculateFacilitatorFee, getNetworkConfig } from "@secured-finance/x402-core";
 import { useX402Client, X402Client } from "@secured-finance/x402-client";
 import type { FeeCalculationResult } from "@secured-finance/x402-client";
 import { useNetworkSwitch } from "../hooks/useNetworkSwitch";
@@ -138,8 +138,26 @@ export function ServerlessPaymentDialog({
           ? await client.calculateFee(hook, hookData)
           : await calculateFacilitatorFee(facilitatorUrl, network, hook, hookData);
 
-        console.log("[ServerlessPaymentDialog] Fee loaded:", fee);
-        setFeeInfo(fee);
+        // Apply fee cap at 3% of payment to prevent fees from exceeding payment
+        const maxFeePercentage = 0.03; // 3% cap
+        const maxFeeAllowed = BigInt(Math.floor(parseFloat(amount) * maxFeePercentage));
+        const calculatedFee = BigInt(fee.facilitatorFee);
+        
+        let cappedFee = fee;
+        if (calculatedFee > maxFeeAllowed) {
+          console.log("[ServerlessPaymentDialog] Fee capped:", {
+            originalFee: fee.facilitatorFee,
+            maxFeeAllowed: maxFeeAllowed.toString(),
+            maxFeePercentage: `${maxFeePercentage * 100}%`,
+          });
+          cappedFee = {
+            ...fee,
+            facilitatorFee: maxFeeAllowed.toString(),
+          };
+        }
+
+        console.log("[ServerlessPaymentDialog] Fee loaded:", cappedFee);
+        setFeeInfo(cappedFee);
         setStep("confirm-payment");
       } catch (err: any) {
         console.error("[ServerlessPaymentDialog] Failed to load fee:", err);
@@ -307,10 +325,14 @@ export function ServerlessPaymentDialog({
 
   if (!isOpen) return null;
 
-  // Format amount for display
-  const amountInUsdc = (parseFloat(amount) / 1_000_000).toFixed(2);
+  // Get token info for selected network
+  const tokenSymbol = selectedNetwork ? getNetworkConfig(selectedNetwork).defaultAsset.symbol : "USDC";
+  const tokenDecimals = selectedNetwork ? getNetworkConfig(selectedNetwork).defaultAsset.decimals : 6;
+
+  // Format amount for display (always 2 decimal places)
+  const amountInUsdc = (parseFloat(amount) / Math.pow(10, tokenDecimals)).toFixed(2);
   const totalAmount = feeInfo
-    ? ((parseFloat(amount) + parseFloat(feeInfo.facilitatorFee)) / 1_000_000).toFixed(6)
+    ? ((parseFloat(amount) + parseFloat(feeInfo.facilitatorFee)) / Math.pow(10, tokenDecimals)).toFixed(2)
     : amountInUsdc;
 
   return (
@@ -376,7 +398,7 @@ export function ServerlessPaymentDialog({
               </h2>
               <p style={{ marginBottom: "25px", color: "#666", fontSize: "14px" }}>
                 {isConnected
-                  ? `Choose the blockchain network for your $${amountInUsdc} USDC payment`
+                  ? `Choose the blockchain network for your $${amountInUsdc} ${tokenSymbol} payment`
                   : `Choose a network to get started (wallet connection will be requested next)`}
               </p>
 
@@ -579,7 +601,7 @@ export function ServerlessPaymentDialog({
                 >
                   <span style={{ color: "#4b5563" }}>Payment Amount:</span>
                   <span style={{ fontWeight: "600", fontFamily: "monospace" }}>
-                    ${amountInUsdc} USDC
+                    ${amountInUsdc} {tokenSymbol}
                   </span>
                 </div>
 
@@ -588,7 +610,7 @@ export function ServerlessPaymentDialog({
                 >
                   <span style={{ color: "#4b5563" }}>Facilitator Fee:</span>
                   <span style={{ fontWeight: "600", fontFamily: "monospace", color: "#059669" }}>
-                    ${(parseFloat(feeInfo.facilitatorFee) / 1_000_000).toFixed(6)} USDC
+                    ${(parseFloat(feeInfo.facilitatorFee) / Math.pow(10, tokenDecimals)).toFixed(2)} {tokenSymbol}
                   </span>
                 </div>
 
@@ -610,7 +632,7 @@ export function ServerlessPaymentDialog({
                       color: "#1e40af",
                     }}
                   >
-                    ${totalAmount} USDC
+                    ${totalAmount} {tokenSymbol}
                   </span>
                 </div>
               </div>
@@ -671,7 +693,7 @@ export function ServerlessPaymentDialog({
                     if (!isPaying) e.currentTarget.style.backgroundColor = "#3b82f6";
                   }}
                 >
-                  {isPaying ? "⏳ Processing..." : `💳 Pay $${totalAmount} USDC`}
+                  {isPaying ? "⏳ Processing..." : `💳 Pay $${totalAmount} ${tokenSymbol}`}
                 </button>
               </div>
             </>

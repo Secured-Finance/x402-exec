@@ -87,6 +87,8 @@ export interface NetworkConfig {
   defaultAsset: {
     /** Asset contract address */
     address: string;
+    /** Asset symbol (e.g., "USDC", "JPYC") */
+    symbol: string;
     /** Asset decimals */
     decimals: number;
     /** EIP-712 domain info for signing */

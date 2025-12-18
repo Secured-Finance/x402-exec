@@ -16,7 +16,7 @@ import { TransactionResult } from "../components/TransactionResult";
 import { CodeBlock } from "../components/CodeBlock";
 import { usePaymentFlow } from "../hooks/usePaymentFlow";
 import { useAllNetworksRewardTokenData } from "../hooks/useRewardTokenData";
-import { RewardHook } from "@secured-finance/x402-core";
+import { RewardHook, getNetworkConfig } from "@secured-finance/x402-core";
 import { type Network, NETWORK_UI_CONFIG } from "../config";
 import pointsRewardCode from "../code-examples/points-reward.ts?raw";
 
@@ -360,7 +360,7 @@ export function ServerlessPointsReward() {
               label: "Cost",
               value: paymentResult.facilitatorFee ? (
                 <strong>
-                  ${(parseFloat(paymentResult.facilitatorFee) / 1_000_000).toFixed(4)} facilitator
+                  ${(parseFloat(paymentResult.facilitatorFee) / Math.pow(10, getNetworkConfig(paymentResult.network).defaultAsset.decimals)).toFixed(2)} {getNetworkConfig(paymentResult.network).defaultAsset.symbol} facilitator
                   fee
                 </strong>
               ) : (

@@ -10,8 +10,6 @@
 import { useState } from "react";
 import { UnifiedDebugPanel } from "./components/UnifiedDebugPanel";
 import { ServerlessSplitPayment } from "./scenarios/ServerlessSplitPayment";
-import { ServerlessRandomNFT } from "./scenarios/ServerlessRandomNFT";
-import { ServerlessPointsReward } from "./scenarios/ServerlessPointsReward";
 import { PremiumDownload } from "./scenarios/PremiumDownload";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import "./App.css";
@@ -27,7 +25,7 @@ function App() {
       <header className="app-header">
         <div className="header-content">
           <div className="header-left">
-            <h1>🎯 x402x Protocol Demo</h1>
+            <h1>🎯 Secured Finance x402</h1>
             <p className="subtitle">Atomic Payment & Smart Contract Execution</p>
           </div>
         </div>
@@ -37,19 +35,17 @@ function App() {
         <Tabs value={activeTab} onValueChange={(value: string) => setActiveTab(value as ScenarioTab)} className="custom-tabs mb-8">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="split-payment" className="flex flex-col items-center gap-1 h-auto py-3">
-              <span className="tab-number">1</span>
               <span className="text-center leading-tight">💸 Split<br/>Payment</span>
             </TabsTrigger>
-            <TabsTrigger value="nft-mint" className="flex flex-col items-center gap-1 h-auto py-3">
+            {/* <TabsTrigger value="nft-mint" className="flex flex-col items-center gap-1 h-auto py-3">
               <span className="tab-number">2</span>
               <span className="text-center leading-tight">🎨 Pay & Mint<br/>NFT</span>
             </TabsTrigger>
             <TabsTrigger value="points-reward" className="flex flex-col items-center gap-1 h-auto py-3">
               <span className="tab-number">3</span>
               <span className="text-center leading-tight">🎁 Pay & Earn<br/>Points</span>
-            </TabsTrigger>
+            </TabsTrigger> */}
             <TabsTrigger value="premium-download" className="flex flex-col items-center gap-1 h-auto py-3">
-              <span className="tab-number">4</span>
               <span className="text-center leading-tight">📥 Premium<br/>Download</span>
             </TabsTrigger>
           </TabsList>
@@ -66,7 +62,7 @@ function App() {
           >
             <ServerlessSplitPayment />
           </TabsContent>
-          <TabsContent 
+          {/* <TabsContent 
             value="nft-mint" 
             className="mt-0" 
             style={{
@@ -89,7 +85,7 @@ function App() {
             }}
           >
             <ServerlessPointsReward />
-          </TabsContent>
+          </TabsContent> */}
           <TabsContent 
             value="premium-download" 
             className="mt-0" 

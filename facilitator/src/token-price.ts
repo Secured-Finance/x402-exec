@@ -33,7 +33,7 @@ export interface TokenPriceConfig {
 }
 
 /**
- * Default CoinGecko coin ID mapping
+ * Default CoinGecko coin ID mapping for NATIVE tokens (used for gas cost calculation)
  */
 const DEFAULT_COIN_IDS: Record<string, string> = {
   "base-sepolia": "ethereum",
@@ -41,8 +41,22 @@ const DEFAULT_COIN_IDS: Record<string, string> = {
   "x-layer-testnet": "okb",
   "x-layer": "okb",
   sepolia: "ethereum", // Using ETH price for Sepolia testnet
-  "filecoin-calibration": "filecoin", // Native token FIL, not payment token USDFC
+  "filecoin-calibration": "filecoin", // Native token FIL
 };
+
+/**
+ * CoinGecko coin ID mapping for PAYMENT tokens (used for fee conversion)
+ * Only needed for non-USD stablecoins like JPYC
+ */
+const PAYMENT_TOKEN_COIN_IDS: Record<string, string> = {
+  sepolia: "jpy-coin", // JPYC payment token
+  // USDFC, USDC are stablecoins at $1, no need to fetch
+};
+
+/**
+ * Payment token price cache
+ */
+const paymentTokenPriceCache = new Map<string, TokenPriceCacheEntry>();
 
 /**
  * Get token price with caching and fallback
@@ -59,6 +73,16 @@ export async function getTokenPrice(
 ): Promise<number> {
   // If dynamic pricing is disabled, return static price
   if (!config?.enabled) {
+    return staticPrice;
+  }
+
+  // For most testnets, use static prices for demo-friendly fees
+  // Exception: Filecoin testnets should use real prices due to FEVM's high gas costs
+  const isTestnet = network.includes("sepolia") || network.includes("testnet");
+  const isFilecoinTestnet = network.includes("filecoin") && network.includes("calibration");
+  
+  if (isTestnet && !isFilecoinTestnet) {
+    logger.debug({ network, staticPrice }, "Using static price for testnet");
     return staticPrice;
   }
 
@@ -218,4 +242,83 @@ export function getTokenPriceCacheStats() {
   }
 
   return stats;
+}
+
+/**
+ * Default fallback prices for payment tokens (USD per token)
+ */
+const DEFAULT_PAYMENT_TOKEN_PRICES: Record<string, number> = {
+  JPYC: 0.0065, // ~154 JPY per USD
+  USDFC: 1.0,
+  USDC: 1.0,
+};
+
+/**
+ * Get payment token price for a network
+ * Uses CoinGecko for non-stablecoins (JPYC), returns 1.0 for stablecoins (USDC, USDFC)
+ *
+ * @param network - Network name
+ * @param config - Optional token price configuration
+ * @returns Token price in USD
+ */
+export async function getPaymentTokenPrice(
+  network: string,
+  config?: TokenPriceConfig,
+): Promise<number> {
+  // Check environment variable first
+  const envVarName = `${network.toUpperCase().replace(/-/g, "_")}_PAYMENT_TOKEN_PRICE`;
+  const envPrice = process.env[envVarName];
+  if (envPrice) {
+    return parseFloat(envPrice);
+  }
+
+  // For stablecoins (USDFC, USDC), return 1.0 directly
+  if (network === "filecoin-calibration") {
+    return DEFAULT_PAYMENT_TOKEN_PRICES.USDFC;
+  }
+
+  // Check if we have a CoinGecko ID for this network's payment token
+  const coinId = PAYMENT_TOKEN_COIN_IDS[network];
+  if (!coinId) {
+    // Default to 1.0 (USD peg) for USDC-based networks
+    return 1.0;
+  }
+
+  // If dynamic pricing is disabled, return fallback
+  if (!config?.enabled) {
+    return network === "sepolia" ? DEFAULT_PAYMENT_TOKEN_PRICES.JPYC : 1.0;
+  }
+
+  // Check cache
+  const cacheKey = `payment:${network}`;
+  const cached = paymentTokenPriceCache.get(cacheKey);
+  if (cached) {
+    const age = (Date.now() - cached.timestamp) / 1000;
+    if (age < config.cacheTTL) {
+      logger.debug({ network, price: cached.price, age }, "Using cached payment token price");
+      return cached.price;
+    }
+  }
+
+  // Fetch from CoinGecko
+  try {
+    const price = await fetchCoinGeckoPrice(coinId, config.apiKey);
+
+    // Update cache
+    paymentTokenPriceCache.set(cacheKey, {
+      price,
+      timestamp: Date.now(),
+    });
+
+    logger.info({ network, coinId, price }, "Fetched payment token price from CoinGecko");
+    return price;
+  } catch (error) {
+    logger.warn({ error, network, coinId }, "Failed to fetch payment token price, using fallback");
+
+    // Return fallback
+    if (network === "sepolia") {
+      return DEFAULT_PAYMENT_TOKEN_PRICES.JPYC;
+    }
+    return 1.0;
+  }
 }

@@ -31,41 +31,6 @@ export interface NetworkBalance {
  */
 export function useNetworkBalances(address: string | undefined) {
   const [balances, setBalances] = useState<Record<Network, NetworkBalance>>({
-    "base-sepolia": {
-      network: "base-sepolia",
-      balance: "0",
-      raw: 0n,
-      loading: true,
-      error: null,
-    },
-    "x-layer-testnet": {
-      network: "x-layer-testnet",
-      balance: "0",
-      raw: 0n,
-      loading: true,
-      error: null,
-    },
-    "skale-base-sepolia": {
-      network: "skale-base-sepolia",
-      balance: "0",
-      raw: 0n,
-      loading: true,
-      error: null,
-    },
-    base: {
-      network: "base",
-      balance: "0",
-      raw: 0n,
-      loading: true,
-      error: null,
-    },
-    "x-layer": {
-      network: "x-layer",
-      balance: "0",
-      raw: 0n,
-      loading: true,
-      error: null,
-    },
     sepolia: {
       network: "sepolia",
       balance: "0",
@@ -86,41 +51,6 @@ export function useNetworkBalances(address: string | undefined) {
     if (!address) {
       // Reset balances when no address
       setBalances({
-        "base-sepolia": {
-          network: "base-sepolia",
-          balance: "0",
-          raw: 0n,
-          loading: false,
-          error: null,
-        },
-        "x-layer-testnet": {
-          network: "x-layer-testnet",
-          balance: "0",
-          raw: 0n,
-          loading: false,
-          error: null,
-        },
-        "skale-base-sepolia": {
-          network: "skale-base-sepolia",
-          balance: "0",
-          raw: 0n,
-          loading: false,
-          error: null,
-        },
-        base: {
-          network: "base",
-          balance: "0",
-          raw: 0n,
-          loading: false,
-          error: null,
-        },
-        "x-layer": {
-          network: "x-layer",
-          balance: "0",
-          raw: 0n,
-          loading: false,
-          error: null,
-        },
         sepolia: {
           network: "sepolia",
           balance: "0",
@@ -150,7 +80,7 @@ export function useNetworkBalances(address: string | undefined) {
         });
 
         const balance = await client.readContract({
-          address: config.usdcAddress as Address,
+          address: config.tokenAddress as Address,
           abi: ERC20_ABI,
           functionName: "balanceOf",
           args: [address as Address],

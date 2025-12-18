@@ -417,7 +417,7 @@ function parseGasCostConfig(): GasCostConfig {
       // Default prices (conservative estimates)
       // Check for most specific matches first
       if (network.includes("filecoin")) {
-        nativeTokenPrice[network] = 4; // FIL ~$4
+        nativeTokenPrice[network] = 1.22; // FIL current price ~$1.22
       } else if (network.includes("x-layer")) {
         nativeTokenPrice[network] = DEFAULTS.nativeTokenPrice.OKB;
       } else if (network.includes("base")) {

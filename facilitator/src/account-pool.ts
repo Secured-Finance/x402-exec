@@ -134,7 +134,7 @@ export class AccountPool {
       // Custom network not in x402 - construct from @secured-finance/x402-core config
       const { getNetworkConfig } = await import("@secured-finance/x402-core");
       const networkConfig = getNetworkConfig(network);
-      const nativeToken = networkConfig.metadata?.nativeToken || 'ETH';
+      const nativeToken = networkConfig.metadata?.nativeToken || "ETH";
 
       chain = {
         id: networkConfig.chainId,
@@ -396,6 +396,8 @@ export class AccountPool {
 
   /**
    * Get information about all accounts
+   *
+   * @returns An array of account information
    */
   getAccountsInfo(): AccountInfo[] {
     return this.accounts.map((acc) => ({
@@ -407,6 +409,8 @@ export class AccountPool {
 
   /**
    * Get the number of pending payers (addresses with transactions in queue)
+   *
+   * @returns The number of pending payers
    */
   getPendingPayersCount(): number {
     return this.pendingPayers.size;
@@ -414,6 +418,8 @@ export class AccountPool {
 
   /**
    * Get total queue depth across all accounts
+   *
+   * @returns The total queue depth across all accounts
    */
   getTotalQueueDepth(): number {
     return this.accounts.reduce(
@@ -424,20 +430,16 @@ export class AccountPool {
 
   /**
    * Get the number of accounts in the pool
+   *
+   * @returns The number of accounts in the pool
    */
   getAccountCount(): number {
     return this.accounts.length;
   }
-
-  /**
-   * Get total number of transactions processed across all accounts
-   */
-  getTotalProcessed(): number {
-    return this.accounts.reduce((sum, acc) => sum + acc.processed, 0);
-  }
-
   /**
    * Select an account based on the configured strategy
+   *
+   * @returns The selected account
    */
   private selectAccount(): Account {
     if (this.strategy === "round_robin") {

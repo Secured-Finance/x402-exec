@@ -16,7 +16,7 @@ import { TransactionResult } from "../components/TransactionResult";
 import { CodeBlock } from "../components/CodeBlock";
 import { usePaymentFlow } from "../hooks/usePaymentFlow";
 import { useAllNetworksNFTData } from "../hooks/useNFTData";
-import { NFTMintHook } from "@secured-finance/x402-core";
+import { NFTMintHook, getNetworkConfig } from "@secured-finance/x402-core";
 import { type Network, NETWORK_UI_CONFIG } from "../config";
 import nftMintCode from "../code-examples/nft-mint.ts?raw";
 
@@ -348,7 +348,7 @@ export function ServerlessRandomNFT() {
               label: "Cost",
               value: paymentResult.facilitatorFee ? (
                 <strong>
-                  ${(parseFloat(paymentResult.facilitatorFee) / 1_000_000).toFixed(4)} facilitator
+                  ${(parseFloat(paymentResult.facilitatorFee) / Math.pow(10, getNetworkConfig(paymentResult.network).defaultAsset.decimals)).toFixed(2)} {getNetworkConfig(paymentResult.network).defaultAsset.symbol} facilitator
                   fee
                 </strong>
               ) : (

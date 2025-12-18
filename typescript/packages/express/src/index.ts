@@ -104,6 +104,15 @@ export interface X402xRouteConfig {
   // 2. Configured with specific value -> use static fee (backward compatible)
   facilitatorFee?: "auto" | string | Money | ((network: Network) => string | Money);
 
+  /**
+   * Maximum fee as a percentage of payment (0-1). Default: 0.1 (10%)
+   * When dynamic fee exceeds this percentage of payment, it will be capped.
+   * Set to 1 to disable capping.
+   * 
+   * Example: maxFeePercentage: 0.03 means fee cannot exceed 3% of payment
+   */
+  maxFeePercentage?: number;
+
   /** Standard x402 configuration */
   config?: {
     description?: string;
@@ -337,6 +346,21 @@ export function paymentMiddleware(
             );
             resolvedFacilitatorFee = feeResult.facilitatorFee;
 
+            // Apply fee cap if configured (default 10% of payment)
+            const maxFeePercent = routeConfig.maxFeePercentage ?? 0.1;
+            const maxFeeAllowed = BigInt(Math.floor(parseFloat(baseAmount) * maxFeePercent));
+            const calculatedFee = BigInt(resolvedFacilitatorFee);
+            
+            if (calculatedFee > maxFeeAllowed && maxFeePercent < 1) {
+              console.log("[x402x Express] Fee capped:", {
+                network,
+                originalFee: resolvedFacilitatorFee,
+                maxFeeAllowed: maxFeeAllowed.toString(),
+                maxFeePercent: `${maxFeePercent * 100}%`,
+              });
+              resolvedFacilitatorFee = maxFeeAllowed.toString();
+            }
+
             // When using dynamic fee, price is business price only
             // Total = business price + facilitator fee
             businessAmount = baseAmount;
@@ -350,6 +374,7 @@ export function paymentMiddleware(
               businessAmount,
               facilitatorFee: resolvedFacilitatorFee,
               totalAmount: maxAmountRequired,
+              capped: calculatedFee > maxFeeAllowed,
               feeUSD: feeResult.facilitatorFeeUSD,
             });
           } catch (error) {

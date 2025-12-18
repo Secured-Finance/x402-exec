@@ -16,6 +16,7 @@ function getDefaultAssetConfig(network: Network) {
   const defaultAsset = getDefaultAsset(network);
   return {
     address: defaultAsset.address as string,
+    symbol: "USDC", // All standard x402 networks use USDC
     decimals: defaultAsset.decimals,
     eip712: {
       name: defaultAsset.eip712.name,
@@ -75,28 +76,28 @@ export const networks: Record<string, NetworkConfig> = {
       nativeToken: "OKB",
     },
   },
-  "skale-base-sepolia": {
-    chainId: getNetworkId("skale-base-sepolia"),
-    name: "SKALE Base Sepolia",
-    type: "testnet",
-    addressExplorerBaseUrl: "https://base-sepolia-testnet-explorer.skalenodes.com/address/",
-    txExplorerBaseUrl: "https://base-sepolia-testnet-explorer.skalenodes.com/tx/",
-    settlementRouter: "0x1Ae0E196dC18355aF3a19985faf67354213F833D",
-    defaultAsset: getDefaultAssetConfig("skale-base-sepolia"),
-    hooks: {
-      transfer: "0x2f05fe5674aE756E25C26855258B4877E9e021Fd",
-    },
-    demoHooks: {
-      nftMint: "0x73fc659cd5494e69852be8d9d23fe05aab14b29b",
-      randomNFT: "0x081258287f692d61575387ee2a4075f34dd7aef7",
-      reward: "0xc20634ea518985901e32fbc1ba27fa673d37601a",
-      rewardToken: "0x9fc2c199170b039f093abcd54008038f0c0a31d6",
-    },
-    metadata: {
-      gasModel: "legacy",
-      nativeToken: "Credits",
-    },
-  },
+  // "skale-base-sepolia": {
+  //   chainId: getNetworkId("skale-base-sepolia"),
+  //   name: "SKALE Base Sepolia",
+  //   type: "testnet",
+  //   addressExplorerBaseUrl: "https://base-sepolia-testnet-explorer.skalenodes.com/address/",
+  //   txExplorerBaseUrl: "https://base-sepolia-testnet-explorer.skalenodes.com/tx/",
+  //   settlementRouter: "0x1Ae0E196dC18355aF3a19985faf67354213F833D",
+  //   defaultAsset: getDefaultAssetConfig("skale-base-sepolia"),
+  //   hooks: {
+  //     transfer: "0x2f05fe5674aE756E25C26855258B4877E9e021Fd",
+  //   },
+  //   demoHooks: {
+  //     nftMint: "0x73fc659cd5494e69852be8d9d23fe05aab14b29b",
+  //     randomNFT: "0x081258287f692d61575387ee2a4075f34dd7aef7",
+  //     reward: "0xc20634ea518985901e32fbc1ba27fa673d37601a",
+  //     rewardToken: "0x9fc2c199170b039f093abcd54008038f0c0a31d6",
+  //   },
+  //   metadata: {
+  //     gasModel: "legacy",
+  //     nativeToken: "Credits",
+  //   },
+  // },
   // Mainnet configurations
   base: {
     chainId: getNetworkId("base"),
@@ -151,6 +152,7 @@ export const networks: Record<string, NetworkConfig> = {
     settlementRouter: "0x876308C01deCdbae46E353C81d869f102Ec1DFB3",
     defaultAsset: {
       address: "0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29",
+      symbol: "JPYC",
       decimals: 18, // JPYC has 18 decimals
       eip712: {
         name: "JPY Coin",
@@ -174,6 +176,7 @@ export const networks: Record<string, NetworkConfig> = {
     settlementRouter: "0xf9EF447517d15c503cfE3328b841441b878672A3",
     defaultAsset: {
       address: "0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0",
+      symbol: "USDFC",
       decimals: 18,
       eip712: {
         name: "USD for Filecoin Community",

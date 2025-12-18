@@ -7,7 +7,7 @@
 import { Router, Request, Response } from "express";
 import { getLogger, traced, recordMetric } from "../telemetry.js";
 import { calculateMinFacilitatorFee, type GasCostConfig } from "../gas-cost.js";
-import { getNetworkConfig } from "@secured-finance/x402-core";
+import { getNetworkConfig, getSupportedNetworks } from "@secured-finance/x402-core";
 import type { DynamicGasPriceConfig } from "../dynamic-gas-price.js";
 import type { TokenPriceConfig } from "../token-price.js";
 import type { PoolManager } from "../pool-manager.js";
@@ -75,10 +75,12 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
       try {
         networkConfig = getNetworkConfig(network);
       } catch (error) {
+        const supportedNetworks = getSupportedNetworks();
         return res.status(400).json({
           error: "Invalid network",
-          message: `Network '${network}' is not supported`,
+          message: `Network '${network}' is not supported. Supported networks: ${supportedNetworks.join(", ")}`,
           network,
+          supportedNetworks,
         });
       }
 
@@ -209,10 +211,12 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         try {
           getNetworkConfig(network);
         } catch {
+          const supportedNetworks = getSupportedNetworks();
           return res.status(400).json({
             error: "Invalid network",
-            message: `Network '${network}' is not supported`,
+            message: `Network '${network}' is not supported. Supported networks: ${supportedNetworks.join(", ")}`,
             network,
+            supportedNetworks,
           });
         }
       }

@@ -237,14 +237,17 @@ export function createSettleRoutes(
               });
             }
 
-            logger.info(
+            logger[response.success ? 'info' : 'warn'](
               {
                 transaction: response.transaction,
                 success: response.success,
                 payer: response.payer,
                 duration_ms: duration,
+                errorReason: response.errorReason,
               },
-              "SettlementRouter settlement successful",
+              response.success 
+                ? "SettlementRouter settlement successful"
+                : "SettlementRouter settlement FAILED (transaction reverted)",
             );
 
             // Return standard SettleResponse without gas metrics (internal use only)

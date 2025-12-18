@@ -98,6 +98,15 @@ export interface X402xRouteConfig {
   // 2. Configured with specific value -> use static fee (backward compatible)
   facilitatorFee?: "auto" | string | Money | ((network: Network) => string | Money);
 
+  /**
+   * Maximum fee as a percentage of payment (0-1). Default: 0.1 (10%)
+   * When dynamic fee exceeds this percentage of payment, it will be capped.
+   * Set to 1 to disable capping.
+   * 
+   * Example: maxFeePercentage: 0.03 means fee cannot exceed 3% of payment
+   */
+  maxFeePercentage?: number;
+
   /** Standard x402 configuration */
   config?: {
     description?: string;
@@ -326,29 +335,61 @@ export function paymentMiddleware(
         // Get network config from @secured-finance/x402-core
         const x402xConfig = getNetworkConfig(network);
 
-        // Try standard processPriceToAtomicAmount, but handle custom networks
+        // Calculate price using correct decimals from @secured-finance/x402-core
+        // x402's processPriceToAtomicAmount hardcodes 6 decimals, but JPYC has 18 decimals
         let baseAmount: string;
         let asset: any;
 
-        try {
-          const atomicAmountForAsset = processPriceToAtomicAmount(price, network);
-          if ("error" in atomicAmountForAsset) {
-            throw new Error(atomicAmountForAsset.error);
-          }
-          baseAmount = atomicAmountForAsset.maxAmountRequired;
-          asset = atomicAmountForAsset.asset;
-        } catch (error) {
-          // For custom networks not in x402, manually calculate from @secured-finance/x402-core config
-          const parsedPrice = typeof price === 'string' && price.startsWith('$')
+        // Always use our config for networks with custom tokens (sepolia, filecoin-calibration)
+        // For other networks, try x402's processPriceToAtomicAmount first
+        const customTokenNetworks = ['sepolia', 'filecoin-calibration'];
+
+        // Token USD rates for proper conversion
+        const TOKEN_USD_RATES: Record<string, number> = {
+          'sepolia': 0.0065,          // JPYC: 1 JPYC ≈ $0.0065
+          'filecoin-calibration': 1.0, // USDFC: 1 USDFC ≈ $1
+        };
+
+        if (customTokenNetworks.includes(network)) {
+          // Parse USD price
+          const usdPrice = typeof price === 'string' && price.startsWith('$')
             ? parseFloat(price.slice(1))
             : typeof price === 'number' ? price : parseFloat(String(price));
 
-          baseAmount = BigInt(Math.floor(parsedPrice * Math.pow(10, x402xConfig.defaultAsset.decimals))).toString();
+          // Convert USD to token amount using exchange rate
+          const tokenRate = TOKEN_USD_RATES[network] || 1.0;
+          const tokenAmount = usdPrice / tokenRate;
+
+          console.log(`[x402x Middleware] USD to token conversion: $${usdPrice} → ${tokenAmount.toFixed(4)} tokens (rate: $${tokenRate})`);
+
+          baseAmount = BigInt(Math.floor(tokenAmount * Math.pow(10, x402xConfig.defaultAsset.decimals))).toString();
           asset = {
             address: x402xConfig.defaultAsset.address,
             decimals: x402xConfig.defaultAsset.decimals,
             eip712: x402xConfig.defaultAsset.eip712,
           };
+        } else {
+          // Try x402's standard calculation for other networks
+          try {
+            const atomicAmountForAsset = processPriceToAtomicAmount(price, network);
+            if ("error" in atomicAmountForAsset) {
+              throw new Error(atomicAmountForAsset.error);
+            }
+            baseAmount = atomicAmountForAsset.maxAmountRequired;
+            asset = atomicAmountForAsset.asset;
+          } catch (error) {
+            // Fallback to manual calculation
+            const parsedPrice = typeof price === 'string' && price.startsWith('$')
+              ? parseFloat(price.slice(1))
+              : typeof price === 'number' ? price : parseFloat(String(price));
+
+            baseAmount = BigInt(Math.floor(parsedPrice * Math.pow(10, x402xConfig.defaultAsset.decimals))).toString();
+            asset = {
+              address: x402xConfig.defaultAsset.address,
+              decimals: x402xConfig.defaultAsset.decimals,
+              eip712: x402xConfig.defaultAsset.eip712,
+            };
+          }
         }
 
         const resourceUrl: Resource = resource || (c.req.url as Resource);
@@ -371,43 +412,101 @@ export function paymentMiddleware(
 
         // Check if we should dynamically query fee
         if (resolvedFacilitatorFeeRaw === undefined || resolvedFacilitatorFeeRaw === "auto") {
-          // Dynamic fee calculation
-          if (!facilitator?.url) {
-            throw new Error(
-              `Facilitator URL required for dynamic fee calculation. ` +
-                `Please provide facilitator config in paymentMiddleware() or set static facilitatorFee.`,
-            );
-          }
-
-          try {
-            const feeResult = await calculateFacilitatorFee(
-              facilitator.url,
-              network,
-              resolvedHook,
-              resolvedHookData,
-            );
-            resolvedFacilitatorFee = feeResult.facilitatorFee;
-
-            // When using dynamic fee, price is business price only
-            // Total = business price + facilitator fee
+          // For testnets, use simple percentage-based fee (0.3% or $0.01 min)
+          // This matches the facilitator's validation logic
+          const isTestnet = network.includes("sepolia") || network.includes("testnet") || network.includes("calibration");
+          
+          if (isTestnet) {
+            // Token USD rates for fee calculation
+            const TOKEN_USD_RATES: Record<string, number> = {
+              'sepolia': 0.0065,          // JPYC
+              'filecoin-calibration': 1.0, // USDFC
+            };
+            
+            const baseAmountBigInt = BigInt(baseAmount);
+            const tokenRate = TOKEN_USD_RATES[network] || 1.0;
+            const tokenDecimals = x402xConfig.defaultAsset.decimals;
+            
+            // Calculate 0.3% fee
+            const percentFee = (baseAmountBigInt * 3n) / 1000n;
+            
+            // Calculate $0.01 minimum in token units
+            const minFeeUsd = 0.01;
+            const minFeeTokenAmount = minFeeUsd / tokenRate;
+            const minFeeAtomic = BigInt(Math.floor(minFeeTokenAmount * Math.pow(10, tokenDecimals)));
+            
+            // Use the higher of percentage or minimum
+            resolvedFacilitatorFee = (percentFee > minFeeAtomic ? percentFee : minFeeAtomic).toString();
+            
             businessAmount = baseAmount;
-            maxAmountRequired = (
-              BigInt(businessAmount) + BigInt(resolvedFacilitatorFee)
-            ).toString();
-
-            console.log("[x402x Middleware] Dynamic fee calculated:", {
+            maxAmountRequired = (baseAmountBigInt + BigInt(resolvedFacilitatorFee)).toString();
+            
+            const feeUSD = (Number(resolvedFacilitatorFee) / Math.pow(10, tokenDecimals)) * tokenRate;
+            
+            console.log("[x402x Middleware] Testnet fee calculated (percentage-based):", {
               network,
-              hook: resolvedHook,
               businessAmount,
               facilitatorFee: resolvedFacilitatorFee,
               totalAmount: maxAmountRequired,
-              feeUSD: feeResult.facilitatorFeeUSD,
+              feeUSD: feeUSD.toFixed(6),
+              feePercent: `${((Number(resolvedFacilitatorFee) / Number(baseAmount)) * 100).toFixed(2)}%`,
+              method: percentFee > minFeeAtomic ? "0.3%" : "$0.01 min",
             });
-          } catch (error) {
-            console.error("[x402x Middleware] Failed to calculate dynamic fee:", error);
-            throw new Error(
-              `Failed to query facilitator fee: ${error instanceof Error ? error.message : "Unknown error"}`,
-            );
+          } else {
+            // For mainnets, query facilitator for gas-based fee
+            if (!facilitator?.url) {
+              throw new Error(
+                `Facilitator URL required for dynamic fee calculation. ` +
+                  `Please provide facilitator config in paymentMiddleware() or set static facilitatorFee.`,
+              );
+            }
+
+            try {
+              const feeResult = await calculateFacilitatorFee(
+                facilitator.url,
+                network,
+                resolvedHook,
+                resolvedHookData,
+              );
+              resolvedFacilitatorFee = feeResult.facilitatorFee;
+
+              // Apply fee cap if configured (default 10% of payment)
+              const maxFeePercent = routeConfig.maxFeePercentage ?? 0.1;
+              const maxFeeAllowed = BigInt(Math.floor(parseFloat(baseAmount) * maxFeePercent));
+              const calculatedFee = BigInt(resolvedFacilitatorFee);
+              
+              if (calculatedFee > maxFeeAllowed && maxFeePercent < 1) {
+                console.log("[x402x Middleware] Fee capped:", {
+                  network,
+                  originalFee: resolvedFacilitatorFee,
+                  maxFeeAllowed: maxFeeAllowed.toString(),
+                  maxFeePercent: `${maxFeePercent * 100}%`,
+                });
+                resolvedFacilitatorFee = maxFeeAllowed.toString();
+              }
+
+              // When using dynamic fee, price is business price only
+              // Total = business price + facilitator fee
+              businessAmount = baseAmount;
+              maxAmountRequired = (
+                BigInt(businessAmount) + BigInt(resolvedFacilitatorFee)
+              ).toString();
+
+              console.log("[x402x Middleware] Dynamic fee calculated:", {
+                network,
+                hook: resolvedHook,
+                businessAmount,
+                facilitatorFee: resolvedFacilitatorFee,
+                totalAmount: maxAmountRequired,
+                feeUSD: feeResult.facilitatorFeeUSD,
+                capped: calculatedFee > maxFeeAllowed,
+              });
+            } catch (error) {
+              console.error("[x402x Middleware] Failed to calculate dynamic fee:", error);
+              throw new Error(
+                `Failed to query facilitator fee: ${error instanceof Error ? error.message : "Unknown error"}`,
+              );
+            }
           }
         } else if (resolvedFacilitatorFeeRaw === "0" || resolvedFacilitatorFeeRaw === 0) {
           // Explicitly set to 0
@@ -444,7 +543,9 @@ export function paymentMiddleware(
               discoverable: true,
             },
           },
-          extra: "eip712" in asset ? asset.eip712 : undefined,
+          // DON'T include eip712 in extra - client will use correct config from @secured-finance/x402-core
+          // x402's asset.eip712 has hardcoded version "2" which is incorrect for JPYC and other tokens
+          extra: undefined,
         };
 
         // Add settlement extension with both business amount and facilitator fee

@@ -38,6 +38,7 @@ app.use(
   cors({
     origin: "*",
     credentials: false,
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "X-PAYMENT"],
     exposeHeaders: ["X-PAYMENT"],
   }),
@@ -95,8 +96,11 @@ app.post(
   paymentMiddleware(
     appConfig.resourceServerAddress,
     {
-      price: "$1.00", // 1.00 USD for digital content
+      price: "$1", // $1 USD → converts to ~154 JPYC or 1 USDFC based on token rate
       network: getSupportedNetworks() as any,
+      // Dynamic fee calculation with cap at 3% of payment
+      // This ensures fees are reasonable relative to payment amount
+      maxFeePercentage: 0.03, // Fee capped at 3% of payment
       config: {
         description: "Premium Content Download: Purchase and download digital content",
       },

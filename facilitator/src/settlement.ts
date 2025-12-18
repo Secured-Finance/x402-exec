@@ -86,7 +86,7 @@ export function validateSettlementRouter(
     );
     throw new SettlementExtraError(
       `Settlement router ${routerAddress} is not in whitelist for network ${network}. ` +
-      `Allowed: ${allowedForNetwork.join(", ")}`,
+        `Allowed: ${allowedForNetwork.join(", ")}`,
     );
   }
 
@@ -122,7 +122,7 @@ export function validateTokenAddress(network: string, tokenAddress: string): voi
     );
     throw new SettlementExtraError(
       `Only USDC is currently supported for settlement on ${network}. ` +
-      `Expected: ${networkConfig.defaultAsset.address}, Got: ${tokenAddress}`,
+        `Expected: ${networkConfig.defaultAsset.address}, Got: ${tokenAddress}`,
     );
   }
 
@@ -288,14 +288,17 @@ export async function settleWithRouter(
       rpcUrl = dynamicGasPriceConfig?.rpcUrls[network];
     }
 
-    logger.info({
-      network,
-      chainId: chain.id,
-      rpcUrl,
-      asset,
-      signer: authorization.from,
-      payloadScheme: paymentPayload.scheme
-    }, "Creating verification client");
+    logger.info(
+      {
+        network,
+        chainId: chain.id,
+        rpcUrl,
+        asset,
+        signer: authorization.from,
+        payloadScheme: paymentPayload.scheme,
+      },
+      "Creating verification client",
+    );
 
     const client = createPublicClient({
       chain,
@@ -304,7 +307,7 @@ export async function settleWithRouter(
 
     // Ensure scheme is set correctly for EVM payments
     if (!paymentPayload.scheme) {
-      (paymentPayload as any).scheme = 'exact';
+      (paymentPayload as any).scheme = "exact";
     }
 
     const verifyResult = await verify(
@@ -387,6 +390,30 @@ export async function settleWithRouter(
       hookData: extra.hookData,
     });
 
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/f33f61ee-a494-42cb-a202-5ea0176313c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "settlement.ts:375",
+        message: "Commitment calculated",
+        data: {
+          network,
+          chainId: chain.id,
+          expectedCommitment,
+          actualNonce: authorization.nonce,
+          validAfter: authorization.validAfter,
+          validBefore: authorization.validBefore,
+          currentTimestamp: Math.floor(Date.now() / 1000),
+          salt: extra.salt,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "A,E",
+      }),
+    }).catch(() => {});
+    // #endregion
+
     if (authorization.nonce.toLowerCase() !== expectedCommitment.toLowerCase()) {
       logger.error(
         {
@@ -425,7 +452,27 @@ export async function settleWithRouter(
     let effectiveGasLimit: bigint | undefined;
     let gasLimitMode = "static";
 
-    if (gasCostConfig && dynamicGasPriceConfig) {
+    // FEVM requires MUCH higher gas limits due to proxy delegatecall overhead
+    // Call trace analysis shows:
+    // - balanceOf: 4.6M gas (proxy delegatecall)
+    // - authorizationState: 3.6M gas
+    // - transferWithAuthorization: 4.4M gas (proxy delegatecall)
+    // - approve: 4.4M gas (proxy delegatecall)
+    // - transferFrom: 21M+ gas (proxy delegatecall)
+    // Total: ~47M consumed before final transferFrom, which needs 21M+ more
+    const isFilecoin = network.includes("filecoin");
+    if (isFilecoin && !gasCostConfig) {
+      effectiveGasLimit = BigInt(150000000); // 150M for FEVM proxy overhead (47M + 21M + buffer)
+      gasLimitMode = "fevm-fallback";
+      logger.info(
+        {
+          network,
+          gasLimit: effectiveGasLimit.toString(),
+          reason: "FEVM USDC uses proxy delegatecall pattern - extremely high gas cost",
+        },
+        "Using FEVM gas limit (150M) for proxy contract overhead",
+      );
+    } else if (gasCostConfig && dynamicGasPriceConfig) {
       try {
         // Get current gas price for the network
         const gasPrice = await getGasPrice(network, gasCostConfig, dynamicGasPriceConfig);
@@ -447,7 +494,8 @@ export async function settleWithRouter(
         // IMPORTANT: Add hook-specific gas overhead on top of calculated limit
         // This ensures we have enough gas for hook execution, not just base settlement
         const hookType = getHookType(network, extra.hook);
-        const hookOverhead = gasCostConfig.hookGasOverhead[hookType] || gasCostConfig.hookGasOverhead.custom || 100000;
+        const hookOverhead =
+          gasCostConfig.hookGasOverhead[hookType] || gasCostConfig.hookGasOverhead.custom || 100000;
         const finalLimit = calculatedLimit + hookOverhead;
 
         effectiveGasLimit = BigInt(finalLimit);
@@ -573,6 +621,39 @@ export async function settleWithRouter(
       ],
     };
 
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/f33f61ee-a494-42cb-a202-5ea0176313c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "settlement.ts:574",
+        message: "Transaction params prepared",
+        data: {
+          network,
+          functionName: txParams.functionName,
+          routerAddress: txParams.address,
+          argsCount: txParams.args.length,
+          argValues: {
+            asset: txParams.args[0],
+            from: txParams.args[1],
+            value: txParams.args[2].toString(),
+            validAfter: txParams.args[3].toString(),
+            validBefore: txParams.args[4].toString(),
+            nonce: txParams.args[5],
+            salt: txParams.args[7],
+            payTo: txParams.args[8],
+            facilitatorFee: txParams.args[9].toString(),
+            hook: txParams.args[10],
+            hookData: txParams.args[11],
+          },
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "B,C,D",
+      }),
+    }).catch(() => {});
+    // #endregion
+
     // Add gas limit if configured (for security against malicious hooks)
     if (effectiveGasLimit) {
       txParams.gas = effectiveGasLimit;
@@ -595,12 +676,146 @@ export async function settleWithRouter(
       );
     }
 
+    // #region agent log - Try to simulate call to get potential revert reason
+    try {
+      const simulateResult = await publicClient.simulateContract({
+        address: txParams.address,
+        abi: txParams.abi,
+        functionName: txParams.functionName,
+        args: txParams.args,
+        gas: txParams.gas,
+        account: walletClient.account?.address,
+      });
+      fetch("http://127.0.0.1:7242/ingest/f33f61ee-a494-42cb-a202-5ea0176313c5", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "settlement.ts:597a",
+          message: "Simulation successful",
+          data: { network, simulationSuccess: true, result: simulateResult?.result?.toString() },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          hypothesisId: "B,C,D,E",
+        }),
+      }).catch(() => {});
+    } catch (simError: any) {
+      fetch("http://127.0.0.1:7242/ingest/f33f61ee-a494-42cb-a202-5ea0176313c5", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "settlement.ts:597b",
+          message: "Simulation failed - reveals potential revert",
+          data: {
+            network,
+            simulationSuccess: false,
+            errorName: simError?.name,
+            errorMessage: simError?.message,
+            errorCause: simError?.cause?.reason || simError?.cause?.shortMessage,
+            errorDetails: simError?.details,
+            metaMessages: simError?.metaMessages,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          hypothesisId: "B,C,D,E",
+        }),
+      }).catch(() => {});
+    }
+    // #endregion
+
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/f33f61ee-a494-42cb-a202-5ea0176313c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "settlement.ts:598",
+        message: "Before writeContract",
+        data: {
+          network,
+          router: extra.settlementRouter,
+          hook: extra.hook,
+          asset: paymentRequirements.asset,
+          from: authorization.from,
+          value: authorization.value,
+          facilitatorFee: extra.facilitatorFee,
+          gasLimit: effectiveGasLimit?.toString(),
+          nonce: authorization.nonce,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "A,B,C,D",
+      }),
+    }).catch(() => {});
+    // #endregion
+
     const tx = await walletClient.writeContract(txParams);
+
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/f33f61ee-a494-42cb-a202-5ea0176313c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "settlement.ts:599",
+        message: "Transaction sent",
+        data: { network, txHash: tx, router: extra.settlementRouter, hook: extra.hook },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "A,B,C,D",
+      }),
+    }).catch(() => {});
+    // #endregion
 
     // 8. Wait for transaction confirmation
     const receipt = await publicClient.waitForTransactionReceipt({ hash: tx });
 
+    // #region agent log
+    fetch("http://127.0.0.1:7242/ingest/f33f61ee-a494-42cb-a202-5ea0176313c5", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        location: "settlement.ts:603",
+        message: "Transaction receipt received",
+        data: {
+          network,
+          txHash: tx,
+          status: receipt.status,
+          gasUsed: receipt.gasUsed?.toString(),
+          effectiveGasPrice: receipt.effectiveGasPrice?.toString(),
+          blockNumber: receipt.blockNumber?.toString(),
+          contractAddress: receipt.contractAddress,
+          logs: receipt.logs?.length,
+        },
+        timestamp: Date.now(),
+        sessionId: "debug-session",
+        hypothesisId: "A,B,C,D,E",
+      }),
+    }).catch(() => {});
+    // #endregion
+
     if (receipt.status !== "success") {
+      // #region agent log
+      fetch("http://127.0.0.1:7242/ingest/f33f61ee-a494-42cb-a202-5ea0176313c5", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          location: "settlement.ts:606",
+          message: "Transaction failed - status not success",
+          data: {
+            network,
+            txHash: tx,
+            status: receipt.status,
+            gasUsed: receipt.gasUsed?.toString(),
+            from: authorization.from,
+            router: extra.settlementRouter,
+            hook: extra.hook,
+            logs: receipt.logs,
+          },
+          timestamp: Date.now(),
+          sessionId: "debug-session",
+          hypothesisId: "A,B,C,D,E",
+        }),
+      }).catch(() => {});
+      // #endregion
+
       return {
         success: false,
         errorReason: "invalid_transaction_state",

@@ -186,7 +186,7 @@ export function PremiumDownload() {
           cursor: downloadResult ? "not-allowed" : "pointer",
         }}
       >
-        {downloadResult ? "✅ Purchased" : "💳 Purchase & Download ($0.1 USDC)"}
+        {downloadResult ? "✅ Purchased" : "💳 Purchase & Download (0.1 JPYC)"}
       </button>
 
       {downloadResult && (
@@ -266,8 +266,7 @@ export function PremiumDownload() {
       <PaymentDialog
         isOpen={showPaymentDialog}
         onClose={() => setShowPaymentDialog(false)}
-        amount="$0.10"
-        currency="JPYC"
+        amount="0.10"
         endpoint="http://localhost:3001/api/purchase-download"
         getRequestBody={(userAddress) => ({
           walletAddress: userAddress,

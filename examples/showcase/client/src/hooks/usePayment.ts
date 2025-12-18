@@ -12,6 +12,7 @@ import { useAccount, useConnectorClient } from "wagmi";
 import { createWalletClient, custom } from "viem";
 import { signTypedData } from "viem/actions";
 import { type Hex, type WalletClient } from "viem";
+import { getNetworkConfig } from "@secured-finance/x402-core";
 import { calculateCommitment, validateCommitmentParams } from "../utils/commitment";
 import { buildApiUrl, Network } from "../config";
 import { useNetworkSwitch } from "./useNetworkSwitch";
@@ -267,7 +268,10 @@ export function usePayment() {
         throw new Error("No account address available");
       }
 
+      // Use maxAmountRequired (total amount including fee) for BOTH authorization and commitment
+      // The facilitator verifies commitment using authorization.value, so they must match
       const value = paymentReq.maxAmountRequired;
+      
       const validAfter = (Math.floor(Date.now() / 1000) - 600).toString(); // 10 minutes before
       const validBefore = (Math.floor(Date.now() / 1000) + paymentReq.maxTimeoutSeconds).toString();
 
@@ -289,12 +293,13 @@ export function usePayment() {
 
       if (isComplexSettlement) {
         // Complex settlement: Calculate commitment hash (this becomes the nonce)
+        // IMPORTANT: Use same value as authorization for commitment (facilitator validates this)
         const commitmentParams = {
           chainId,
           hub: settlementRouter!,
           asset: paymentReq.asset,
           from,
-          value,
+          value, // Same as authorization.value
           validAfter,
           validBefore,
           salt: salt!,
@@ -337,9 +342,10 @@ export function usePayment() {
       setStatus("signing");
 
       // Step 6: Sign EIP-712 authorization (EIP-3009)
+      const networkConfig = getNetworkConfig(paymentReq.network as Network);
       const domain = {
-        name: name || "USDC",
-        version: version || "2",
+        name: name || networkConfig.defaultAsset.eip712.name,
+        version: version || networkConfig.defaultAsset.eip712.version,
         chainId,
         verifyingContract: paymentReq.asset as Hex,
       };
