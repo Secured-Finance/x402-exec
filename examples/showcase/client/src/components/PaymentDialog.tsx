@@ -574,7 +574,10 @@ export function PaymentDialog({
             {status === "error" && (
               <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
                 <button
-                  onClick={() => setStep("confirm-payment")}
+                  onClick={() => {
+                    reset(); // Clear error state from usePayment hook
+                    setStep("confirm-payment");
+                  }}
                   style={{
                     flex: 1,
                     padding: "12px",

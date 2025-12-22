@@ -29,7 +29,7 @@ const filecoinCalibration: Chain = {
   blockExplorers: {
     default: {
       name: "Filecoin Calibration Explorer",
-      url: "https://filecoin.blockscout.com",
+      url: "https://filecoin-testnet.blockscout.com",
     },
   },
   testnet: true,
@@ -176,7 +176,7 @@ export function getFacilitatorUrl(): string {
 
   // If no facilitator URL is set (undefined or empty string), use default
   if (!facilitatorUrl || facilitatorUrl.trim() === "") {
-    return "https://facilitator.x402x.dev";
+    return "https://x402-facilitator-production-57a2.up.railway.app";
   }
 
   // Remove trailing slash if present
@@ -232,7 +232,7 @@ export const config = {
  * @param atomicAmount - Amount in smallest unit (e.g., "100000000000000000" for 0.1 with 18 decimals)
  * @param decimals - Number of decimal places (e.g., 18 for JPYC/USDFC, 6 for USDC)
  * @param displayDecimals - Number of decimal places to show (default: 2)
- * @returns Formatted string (e.g., "0.10")
+ * @returns Formatted string (e.g., "1.00")
  */
 export function formatAtomicAmount(
   atomicAmount: string | undefined,

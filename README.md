@@ -229,7 +229,7 @@ Example deployments for testing and reference:
 - **Showcase Demo**: [https://demo.x402x.dev/](https://demo.x402x.dev/)  
   Interactive demo with 3 payment scenarios (referral split, NFT mint, loyalty rewards)
 
-- **Example Facilitator**: [https://facilitator.x402x.dev](https://facilitator.x402x.dev)  
+- **Example Facilitator**: [https://x402-facilitator-production-57a2.up.railway.app](https://x402-facilitator-production-57a2.up.railway.app)  
   Reference facilitator implementation (see [Facilitator Guide](./facilitator/README.md))
 
 > 💡 **Note**: These are example deployments. For production use, deploy your own facilitator using the [Facilitator package](./facilitator/) and configure it according to your needs.

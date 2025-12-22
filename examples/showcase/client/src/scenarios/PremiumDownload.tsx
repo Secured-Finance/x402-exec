@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { getServerUrl } from "../config";
+import { useState, useEffect } from "react";
+import { buildApiUrl, getServerUrl, NETWORKS } from "../config";
 import { PaymentDialog } from "../components/PaymentDialog";
 import { ScenarioCard } from "../components/ScenarioCard";
 import { StatusMessage } from "../components/StatusMessage";
@@ -13,6 +13,7 @@ interface DownloadResult {
   fileName: string;
   expiresAt: string;
   network: string;
+  txHash?: string; // Transaction hash if available
 }
 
 export function PremiumDownload() {
@@ -20,8 +21,15 @@ export function PremiumDownload() {
   const [downloadResult, setDownloadResult] = useState<DownloadResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Clear error when payment dialog opens
+  useEffect(() => {
+    if (showPaymentDialog) {
+      setError(null);
+    }
+  }, [showPaymentDialog]);
+
   const handlePurchase = () => {
-    // Clear previous results
+    // Clear previous results and errors
     setDownloadResult(null);
     setError(null);
 
@@ -53,9 +61,13 @@ export function PremiumDownload() {
   };
 
   const handleReset = () => {
+    // Clear all state
     setDownloadResult(null);
-    setShowPaymentDialog(false);
     setError(null);
+    setShowPaymentDialog(false);
+    // Force a hard page reload to fully reset all payment state
+    // This ensures payment hooks and dialogs are completely reset
+    window.location.reload();
   };
 
   return (
@@ -66,7 +78,7 @@ export function PremiumDownload() {
         <>
           <p>
             Purchase the exclusive <strong>"x402 Protocol Whitepaper"</strong> PDF for{" "}
-            <strong>$0.10 JPYC</strong>. This content requires server-side processing for secure
+            <strong>$1.00</strong>. Payment is made with the network's token (JPYC on Sepolia, USDFC on Filecoin Calibration). This content requires server-side processing for secure
             delivery.
           </p>
 
@@ -95,7 +107,7 @@ export function PremiumDownload() {
                 🖥️ <strong>Server Mode</strong>: Backend controls payment requirements
               </li>
               <li style={{ margin: "8px 0", lineHeight: 1.6 }}>
-                💰 <strong>Real Payment</strong>: Actual JPYC payment (not returned in this demo)
+                💰 <strong>Real Payment</strong>: Actual payment in network token (not returned in this demo)
               </li>
             </ul>
           </div>
@@ -169,7 +181,7 @@ export function PremiumDownload() {
                 <strong>Size:</strong> ~2.5 MB
               </li>
               <li style={{ marginBottom: "5px" }}>
-                <strong>Price:</strong> $0.10 JPYC
+                <strong>Price:</strong> $1.00 (paid in network token)
               </li>
             </ul>
           </div>
@@ -186,7 +198,7 @@ export function PremiumDownload() {
           cursor: downloadResult ? "not-allowed" : "pointer",
         }}
       >
-        {downloadResult ? "✅ Purchased" : "💳 Purchase & Download (0.1 JPYC)"}
+        {downloadResult ? "✅ Purchased" : "💳 Purchase & Download ($1.00)"}
       </button>
 
       {downloadResult && (
@@ -256,9 +268,61 @@ export function PremiumDownload() {
           <div style={{ marginBottom: "10px", fontSize: "14px", color: "#155724" }}>
             <strong>⏰ Expires:</strong> {new Date(downloadResult.expiresAt).toLocaleString()}
           </div>
-          <div style={{ fontSize: "14px", color: "#155724" }}>
+          <div style={{ marginBottom: "10px", fontSize: "14px", color: "#155724" }}>
             <strong>🌐 Network:</strong> {downloadResult.network}
           </div>
+          {downloadResult.txHash && (
+            <div style={{ marginTop: "15px" }}>
+              <div
+                style={{
+                  fontSize: "14px",
+                  color: "#155724",
+                  marginBottom: "5px",
+                  fontWeight: "bold",
+                }}
+              >
+                Transaction Hash:
+              </div>
+              <code
+                style={{
+                  display: "block",
+                  backgroundColor: "#fff",
+                  padding: "10px",
+                  borderRadius: "4px",
+                  fontSize: "12px",
+                  wordBreak: "break-all",
+                  fontFamily: "monospace",
+                  color: "#155724",
+                  border: "1px solid #c3e6cb",
+                }}
+              >
+                {downloadResult.txHash}
+              </code>
+              <a
+                href={`${(() => {
+                  const networkConfig = Object.values(NETWORKS).find(
+                    (n) => n.name === downloadResult.network
+                  );
+                  return networkConfig?.explorerUrl || "";
+                })()}/tx/${downloadResult.txHash}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: "inline-block",
+                  marginTop: "8px",
+                  padding: "8px 16px",
+                  backgroundColor: "#28a745",
+                  color: "white",
+                  textDecoration: "none",
+                  borderRadius: "6px",
+                  fontSize: "12px",
+                  fontWeight: "bold",
+                }}
+              >
+                🔍 View on Explorer →
+              </a>
+            </div>
+          )}
         </div>
       )}
 
@@ -266,8 +330,8 @@ export function PremiumDownload() {
       <PaymentDialog
         isOpen={showPaymentDialog}
         onClose={() => setShowPaymentDialog(false)}
-        amount="0.10"
-        endpoint="http://localhost:3001/api/purchase-download"
+        amount="1"
+        endpoint={buildApiUrl("/api/purchase-download")}
         getRequestBody={(userAddress) => ({
           walletAddress: userAddress,
           contentId: "x402-whitepaper",

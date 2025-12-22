@@ -96,7 +96,7 @@ app.post(
   paymentMiddleware(
     appConfig.resourceServerAddress,
     {
-      price: "$1", // $1 USD → converts to ~154 JPYC or 1 USDFC based on token rate
+      price: "$1", // $1 USD → converts to network-specific token (JPYC on Sepolia, USDFC on Filecoin Calibration)
       network: getSupportedNetworks() as any,
       // Dynamic fee calculation with cap at 3% of payment
       // This ensures fees are reasonable relative to payment amount
@@ -207,7 +207,7 @@ app.get("/api/download/:contentId", async (c) => {
 
 // Start server
 const port = Number(process.env.PORT) || 3000;
-console.log(`🚀 x402-exec Showcase Server (Server Mode Only) starting on port ${port}`);
+console.log(`🚀 x402-exec Showcase Server starting on port ${port}`);
 console.log(`📍 Default network: ${appConfig.defaultNetwork}`);
 console.log(`🌐 Supported networks: ${getSupportedNetworks().join(", ")}`);
 console.log(`💰 Resource server address: ${appConfig.resourceServerAddress}`);
