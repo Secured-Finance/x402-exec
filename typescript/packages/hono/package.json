@@ -1,6 +1,6 @@
 {
   "name": "@secured-finance/x402-hono",
-  "version": "0.3.0",
+  "version": "0.3.2",
   "description": "Hono middleware for x402x settlement framework",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -35,6 +35,14 @@
   ],
   "author": "Nuwa Protocol",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/secured-finance/x402-exec.git",
+    "directory": "typescript/packages/hono"
+  },
   "dependencies": {
     "@solana/kit": "^2.3.0",
     "@secured-finance/x402-core": "workspace:*",

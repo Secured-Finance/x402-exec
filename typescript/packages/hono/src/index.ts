@@ -59,6 +59,9 @@ export interface X402Context {
   /** Matched payment requirements */
   requirements: PaymentRequirements;
 
+  /** Transaction hash (populated after settlement, may be undefined initially) */
+  transactionHash?: string;
+
   /** Settlement information (x402x specific, undefined for standard x402) */
   settlement?: {
     /** SettlementRouter address */
@@ -655,6 +658,27 @@ export function paymentMiddleware(
       if (settlement.success) {
         const responseHeader = settleResponseHeader(settlement);
         res.headers.set("X-PAYMENT-RESPONSE", responseHeader);
+
+        // Update x402 context with transaction hash (for reference)
+        x402Context.transactionHash = settlement.transaction;
+
+        // Inject transaction hash into response body if it's JSON
+        try {
+          const contentType = res.headers.get("Content-Type");
+          if (contentType?.includes("application/json")) {
+            const bodyText = await res.text();
+            const bodyJson = JSON.parse(bodyText);
+            bodyJson.txHash = settlement.transaction;
+            res = new Response(JSON.stringify(bodyJson), {
+              status: res.status,
+              statusText: res.statusText,
+              headers: res.headers,
+            });
+          }
+        } catch (e) {
+          // If we can't parse/modify the response body, just continue
+          console.error("[x402x Middleware] Failed to inject txHash into response:", e);
+        }
       } else {
         throw new Error(settlement.errorReason);
       }

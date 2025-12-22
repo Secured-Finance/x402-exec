@@ -1,6 +1,6 @@
 {
   "name": "@secured-finance/x402-client",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Client SDK for x402x Serverless Mode - execute on-chain contracts directly via facilitator",
   "type": "module",
   "main": "./dist/index.cjs",
@@ -41,6 +41,14 @@
   ],
   "author": "Nuwa Protocol",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/secured-finance/x402-exec.git",
+    "directory": "typescript/packages/client"
+  },
   "dependencies": {
     "@secured-finance/x402-core": "workspace:*",
     "viem": "2.40.3",

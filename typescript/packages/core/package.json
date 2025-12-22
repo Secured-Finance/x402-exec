@@ -34,6 +34,14 @@
   ],
   "author": "Nuwa Protocol",
   "license": "Apache-2.0",
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/secured-finance/x402-exec.git",
+    "directory": "typescript/packages/core"
+  },
   "dependencies": {
     "viem": "2.40.3",
     "x402": "npm:sf-x402x@^0.6.6-patch.4"
