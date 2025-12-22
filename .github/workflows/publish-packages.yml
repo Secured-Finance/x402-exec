@@ -44,6 +44,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
         working-directory: ./typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Build packages in dependency order
       - name: Build core

@@ -9,7 +9,10 @@ on:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+      packages: read
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,11 +30,15 @@ jobs:
         with:
           node-version: '20'
           cache: 'pnpm'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@secured-finance'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
         env:
           NODE_OPTIONS: --max-old-space-size=4096
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Foundry
         uses: foundry-rs/foundry-toolchain@v1
