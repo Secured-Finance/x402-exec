@@ -22,13 +22,20 @@ usage() {
     echo "Usage: $0 [NETWORK] [OPTIONS]"
     echo ""
     echo "Networks:"
-    echo "  sepolia           Ethereum Sepolia Testnet (Chain ID: 11155111)"
-    echo "  filecoin-calibration Filecoin Calibration Testnet (Chain ID: 314159)"
-    echo "  base-sepolia      Base Sepolia Testnet (Chain ID: 84532)"
-    echo "  base              Base Mainnet (Chain ID: 8453)"
-    echo "  xlayer-testnet    X-Layer Testnet (Chain ID: 1952)"
-    echo "  xlayer            X-Layer Mainnet (Chain ID: 196)"
-    echo "  skale-base-sepolia SKALE Base Sepolia (Chain ID: 324705682)"
+    echo "  Testnets:"
+    echo "    sepolia           Ethereum Sepolia Testnet (Chain ID: 11155111)"
+    echo "    base-sepolia      Base Sepolia Testnet (Chain ID: 84532)"
+    echo "    xlayer-testnet    X-Layer Testnet (Chain ID: 1952)"
+    echo "    polygon-amoy      Polygon Amoy Testnet (Chain ID: 80002)"
+    echo "    filecoin-calibration Filecoin Calibration Testnet (Chain ID: 314159)"
+    echo "    skale-base-sepolia SKALE Base Sepolia (Chain ID: 324705682)"
+    echo ""
+    echo "  Mainnets:"
+    echo "    ethereum          Ethereum Mainnet (Chain ID: 1)"
+    echo "    base              Base Mainnet (Chain ID: 8453)"
+    echo "    xlayer            X-Layer Mainnet (Chain ID: 196)"
+    echo "    polygon           Polygon Mainnet (Chain ID: 137)"
+    echo "    filecoin          Filecoin Mainnet (Chain ID: 314)"
     echo ""
     echo "Options:"
     echo "  --settlement      Deploy only SettlementRouter"
@@ -76,7 +83,7 @@ WITH_HOOKS=false  # Flag for --with-hooks option
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        sepolia|base-sepolia|base|xlayer-testnet|xlayer|skale-base-sepolia|filecoin-calibration)
+        sepolia|base-sepolia|base|xlayer-testnet|xlayer|skale-base-sepolia|filecoin-calibration|filecoin|ethereum|polygon|polygon-amoy)
             NETWORK=$1
             shift
             ;;
@@ -150,23 +157,35 @@ echo ""
 # Map network to environment variable prefixes
 get_env_prefix() {
     case $1 in
+        ethereum)
+            echo "ETHEREUM"
+            ;;
         sepolia)
             echo "SEPOLIA"
-            ;;
-        filecoin-calibration)
-            echo "FILECOIN_CALIBRATION"
-            ;;
-        base-sepolia)
-            echo "BASE_SEPOLIA"
             ;;
         base)
             echo "BASE"
             ;;
-        xlayer-testnet)
-            echo "X_LAYER_TESTNET"
+        base-sepolia)
+            echo "BASE_SEPOLIA"
             ;;
         xlayer)
             echo "X_LAYER"
+            ;;
+        xlayer-testnet)
+            echo "X_LAYER_TESTNET"
+            ;;
+        polygon)
+            echo "POLYGON"
+            ;;
+        polygon-amoy)
+            echo "POLYGON_AMOY"
+            ;;
+        filecoin)
+            echo "FILECOIN"
+            ;;
+        filecoin-calibration)
+            echo "FILECOIN_CALIBRATION"
             ;;
         skale-base-sepolia)
             echo "SKALE_BASE_SEPOLIA"
@@ -177,23 +196,35 @@ get_env_prefix() {
 # Get network display name and chain ID
 get_network_info() {
     case $1 in
+        ethereum)
+            echo "Ethereum Mainnet|1"
+            ;;
         sepolia)
             echo "Ethereum Sepolia Testnet|11155111"
-            ;;
-        filecoin-calibration)
-            echo "Filecoin Calibration Testnet|314159"
-            ;;
-        base-sepolia)
-            echo "Base Sepolia Testnet|84532"
             ;;
         base)
             echo "Base Mainnet|8453"
             ;;
-        xlayer-testnet)
-            echo "X-Layer Testnet|1952"
+        base-sepolia)
+            echo "Base Sepolia Testnet|84532"
             ;;
         xlayer)
             echo "X-Layer Mainnet|196"
+            ;;
+        xlayer-testnet)
+            echo "X-Layer Testnet|1952"
+            ;;
+        polygon)
+            echo "Polygon Mainnet|137"
+            ;;
+        polygon-amoy)
+            echo "Polygon Amoy Testnet|80002"
+            ;;
+        filecoin)
+            echo "Filecoin Mainnet|314"
+            ;;
+        filecoin-calibration)
+            echo "Filecoin Calibration Testnet|314159"
             ;;
         skale-base-sepolia)
             echo "SKALE Base Sepolia|324705682"
@@ -204,23 +235,35 @@ get_network_info() {
 # Get default RPC URL for network
 get_default_rpc_url() {
     case $1 in
+        ethereum)
+            echo "https://eth.llamarpc.com"
+            ;;
         sepolia)
             echo "https://rpc.sepolia.org"
-            ;;
-        filecoin-calibration)
-            echo "https://api.calibration.node.glif.io"
-            ;;
-        base-sepolia)
-            echo "https://sepolia.base.org"
             ;;
         base)
             echo "https://mainnet.base.org"
             ;;
-        xlayer-testnet)
-            echo "https://testrpc.xlayer.tech/terigon"
+        base-sepolia)
+            echo "https://sepolia.base.org"
             ;;
         xlayer)
             echo "https://rpc.xlayer.tech"
+            ;;
+        xlayer-testnet)
+            echo "https://testrpc.xlayer.tech/terigon"
+            ;;
+        polygon)
+            echo "https://polygon-rpc.com"
+            ;;
+        polygon-amoy)
+            echo "https://rpc-amoy.polygon.technology"
+            ;;
+        filecoin)
+            echo "https://api.node.glif.io"
+            ;;
+        filecoin-calibration)
+            echo "https://api.calibration.node.glif.io"
             ;;
         skale-base-sepolia)
             echo "https://base-sepolia-testnet.skalenodes.com/v1/jubilant-horrible-ancha"
@@ -350,17 +393,22 @@ export SETTLEMENT_ROUTER_ADDRESS="$SETTLEMENT_ROUTER"
 
 # Determine additional flags based on network
 LEGACY_FLAG=""
+SKIP_SIMULATION_FLAG=""
 GAS_LIMIT_FLAG=""
+
 if [ "$NETWORK" = "skale-base-sepolia" ]; then
     LEGACY_FLAG="--legacy"
     print_info "Using legacy gas pricing for SKALE network"
 fi
 
-# Filecoin requires higher gas limits due to on-chain storage
-if [ "$NETWORK" = "filecoin-calibration" ]; then
-    GAS_LIMIT_FLAG="--skip-simulation"
+# Filecoin requires higher gas limits due to FEVM architecture
+# FEVM (Filecoin EVM) has significantly higher gas consumption (100M+) compared to
+# standard EVM networks (~200k) due to Filecoin's storage proofs and WASM runtime overhead
+if [ "$NETWORK" = "filecoin-calibration" ] || [ "$NETWORK" = "filecoin" ]; then
     export ETH_GAS=10000000
-    print_info "Using fixed gas limit (10M) for Filecoin network"
+    GAS_LIMIT_FLAG="--gas-limit $ETH_GAS"
+    SKIP_SIMULATION_FLAG="--skip-simulation"
+    print_info "Using fixed gas limit (10M) for Filecoin FEVM - required due to high gas consumption"
 fi
 
 # Deploy SettlementRouter
@@ -370,23 +418,14 @@ if [ "$DEPLOY_MODE" = "settlement" ] || [ "$DEPLOY_MODE" = "all" ]; then
     echo "========================================="
     echo ""
     
-    if [ "$NETWORK" = "filecoin-calibration" ]; then
-        # Filecoin requires explicit high gas limit
-        forge script script/DeploySettlement.s.sol:DeploySettlement \
-            --rpc-url $RPC_URL \
-            --broadcast \
-            --gas-limit 10000000 \
-            --skip-simulation \
-            $VERIFY_FLAG \
-            -vvv
-    else
-        forge script script/DeploySettlement.s.sol:DeploySettlement \
-            --rpc-url $RPC_URL \
-            --broadcast \
-            $LEGACY_FLAG \
-            $VERIFY_FLAG \
-            -vvv
-    fi
+    forge script script/DeploySettlement.s.sol:DeploySettlement \
+        --rpc-url $RPC_URL \
+        --broadcast \
+        $GAS_LIMIT_FLAG \
+        $SKIP_SIMULATION_FLAG \
+        $LEGACY_FLAG \
+        $VERIFY_FLAG \
+        -vvv
     
     print_success "SettlementRouter deployed!"
     echo ""
@@ -445,8 +484,9 @@ if [ "$DEPLOY_MODE" = "showcase" ] || [ "$DEPLOY_MODE" = "referral" ] || [ "$DEP
         --sig "${DEPLOY_FUNCTION}(string)" "$ENV_PREFIX" \
         --rpc-url $RPC_URL \
         --broadcast \
-        $LEGACY_FLAG \
         $GAS_LIMIT_FLAG \
+        $SKIP_SIMULATION_FLAG \
+        $LEGACY_FLAG \
         $VERIFY_FLAG \
         -vv
     
@@ -480,8 +520,9 @@ if [ "$DEPLOY_MODE" = "hooks" ] || [ "$DEPLOY_MODE" = "transfer" ] || [ "$WITH_H
             --sig "run(address)" "$SETTLEMENT_ROUTER_ADDRESS" \
             --rpc-url $RPC_URL \
             --broadcast \
-            $LEGACY_FLAG \
             $GAS_LIMIT_FLAG \
+            $SKIP_SIMULATION_FLAG \
+            $LEGACY_FLAG \
             $VERIFY_FLAG \
             -vvv
         

@@ -122,6 +122,11 @@ contract SettlementRouter is ISettlementRouter, ReentrancyGuard {
 
             // Extract v, r, s from signature bytes
             // Signature format: 65 bytes = r (32 bytes) + s (32 bytes) + v (1 byte)
+            //
+            // Note: We accept bytes signature (not v,r,s params) for better DX:
+            // - JS libraries (ethers, viem, wagmi) return hex strings, not split components
+            // - Follows EIP-2612/EIP-712 pattern (industry standard)
+            // - Simpler interface (1 param vs 3), prevents ordering errors
             bytes32 r;
             bytes32 s;
             uint8 v;

@@ -32,7 +32,7 @@ interface IERC3009 {
     /**
      * @notice Transfer using authorization with separate signature components
      * @dev Authorization via EIP-712 signature, msg.sender doesn't need to be from address
-     *      This overload is used by some implementations like JPYC that expect v, r, s separately
+     *      This overload is used by implementations that expect v, r, s separately
      *
      * @param from Payer address
      * @param to Recipient address

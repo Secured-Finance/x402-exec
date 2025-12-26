@@ -50,7 +50,7 @@ contract MockUSDC is ERC20, IERC3009 {
         require(block.timestamp > validAfter, "Authorization not yet valid");
         require(block.timestamp < validBefore, "Authorization expired");
         require(!_usedNonces[from][nonce], "Authorization already used");
-        
+
         // Build message hash
         bytes32 structHash = keccak256(abi.encode(
             TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
@@ -61,19 +61,44 @@ contract MockUSDC is ERC20, IERC3009 {
             validBefore,
             nonce
         ));
-        
+
         bytes32 hash = keccak256(abi.encodePacked(
             "\x19\x01",
             DOMAIN_SEPARATOR,
             structHash
         ));
-        
+
         // Simplified signature verification: skip actual ECDSA verification in tests
         // In production environment, signature verification is needed here
-        
+
         // Mark nonce as used
         _usedNonces[from][nonce] = true;
-        
+
+        // Execute transfer
+        _transfer(from, to, value);
+    }
+
+    function transferWithAuthorization(
+        address from,
+        address to,
+        uint256 value,
+        uint256 validAfter,
+        uint256 validBefore,
+        bytes32 nonce,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external override {
+        require(block.timestamp > validAfter, "Authorization not yet valid");
+        require(block.timestamp < validBefore, "Authorization expired");
+        require(!_usedNonces[from][nonce], "Authorization already used");
+
+        // Simplified signature verification: skip actual ECDSA verification in tests
+        // In production environment, signature verification is needed here
+
+        // Mark nonce as used
+        _usedNonces[from][nonce] = true;
+
         // Execute transfer
         _transfer(from, to, value);
     }
