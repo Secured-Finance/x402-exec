@@ -18,7 +18,7 @@ import { generateSalt } from "./commitment.js";
  *
  * @example
  * ```typescript
- * import { addSettlementExtra, TransferHook, getNetworkConfig } from '@x402x/core';
+ * import { addSettlementExtra, TransferHook, getNetworkConfig } from '@secured-finance/x402-core';
  *
  * const baseRequirements = {
  *   scheme: 'exact',

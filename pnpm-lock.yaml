@@ -27,18 +27,18 @@ importers:
       '@radix-ui/react-tabs':
         specifier: ^1.1.13
         version: 1.1.13(@types/react-dom@18.3.7(@types/react@18.3.27))(@types/react@18.3.27)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@secured-finance/x402-client':
+        specifier: workspace:*
+        version: link:../../../typescript/packages/client
+      '@secured-finance/x402-core':
+        specifier: workspace:*
+        version: link:../../../typescript/packages/core
       '@tanstack/react-query':
         specifier: ^5.51.0
         version: 5.90.11(react@18.3.1)
       '@types/react-syntax-highlighter':
         specifier: ^15.5.13
         version: 15.5.13
-      '@x402x/client':
-        specifier: workspace:*
-        version: link:../../../typescript/packages/client
-      '@x402x/core':
-        specifier: workspace:*
-        version: link:../../../typescript/packages/core
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -109,10 +109,10 @@ importers:
       '@hono/node-server':
         specifier: ^1.12.0
         version: 1.19.6(hono@4.10.7)
-      '@x402x/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../../../typescript/packages/core
-      '@x402x/hono':
+      '@secured-finance/x402-hono':
         specifier: workspace:*
         version: link:../../../typescript/packages/hono
       dotenv:
@@ -179,12 +179,12 @@ importers:
       '@opentelemetry/semantic-conventions':
         specifier: ^1.25.0
         version: 1.38.0
+      '@secured-finance/x402-core':
+        specifier: workspace:*
+        version: link:../typescript/packages/core
       '@supabase/supabase-js':
         specifier: ^2.38.0
         version: 2.86.0(bufferutil@4.0.9)(utf-8-validate@5.0.10)
-      '@x402x/core':
-        specifier: workspace:*
-        version: link:../typescript/packages/core
       cors:
         specifier: ^2.8.5
         version: 2.8.5
@@ -276,7 +276,7 @@ importers:
 
   typescript/packages/client:
     dependencies:
-      '@x402x/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../core
       react:
@@ -347,12 +347,12 @@ importers:
 
   typescript/packages/express:
     dependencies:
+      '@secured-finance/x402-core':
+        specifier: workspace:*
+        version: link:../core
       '@solana/kit':
         specifier: ^2.3.0
         version: 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
-      '@x402x/core':
-        specifier: workspace:*
-        version: link:../core
       viem:
         specifier: 2.40.3
         version: 2.40.3(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.1.13)
@@ -390,7 +390,7 @@ importers:
 
   typescript/packages/fetch:
     dependencies:
-      '@x402x/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../core
       viem:
@@ -424,12 +424,12 @@ importers:
 
   typescript/packages/hono:
     dependencies:
+      '@secured-finance/x402-core':
+        specifier: workspace:*
+        version: link:../core
       '@solana/kit':
         specifier: ^2.3.0
         version: 2.3.0(fastestsmallesttextencoderdecoder@1.0.22)(typescript@5.9.3)(ws@8.18.3(bufferutil@4.0.9)(utf-8-validate@5.0.10))
-      '@x402x/core':
-        specifier: workspace:*
-        version: link:../core
       viem:
         specifier: 2.40.3
         version: 2.40.3(bufferutil@4.0.9)(typescript@5.9.3)(utf-8-validate@5.0.10)(zod@4.1.13)
@@ -464,10 +464,10 @@ importers:
 
   typescript/packages/react:
     dependencies:
-      '@x402x/core':
+      '@secured-finance/x402-core':
         specifier: workspace:*
         version: link:../core
-      '@x402x/fetch':
+      '@secured-finance/x402-fetch':
         specifier: workspace:*
         version: link:../fetch
     devDependencies:
@@ -688,6 +688,12 @@ importers:
       '@reown/appkit-adapter-wagmi':
         specifier: ^1.8.14
         version: 1.8.14(417aa62ce8f565a25c3cfe1ee88be0a9)
+      '@secured-finance/x402-client':
+        specifier: workspace:*
+        version: link:../../typescript/packages/client
+      '@secured-finance/x402-core':
+        specifier: workspace:*
+        version: link:../../typescript/packages/core
       '@tailwindcss/vite':
         specifier: ^4.1.16
         version: 4.1.17(vite@7.2.6(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.2)(tsx@4.21.0)(yaml@2.8.2))
@@ -700,12 +706,6 @@ importers:
       '@vercel/node':
         specifier: ^5.5.6
         version: 5.5.14(@swc/core@1.15.3(@swc/helpers@0.5.17))(rollup@4.53.3)
-      '@x402x/client':
-        specifier: workspace:*
-        version: link:../../typescript/packages/client
-      '@x402x/core':
-        specifier: workspace:*
-        version: link:../../typescript/packages/core
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1

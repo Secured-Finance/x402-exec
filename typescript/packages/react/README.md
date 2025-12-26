@@ -1,4 +1,4 @@
-# @x402x/react
+# @secured-finance/x402-react
 
 React hooks for the x402x settlement framework.
 
@@ -13,7 +13,7 @@ React hooks for the x402x settlement framework.
 ## Installation
 
 ```bash
-npm install @x402x/react @x402x/core
+npm install @secured-finance/x402-react @secured-finance/x402-core
 # Also install peer dependencies if not already installed
 npm install react wagmi viem
 ```
@@ -21,7 +21,7 @@ npm install react wagmi viem
 ## Quick Start
 
 ```typescript
-import { useX402Payment } from '@x402x/react';
+import { useX402Payment } from '@secured-finance/x402-react';
 import { WagmiProvider } from 'wagmi';
 
 function PaymentButton() {
@@ -194,7 +194,7 @@ function PaymentWithResult() {
 ### Full Example with Wagmi
 
 ```typescript
-import { useX402Payment } from '@x402x/react';
+import { useX402Payment } from '@secured-finance/x402-react';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { WagmiProvider, createConfig } from 'wagmi';
 import { baseSepolia } from 'wagmi/chains';
@@ -269,7 +269,7 @@ export default function App() {
 
 ## Related Packages
 
-- [`@x402x/core`](../core): Core utilities and types
+- [`@secured-finance/x402-core`](../core): Core utilities and types
 - [`x402`](https://github.com/coinbase/x402): Base x402 protocol
 
 ## License

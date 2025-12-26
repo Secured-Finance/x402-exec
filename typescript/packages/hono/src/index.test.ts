@@ -43,7 +43,7 @@ vi.mock("x402/types", async () => {
   };
 });
 
-vi.mock("@x402x/core", () => ({
+vi.mock("@secured-finance/x402-core", () => ({
   addSettlementExtra: vi.fn((requirements) => ({
     ...requirements,
     payTo: "0x32431D4511e061F1133520461B07eC42afF157D6",
