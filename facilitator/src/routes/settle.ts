@@ -10,14 +10,12 @@ import { Router, Request, Response } from "express";
 import type { RateLimitRequestHandler } from "express-rate-limit";
 import { settle } from "x402/facilitator";
 import {
-  PaymentRequirementsSchema,
   type PaymentRequirements,
   type PaymentPayload,
-  PaymentPayloadSchema,
-  SupportedEVMNetworks,
   type Signer,
   type X402Config,
 } from "x402/types";
+import { getSupportedNetworks } from "@secured-finance/x402-core";
 import { isSettlementMode, settleWithRouter } from "../settlement.js";
 import { getLogger, traced, recordMetric, recordHistogram } from "../telemetry.js";
 import type { PoolManager } from "../pool-manager.js";
@@ -98,8 +96,25 @@ export function createSettleRoutes(
   router.post("/settle", ...(middlewares as any), async (req: Request, res: Response) => {
     try {
       const body: SettleRequest = req.body;
-      const paymentRequirements = PaymentRequirementsSchema.parse(body.paymentRequirements);
-      const paymentPayload = PaymentPayloadSchema.parse(body.paymentPayload);
+      // Skip x402's strict schema validation for custom networks
+      // Validate manually that required fields exist
+      const paymentRequirements = body.paymentRequirements as PaymentRequirements;
+      const paymentPayload = body.paymentPayload as PaymentPayload;
+
+      // Validate required fields exist
+      if (!paymentRequirements?.network || !paymentRequirements?.asset) {
+        return res.status(400).json({
+          error: "Invalid request",
+          message: "Missing required fields in paymentRequirements (network, asset)",
+        });
+      }
+
+      if (!paymentPayload?.scheme || !paymentPayload?.payload) {
+        return res.status(400).json({
+          error: "Invalid request",
+          message: "Missing required fields in paymentPayload (scheme, payload)",
+        });
+      }
 
       // Extract payer address from payment payload for duplicate detection
       // For EVM exact scheme: paymentPayload.payload.authorization.from
@@ -141,8 +156,12 @@ export function createSettleRoutes(
           );
 
           // Ensure this is an EVM network (Settlement Router is EVM-only)
-          if (!SupportedEVMNetworks.includes(paymentRequirements.network)) {
-            throw new Error("Settlement Router mode is only supported on EVM networks");
+          // Allow custom networks from @secured-finance/x402-core (sepolia, filecoin-calibration)
+          const supportedNetworks = getSupportedNetworks();
+          if (!supportedNetworks.includes(paymentRequirements.network)) {
+            throw new Error(
+              `Settlement Router mode is only supported on EVM networks. Unsupported network: ${paymentRequirements.network}`,
+            );
           }
 
           try {
@@ -218,14 +237,17 @@ export function createSettleRoutes(
               });
             }
 
-            logger.info(
+            logger[response.success ? 'info' : 'warn'](
               {
                 transaction: response.transaction,
                 success: response.success,
                 payer: response.payer,
                 duration_ms: duration,
+                errorReason: response.errorReason,
               },
-              "SettlementRouter settlement successful",
+              response.success 
+                ? "SettlementRouter settlement successful"
+                : "SettlementRouter settlement FAILED (transaction reverted)",
             );
 
             // Return standard SettleResponse without gas metrics (internal use only)

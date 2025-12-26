@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: x402-facilitator
+    env: node
+    buildCommand: cd facilitator && pnpm install && pnpm run build
+    startCommand: cd facilitator && pnpm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+    healthCheckPath: /health
+
+
