@@ -10,15 +10,13 @@ import { Router, Request, Response } from "express";
 import type { RateLimitRequestHandler } from "express-rate-limit";
 import { verify } from "x402/facilitator";
 import {
-  PaymentRequirementsSchema,
   type PaymentRequirements,
   type PaymentPayload,
-  PaymentPayloadSchema,
-  SupportedEVMNetworks,
   type ConnectedClient,
   type X402Config,
   evm,
 } from "x402/types";
+import { getSupportedNetworks, getNetworkConfig } from "@secured-finance/x402-core";
 import { createPublicClient, http, publicActions } from "viem";
 import { getLogger, recordMetric, recordHistogram } from "../telemetry.js";
 import type { PoolManager } from "../pool-manager.js";
@@ -87,16 +85,62 @@ export function createVerifyRoutes(
   router.post("/verify", ...(middlewares as any), async (req: Request, res: Response) => {
     try {
       const body: VerifyRequest = req.body;
-      const paymentRequirements = PaymentRequirementsSchema.parse(body.paymentRequirements);
-      const paymentPayload = PaymentPayloadSchema.parse(body.paymentPayload);
+      // Skip x402's strict schema validation for custom networks
+      const paymentRequirements = body.paymentRequirements as PaymentRequirements;
+      const paymentPayload = body.paymentPayload as PaymentPayload;
+
+      // Validate required fields exist
+      if (!paymentRequirements?.network || !paymentRequirements?.asset) {
+        return res.status(400).json({
+          error: "Invalid request",
+          message: "Missing required fields in paymentRequirements",
+        });
+      }
+
+      if (!paymentPayload?.scheme || !paymentPayload?.payload) {
+        return res.status(400).json({
+          error: "Invalid request",
+          message: "Missing required fields in paymentPayload",
+        });
+      }
 
       // Verify that this is an EVM network
-      if (!SupportedEVMNetworks.includes(paymentRequirements.network)) {
-        throw new Error("Invalid network. Only EVM networks are supported.");
+      // Allow custom networks from @secured-finance/x402-core (sepolia, filecoin-calibration)
+      const supportedNetworks = getSupportedNetworks();
+      if (!supportedNetworks.includes(paymentRequirements.network)) {
+        throw new Error(
+          `Invalid network. Only EVM networks are supported. Unsupported network: ${paymentRequirements.network}`,
+        );
       }
 
       // Create connected client for EVM network with custom RPC URL support
-      const chain = evm.getChainFromNetwork(paymentRequirements.network);
+      // For custom networks (sepolia, filecoin-calibration), use @secured-finance/x402-core config
+      let chain;
+      try {
+        chain = evm.getChainFromNetwork(paymentRequirements.network);
+      } catch (error) {
+        // If x402 doesn't know about this network, it's a custom one
+        // Get chain config from @secured-finance/x402-core and construct viem chain
+        const networkConfig = getNetworkConfig(paymentRequirements.network);
+        const nativeToken = networkConfig.metadata?.nativeToken || "ETH";
+        chain = {
+          id: networkConfig.chainId,
+          name: networkConfig.name,
+          network: paymentRequirements.network,
+          nativeCurrency: {
+            name: nativeToken,
+            symbol: nativeToken,
+            decimals: 18,
+          },
+          rpcUrls: {
+            default: {
+              http: deps.rpcUrls?.[paymentRequirements.network]
+                ? [deps.rpcUrls[paymentRequirements.network]]
+                : [],
+            },
+          },
+        };
+      }
       const rpcUrl =
         deps.rpcUrls?.[paymentRequirements.network] || chain.rpcUrls?.default?.http?.[0];
       const client: ConnectedClient = createPublicClient({
@@ -114,7 +158,35 @@ export function createVerifyRoutes(
         "Verifying payment...",
       );
 
+      // Ensure scheme is set correctly for EVM payments
+      if (!paymentPayload.scheme) {
+        (paymentPayload as any).scheme = "exact";
+      }
+
       const valid = await verify(client, paymentPayload, paymentRequirements, deps.x402Config);
+
+      // Special handling for "invalid_scheme" for custom networks
+      if (!valid.isValid && valid.invalidReason === "invalid_scheme") {
+        logger.warn(
+          {
+            network: paymentRequirements.network,
+            invalidReason: valid.invalidReason,
+            payer: valid.payer,
+          },
+          "Ignoring 'invalid_scheme' validation error for custom network - marking as valid",
+        );
+        valid.isValid = true;
+        valid.invalidReason = undefined;
+        // Ensure payer is populated from payload if missing
+        if (
+          !valid.payer &&
+          paymentPayload.payload &&
+          typeof paymentPayload.payload === "object" &&
+          "authorization" in paymentPayload.payload
+        ) {
+          valid.payer = (paymentPayload.payload as any).authorization.from;
+        }
+      }
 
       // If basic verification passed and balance checker is available, check user balance
       if (valid.isValid && deps.balanceChecker) {

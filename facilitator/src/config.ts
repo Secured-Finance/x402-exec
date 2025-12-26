@@ -12,11 +12,15 @@
 import { config as loadEnv } from "dotenv";
 import type { X402Config } from "x402/types";
 import { evm } from "x402/types";
-import { getSupportedNetworks, getNetworkConfig, isNetworkSupported } from "@x402x/core";
+import {
+  getSupportedNetworks,
+  getNetworkConfig,
+  isNetworkSupported,
+} from "@secured-finance/x402-core";
 import type { GasCostConfig } from "./gas-cost.js";
 import type { DynamicGasPriceConfig } from "./dynamic-gas-price.js";
 import type { TokenPriceConfig } from "./token-price.js";
-import { baseSepolia, base } from "viem/chains";
+import { baseSepolia, base, sepolia } from "viem/chains";
 import type { Chain } from "viem";
 import { DEFAULTS } from "./defaults.js";
 
@@ -284,19 +288,37 @@ export function isStandardX402Allowed(network: string): boolean {
 function loadEvmPrivateKeys(): string[] {
   const keys: string[] = [];
 
-  // Load from EVM_PRIVATE_KEY_1, EVM_PRIVATE_KEY_2, etc.
-  for (let i = 1; i <= 100; i++) {
-    const key = process.env[`EVM_PRIVATE_KEY_${i}`];
-    if (key) {
-      keys.push(key);
-    } else {
-      break; // Stop at first missing key
+  // 1. Try comma-separated format (EVM_PRIVATE_KEYS)
+  const keysStr = process.env.EVM_PRIVATE_KEYS;
+  if (keysStr) {
+    const list = keysStr
+      .split(",")
+      .map((k) => k.trim())
+      .filter(Boolean);
+    keys.push(...list);
+  }
+
+  // 2. Load from EVM_PRIVATE_KEY_1, EVM_PRIVATE_KEY_2, etc. (if not found in list)
+  if (keys.length === 0) {
+    for (let i = 1; i <= 100; i++) {
+      const key = process.env[`EVM_PRIVATE_KEY_${i}`];
+      if (key) {
+        keys.push(key);
+      } else {
+        break; // Stop at first missing key
+      }
     }
   }
 
-  // Fallback to single EVM_PRIVATE_KEY
+  // 3. Fallback to single EVM_PRIVATE_KEY
   if (keys.length === 0 && process.env.EVM_PRIVATE_KEY) {
     keys.push(process.env.EVM_PRIVATE_KEY);
+  }
+
+  if (keys.length === 0) {
+    throw new Error(
+      "No EVM private keys configured. Set EVM_PRIVATE_KEYS, EVM_PRIVATE_KEY_*, or EVM_PRIVATE_KEY",
+    );
   }
 
   return keys;
@@ -394,13 +416,25 @@ function parseGasCostConfig(): GasCostConfig {
     } else {
       // Default prices (conservative estimates)
       // Check for most specific matches first
-      if (network.includes("x-layer")) {
+      if (network.includes("filecoin")) {
+        nativeTokenPrice[network] = 1.22; // FIL current price ~$1.22
+      } else if (network.includes("x-layer")) {
         nativeTokenPrice[network] = DEFAULTS.nativeTokenPrice.OKB;
       } else if (network.includes("base")) {
         nativeTokenPrice[network] = DEFAULTS.nativeTokenPrice.ETH;
       } else {
         nativeTokenPrice[network] = DEFAULTS.nativeTokenPrice.GENERIC;
       }
+    }
+  }
+
+  // Parse network-specific minimum gas limits
+  const networkMinGasLimit: Record<string, number> = {};
+  for (const network of supportedNetworks) {
+    const envVarName = `${network.toUpperCase().replace(/-/g, "_")}_MIN_GAS_LIMIT`;
+    const minGasLimit = process.env[envVarName];
+    if (minGasLimit) {
+      networkMinGasLimit[network] = parseInt(minGasLimit);
     }
   }
 
@@ -416,6 +450,7 @@ function parseGasCostConfig(): GasCostConfig {
       process.env.GAS_COST_DYNAMIC_GAS_LIMIT_MARGIN ||
         String(DEFAULTS.gasCost.DYNAMIC_GAS_LIMIT_MARGIN),
     ),
+    networkMinGasLimit,
 
     // Gas Overhead Configuration
     hookGasOverhead,
@@ -472,6 +507,7 @@ function parseDynamicGasPriceConfig(): DynamicGasPriceConfig {
     base: base,
     "x-layer-testnet": evm.xLayerTestnet,
     "x-layer": evm.xLayer,
+    sepolia: sepolia,
   };
 
   // Parse RPC URLs for each network
