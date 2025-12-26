@@ -28,7 +28,34 @@ interface IERC3009 {
         bytes32 nonce,
         bytes calldata signature
     ) external;
-    
+
+    /**
+     * @notice Transfer using authorization with separate signature components
+     * @dev Authorization via EIP-712 signature, msg.sender doesn't need to be from address
+     *      This overload is used by implementations that expect v, r, s separately
+     *
+     * @param from Payer address
+     * @param to Recipient address
+     * @param value Amount
+     * @param validAfter Valid after timestamp (0 means immediately)
+     * @param validBefore Expiration timestamp
+     * @param nonce Unique nonce (32 bytes, prevents replay)
+     * @param v v of the signature
+     * @param r r of the signature
+     * @param s s of the signature
+     */
+    function transferWithAuthorization(
+        address from,
+        address to,
+        uint256 value,
+        uint256 validAfter,
+        uint256 validBefore,
+        bytes32 nonce,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external;
+
     /**
      * @notice Cancel authorization
      * @param authorizer Authorizer address
