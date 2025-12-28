@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPublicClient, http, type Address } from "viem";
 import { NETWORKS, type Network } from "../config";
-import { getNetworkConfig } from "@x402x/core";
+import { getNetworkConfig } from "@secured-finance/x402-core";
 
 const NFT_ABI = [
   {
@@ -37,7 +37,9 @@ const NFT_ABI = [
 // Helper function to get NFT address from core config
 function getNFTAddress(network: string): string {
   try {
-    return getNetworkConfig(network).demoHooks?.randomNFT || "0x0000000000000000000000000000000000000000";
+    return (
+      getNetworkConfig(network).demoHooks?.randomNFT || "0x0000000000000000000000000000000000000000"
+    );
   } catch {
     return "0x0000000000000000000000000000000000000000";
   }
@@ -54,45 +56,21 @@ export interface NFTNetworkData {
 
 export function useAllNetworksNFTData() {
   const [data, setData] = useState<Record<Network, NFTNetworkData>>({
-    "base-sepolia": {
-      network: "base-sepolia",
+    sepolia: {
+      network: "sepolia",
       totalSupply: 0,
       maxSupply: 0,
       remainingSupply: 0,
-      loading: true,
-      error: null,
+      loading: false,
+      error: "NFT not available on this network",
     },
-    "x-layer-testnet": {
-      network: "x-layer-testnet",
+    "filecoin-calibration": {
+      network: "filecoin-calibration",
       totalSupply: 0,
       maxSupply: 0,
       remainingSupply: 0,
-      loading: true,
-      error: null,
-    },
-    "skale-base-sepolia": {
-      network: "skale-base-sepolia",
-      totalSupply: 0,
-      maxSupply: 0,
-      remainingSupply: 0,
-      loading: true,
-      error: null,
-    },
-    base: {
-      network: "base",
-      totalSupply: 0,
-      maxSupply: 0,
-      remainingSupply: 0,
-      loading: true,
-      error: null,
-    },
-    "x-layer": {
-      network: "x-layer",
-      totalSupply: 0,
-      maxSupply: 0,
-      remainingSupply: 0,
-      loading: true,
-      error: null,
+      loading: false,
+      error: "NFT not available on this network",
     },
   });
 

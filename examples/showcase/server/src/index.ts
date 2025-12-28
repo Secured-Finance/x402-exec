@@ -13,8 +13,8 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { cors } from "hono/cors";
-import { paymentMiddleware, type X402Context } from "@x402x/hono";
-import { getSupportedNetworks } from "@x402x/core";
+import { paymentMiddleware, type X402Context } from "@secured-finance/x402-hono";
+import { getSupportedNetworks } from "@secured-finance/x402-core";
 import { appConfig } from "./config.js";
 import * as premiumDownload from "./scenarios/premium-download.js";
 
@@ -38,6 +38,9 @@ app.use(
   cors({
     origin: "*",
     credentials: false,
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowHeaders: ["Content-Type", "X-PAYMENT"],
+    exposeHeaders: ["X-PAYMENT"],
   }),
 );
 
@@ -81,10 +84,19 @@ app.get("/api/premium-download/info", (c) => {
 
 app.post(
   "/api/purchase-download",
+  async (c, next) => {
+    // Debug: log X-PAYMENT header
+    const xPayment = c.req.header("X-PAYMENT");
+    console.log("[Debug] X-PAYMENT header:", xPayment ? "PRESENT" : "NOT FOUND");
+    if (xPayment) {
+      console.log("[Debug] X-PAYMENT length:", xPayment.length);
+    }
+    await next();
+  },
   paymentMiddleware(
     appConfig.resourceServerAddress,
     {
-      price: "$1.00", // 1.00 USD for digital content
+      price: "$1", // $1 USD → converts to network-specific token (JPYC on Sepolia, USDFC on Filecoin Calibration)
       network: getSupportedNetworks() as any,
       config: {
         description: "Premium Content Download: Purchase and download digital content",
@@ -192,7 +204,7 @@ app.get("/api/download/:contentId", async (c) => {
 
 // Start server
 const port = Number(process.env.PORT) || 3000;
-console.log(`🚀 x402-exec Showcase Server (Server Mode Only) starting on port ${port}`);
+console.log(`🚀 x402-exec Showcase Server starting on port ${port}`);
 console.log(`📍 Default network: ${appConfig.defaultNetwork}`);
 console.log(`🌐 Supported networks: ${getSupportedNetworks().join(", ")}`);
 console.log(`💰 Resource server address: ${appConfig.resourceServerAddress}`);

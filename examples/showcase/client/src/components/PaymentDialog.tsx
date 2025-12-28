@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
+import { getNetworkConfig } from "@secured-finance/x402-core";
 import { PaymentMethodSelector } from "./PaymentMethodSelector";
 import { WalletSelector } from "./WalletSelector";
 import { PaymentStatus } from "./PaymentStatus";
@@ -17,6 +18,7 @@ import {
   getNetworkByChainId,
   setPreferredNetwork,
   buildApiUrl,
+  formatAtomicAmount,
 } from "../config";
 
 type PaymentStep = "select-network" | "switch-network" | "confirm-payment" | "processing";
@@ -25,7 +27,6 @@ interface PaymentDialogProps {
   isOpen: boolean;
   onClose: () => void;
   amount: string;
-  currency: string;
   endpoint: string;
   requestBody?: any;
   getRequestBody?: (address: string) => any; // Dynamic request body generator
@@ -37,7 +38,6 @@ export function PaymentDialog({
   isOpen,
   onClose,
   amount,
-  currency,
   endpoint,
   requestBody,
   getRequestBody,
@@ -253,7 +253,7 @@ export function PaymentDialog({
           }}
         >
           <h2 style={{ margin: 0, fontSize: "20px", fontWeight: "bold" }}>
-            Pay {amount} {currency}
+            {selectedNetwork ? `Pay ${amount} ${NETWORKS[selectedNetwork].tokenSymbol}` : "Complete Payment"}
           </h2>
           {step !== "processing" && (
             <button
@@ -282,7 +282,6 @@ export function PaymentDialog({
           <div>
             <PaymentMethodSelector
               amount={amount}
-              currency={currency}
               balances={balances}
               selectedNetwork={selectedNetwork}
               onSelect={handleNetworkSelect}
@@ -367,12 +366,13 @@ export function PaymentDialog({
                         marginBottom: "8px",
                       }}
                     >
-                      <span>Business Amount:</span>
+                      <span>Payment Amount:</span>
                       <strong>
-                        {(parseFloat(paymentRequirements.extra.businessAmount) / 1000000).toFixed(
-                          6,
+                        {formatAtomicAmount(
+                          paymentRequirements.extra.businessAmount,
+                          selectedNetwork ? getNetworkConfig(selectedNetwork).defaultAsset.decimals : 6
                         )}{" "}
-                        {currency}
+                        {NETWORKS[selectedNetwork].tokenSymbol}
                       </strong>
                     </div>
                     {paymentRequirements?.extra?.facilitatorFee && (
@@ -385,10 +385,11 @@ export function PaymentDialog({
                       >
                         <span>Facilitator Fee:</span>
                         <strong>
-                          {(parseFloat(paymentRequirements.extra.facilitatorFee) / 1000000).toFixed(
-                            6,
+                          {formatAtomicAmount(
+                            paymentRequirements.extra.facilitatorFee,
+                            selectedNetwork ? getNetworkConfig(selectedNetwork).defaultAsset.decimals : 6
                           )}{" "}
-                          {currency}
+                          {NETWORKS[selectedNetwork].tokenSymbol}
                         </strong>
                       </div>
                     )}
@@ -404,8 +405,11 @@ export function PaymentDialog({
                         <strong>Total Amount:</strong>
                       </span>
                       <strong>
-                        {(parseFloat(paymentRequirements.maxAmountRequired) / 1000000).toFixed(6)}{" "}
-                        {currency}
+                        {formatAtomicAmount(
+                          paymentRequirements.maxAmountRequired,
+                          selectedNetwork ? getNetworkConfig(selectedNetwork).defaultAsset.decimals : 6
+                        )}{" "}
+                        {NETWORKS[selectedNetwork].tokenSymbol}
                       </strong>
                     </div>
                   </>
@@ -419,7 +423,7 @@ export function PaymentDialog({
                   >
                     <span>Amount:</span>
                     <strong>
-                      {amount} {currency}
+                      {amount} {NETWORKS[selectedNetwork].tokenSymbol}
                     </strong>
                   </div>
                 )}
@@ -454,7 +458,7 @@ export function PaymentDialog({
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span>Your Balance:</span>
                     <strong>
-                      {balances[selectedNetwork].balance} {currency}
+                      {balances[selectedNetwork].balance} {NETWORKS[selectedNetwork].tokenSymbol}
                     </strong>
                   </div>
                   {parseFloat(balances[selectedNetwork].balance) < parseFloat(amount) && (
@@ -466,7 +470,7 @@ export function PaymentDialog({
                         rel="noopener noreferrer"
                         style={{ marginLeft: "8px", color: "#721c24" }}
                       >
-                        Get test {currency}
+                        Get test {NETWORKS[selectedNetwork].tokenSymbol}
                       </a>
                     </div>
                   )}
@@ -570,7 +574,10 @@ export function PaymentDialog({
             {status === "error" && (
               <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
                 <button
-                  onClick={() => setStep("confirm-payment")}
+                  onClick={() => {
+                    reset(); // Clear error state from usePayment hook
+                    setStep("confirm-payment");
+                  }}
                   style={{
                     flex: 1,
                     padding: "12px",

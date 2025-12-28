@@ -1,6 +1,6 @@
 // @ts-nocheck
 // This file is for display purposes only and is not compiled
-import { wrapFetchWithPayment } from "@x402x/fetch";
+import { wrapFetchWithPayment } from "@secured-finance/x402-fetch";
 import { useWalletClient } from "wagmi";
 
 // 1. Create a payment-enabled fetch wrapper

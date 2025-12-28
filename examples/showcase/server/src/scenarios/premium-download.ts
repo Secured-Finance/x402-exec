@@ -8,7 +8,7 @@
  */
 
 import type { Address } from "viem";
-import { TransferHook } from "@x402x/core";
+import { TransferHook } from "@secured-finance/x402-core";
 
 export interface ContentItem {
   id: string;
@@ -43,7 +43,7 @@ const CONTENT_CATALOG: Record<string, ContentItem> = {
     description: "Official whitepaper of the x402 payment protocol",
     fileName: "x402-whitepaper.pdf",
     fileSize: "2.5 MB",
-    price: "$0.10",
+    price: "$1.00",
     mimeType: "application/pdf",
   },
 };
