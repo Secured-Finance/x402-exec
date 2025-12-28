@@ -124,6 +124,30 @@ export const networks: Record<string, NetworkConfig> = {
       nativeToken: "FIL",
     },
   },
+  "polygon-amoy": {
+    chainId: 80002,
+    name: "Polygon Amoy",
+    type: "testnet",
+    addressExplorerBaseUrl: "https://amoy.polygonscan.com/address/",
+    txExplorerBaseUrl: "https://amoy.polygonscan.com/tx/",
+    settlementRouter: "0x4f697ecbbb56f6748996b08d7bc09cdb9094fb9d",
+    defaultAsset: {
+      address: "0xe7c3d8c9a439fede00d2600032d5db0be71c3c29",
+      symbol: "JPYC",
+      decimals: 18,
+      eip712: {
+        name: "JPY Coin",
+        version: "1",
+      },
+    },
+    hooks: {
+      transfer: "0xCe05702Fb54b50F3FC038c68F33073fC098CbC2A",
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "POL",
+    },
+  },
   "skale-base-sepolia": {
     chainId: getNetworkId("skale-base-sepolia"),
     name: "SKALE Base Sepolia",
@@ -189,6 +213,78 @@ export const networks: Record<string, NetworkConfig> = {
     metadata: {
       gasModel: "eip1559",
       nativeToken: "OKB",
+    },
+  },
+  ethereum: {
+    chainId: 1,
+    name: "Ethereum Mainnet",
+    type: "mainnet",
+    addressExplorerBaseUrl: "https://etherscan.io/address/",
+    txExplorerBaseUrl: "https://etherscan.io/tx/",
+    settlementRouter: "0x0000000000000000000000000000000000000000", // TODO: Deploy SettlementRouter
+    defaultAsset: {
+      address: "0xe7c3d8c9a439fede00d2600032d5db0be71c3c29",
+      symbol: "JPYC",
+      decimals: 18,
+      eip712: {
+        name: "JPY Coin",
+        version: "1",
+      },
+    },
+    hooks: {
+      transfer: "0x0000000000000000000000000000000000000000", // TODO: Deploy TransferHook
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "ETH",
+    },
+  },
+  polygon: {
+    chainId: 137,
+    name: "Polygon Mainnet",
+    type: "mainnet",
+    addressExplorerBaseUrl: "https://polygonscan.com/address/",
+    txExplorerBaseUrl: "https://polygonscan.com/tx/",
+    settlementRouter: "0x0000000000000000000000000000000000000000", // TODO: Deploy SettlementRouter
+    defaultAsset: {
+      address: "0xe7c3d8c9a439fede00d2600032d5db0be71c3c29",
+      symbol: "JPYC",
+      decimals: 18,
+      eip712: {
+        name: "JPY Coin",
+        version: "1",
+      },
+    },
+    hooks: {
+      transfer: "0x0000000000000000000000000000000000000000", // TODO: Deploy TransferHook
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "POL",
+    },
+  },
+  filecoin: {
+    chainId: 314,
+    name: "Filecoin Mainnet",
+    type: "mainnet",
+    addressExplorerBaseUrl: "https://filfox.info/en/address/",
+    txExplorerBaseUrl: "https://filfox.info/en/message/",
+    settlementRouter: "0x0000000000000000000000000000000000000000", // TODO: Deploy SettlementRouter
+    defaultAsset: {
+      address: "0x80B98d3aa09ffff255c3ba4A241111Ff1262F045",
+      symbol: "USDFC",
+      decimals: 18,
+      eip712: {
+        name: "USD for Filecoin Community",
+        version: "1",
+      },
+    },
+    hooks: {
+      transfer: "0x0000000000000000000000000000000000000000", // TODO: Deploy TransferHook
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "FIL",
     },
   },
 };
