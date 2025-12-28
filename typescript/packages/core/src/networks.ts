@@ -16,6 +16,7 @@ function getDefaultAssetConfig(network: Network) {
   const defaultAsset = getDefaultAsset(network);
   return {
     address: defaultAsset.address as string,
+    symbol: "USDC", // All standard x402 networks use USDC
     decimals: defaultAsset.decimals,
     eip712: {
       name: defaultAsset.eip712.name,
@@ -73,6 +74,54 @@ export const networks: Record<string, NetworkConfig> = {
     metadata: {
       gasModel: "eip1559",
       nativeToken: "OKB",
+    },
+  },
+  sepolia: {
+    chainId: 11155111,
+    name: "Sepolia",
+    type: "testnet",
+    addressExplorerBaseUrl: "https://sepolia.etherscan.io/address/",
+    txExplorerBaseUrl: "https://sepolia.etherscan.io/tx/",
+    settlementRouter: "0x876308C01deCdbae46E353C81d869f102Ec1DFB3",
+    defaultAsset: {
+      address: "0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29",
+      symbol: "JPYC",
+      decimals: 18,
+      eip712: {
+        name: "JPY Coin",
+        version: "1",
+      },
+    },
+    hooks: {
+      transfer: "0x884B29Ee0BdDdFD262990f720D7387611a1be50c",
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "ETH",
+    },
+  },
+  "filecoin-calibration": {
+    chainId: 314159,
+    name: "Filecoin Calibration",
+    type: "testnet",
+    addressExplorerBaseUrl: "https://filecoin-testnet.blockscout.com/address/",
+    txExplorerBaseUrl: "https://filecoin-testnet.blockscout.com/tx/",
+    settlementRouter: "0xf9EF447517d15c503cfE3328b841441b878672A3",
+    defaultAsset: {
+      address: "0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0",
+      symbol: "USDFC",
+      decimals: 18,
+      eip712: {
+        name: "USD for Filecoin Community",
+        version: "1",
+      },
+    },
+    hooks: {
+      transfer: "0xcab270aD54C7ACc89F2545e4E29e1FDa2Ee0651f",
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "FIL",
     },
   },
   "skale-base-sepolia": {

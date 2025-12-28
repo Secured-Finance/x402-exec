@@ -2,24 +2,44 @@
  * Client configuration
  * Manages environment variables and runtime configuration
  *
- * This config maximizes reuse of x402 protocol definitions:
- * - Chain definitions from x402/types (xLayerTestnet, etc.)
- * - USDC addresses from x402 evm.config
- * - Explorer URLs from chain.blockExplorers
+ * Currently supports:
+ * - Sepolia (JPYC token with 18 decimals)
+ * - Filecoin Calibration (USDFC token with 18 decimals)
  *
  * Only UI-specific fields (icon, displayName, faucetUrl) are defined locally.
  */
 
 import { Chain } from "viem";
-import { evm } from "x402/types";
+import { sepolia } from "viem/chains";
 
-// Re-export chains from evm namespace
-const { xLayerTestnet, xLayer, skaleBaseSepolia } = evm;
+// Define Filecoin Calibration chain (not in viem/chains)
+const filecoinCalibration: Chain = {
+  id: 314159,
+  name: "Filecoin Calibration",
+  nativeCurrency: {
+    decimals: 18,
+    name: "Filecoin",
+    symbol: "FIL",
+  },
+  rpcUrls: {
+    default: {
+      http: ["https://api.calibration.node.glif.io/rpc/v1"],
+    },
+  },
+  blockExplorers: {
+    default: {
+      name: "Filecoin Calibration Explorer",
+      url: "https://filecoin-testnet.blockscout.com",
+    },
+  },
+  testnet: true,
+};
 
 /**
  * Supported network identifiers
+ * Currently only Sepolia (JPYC) and Filecoin Calibration (USDFC) are enabled
  */
-export type Network = "base-sepolia" | "x-layer-testnet" | "skale-base-sepolia" | "base" | "x-layer";
+export type Network = "sepolia" | "filecoin-calibration";
 
 /**
  * UI-specific network configuration
@@ -43,7 +63,9 @@ export interface NetworkConfig {
   icon: string;
   faucetUrl: string;
   explorerUrl: string;
-  usdcAddress: string;
+  tokenAddress: string; // Token contract address (USDC, JPYC, USDFC)
+  tokenSymbol: string; // Token symbol (USDC, JPYC, USDFC)
+  decimals: number; // Token decimals (6 for USDC, 18 for JPYC/USDFC)
 }
 
 /**
@@ -51,67 +73,63 @@ export interface NetworkConfig {
  * Only contains presentation-layer fields
  */
 export const NETWORK_UI_CONFIG: Record<string, NetworkUIConfig> = {
-  "base-sepolia": {
-    icon: "🔵",
-    displayName: "Base Sepolia",
-    faucetUrl: "https://faucet.circle.com/",
+  "sepolia": {
+    icon: "💴",
+    displayName: "Sepolia (JPYC)",
+    faucetUrl: "https://sepoliafaucet.com/",
   },
-  "x-layer-testnet": {
-    icon: "⭕",
-    displayName: "X Layer Testnet",
-    faucetUrl: "https://www.okx.com/xlayer/faucet",
-  },
-  "skale-base-sepolia": {
-    icon: "💎",
-    displayName: "SKALE Base Sepolia",
-    faucetUrl: "https://base-sepolia-faucet.skale.space",
-  },
-  base: {
-    icon: "🔵",
-    displayName: "Base Mainnet",
-    faucetUrl: "https://docs.base.org/docs/tools/bridge-funds/",
-  },
-  "x-layer": {
-    icon: "⭕",
-    displayName: "X Layer",
-    faucetUrl: "https://www.okx.com/xlayer/bridge",
-  },
+  "filecoin-calibration": {
+    icon: "🎞️",
+    displayName: "Filecoin Calibration (USDFC)",
+    faucetUrl: "https://faucet.calibration.fildev.network/",
+  }
 };
 
 /**
- * Get complete network configuration by combining x402 data with UI config
+ * Get complete network configuration by combining chain data with UI config
  * @param network Network identifier
  * @returns Complete network configuration
  */
 export function getNetworkConfig(network: Network): NetworkConfig {
-  const chain = evm.getChainFromNetwork(network) as Chain;
-  const chainConfig = evm.config[chain.id.toString()];
   const uiConfig = NETWORK_UI_CONFIG[network];
 
-  if (!chainConfig) {
-    throw new Error(`No chain config found for network: ${network} (chain ID: ${chain.id})`);
+  if (network === "sepolia") {
+    return {
+      chainId: sepolia.id,
+      name: network,
+      chain: sepolia,
+      displayName: uiConfig.displayName,
+      icon: uiConfig.icon,
+      faucetUrl: uiConfig.faucetUrl,
+      tokenAddress: "0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29", // JPYC address
+      tokenSymbol: "JPYC",
+      explorerUrl: sepolia.blockExplorers?.default.url || "",
+      decimals: 18, // JPYC has 18 decimals
+    };
   }
 
+  // filecoin-calibration
   return {
-    chainId: chain.id,
+    chainId: filecoinCalibration.id,
     name: network,
-    chain,
-    usdcAddress: chainConfig.usdcAddress as string,
-    explorerUrl: chain.blockExplorers?.default.url || "",
-    ...uiConfig,
+    chain: filecoinCalibration,
+    displayName: uiConfig.displayName,
+    icon: uiConfig.icon,
+    faucetUrl: uiConfig.faucetUrl,
+    tokenAddress: "0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0", // USDFC address
+    tokenSymbol: "USDFC",
+    explorerUrl: filecoinCalibration.blockExplorers?.default.url || "",
+    decimals: 18, // USDFC has 18 decimals
   };
 }
 
 /**
  * All supported networks configurations
- * Data sourced from x402, only UI fields are local
+ * Currently only Sepolia (JPYC) and Filecoin Calibration (USDFC) are enabled
  */
 export const NETWORKS: Record<Network, NetworkConfig> = {
-  "base-sepolia": getNetworkConfig("base-sepolia"),
-  "x-layer-testnet": getNetworkConfig("x-layer-testnet"),
-  "skale-base-sepolia": getNetworkConfig("skale-base-sepolia"),
-  base: getNetworkConfig("base"),
-  "x-layer": getNetworkConfig("x-layer"),
+  "sepolia": getNetworkConfig("sepolia"),
+  "filecoin-calibration": getNetworkConfig("filecoin-calibration"),
 };
 
 /**
@@ -158,7 +176,7 @@ export function getFacilitatorUrl(): string {
 
   // If no facilitator URL is set (undefined or empty string), use default
   if (!facilitatorUrl || facilitatorUrl.trim() === "") {
-    return "https://facilitator.x402x.dev";
+    return "https://x402-facilitator-production-57a2.up.railway.app";
   }
 
   // Remove trailing slash if present
@@ -184,10 +202,15 @@ export function getServerUrl(): string {
 
 /**
  * Build API endpoint URL
- * @param path - API path (e.g., '/api/health' or 'api/health')
+ * @param path - API path (e.g., '/api/health' or 'api/health') or full URL (e.g., 'http://localhost:3001/api/health')
  * @returns Full URL or relative path
  */
 export function buildApiUrl(path: string): string {
+  // If path is already a full URL, return it as-is
+  if (path.startsWith("http://") || path.startsWith("https://")) {
+    return path;
+  }
+
   const serverUrl = getServerUrl();
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
@@ -202,6 +225,37 @@ export const config = {
   networks: NETWORKS,
 };
 
+/**
+ * Format an atomic amount to a human-readable string
+ * Uses string manipulation to avoid JavaScript floating-point precision issues with large numbers
+ * 
+ * @param atomicAmount - Amount in smallest unit (e.g., "100000000000000000" for 0.1 with 18 decimals)
+ * @param decimals - Number of decimal places (e.g., 18 for JPYC/USDFC, 6 for USDC)
+ * @param displayDecimals - Number of decimal places to show (default: 2)
+ * @returns Formatted string (e.g., "1.00")
+ */
+export function formatAtomicAmount(
+  atomicAmount: string | undefined,
+  decimals: number,
+  displayDecimals: number = 2
+): string {
+  if (!atomicAmount || atomicAmount === "0") {
+    return "0." + "0".repeat(displayDecimals);
+  }
+
+  // Pad the string with leading zeros if needed
+  const paddedAmount = atomicAmount.padStart(decimals + 1, "0");
+  
+  // Split into integer and fractional parts
+  const integerPart = paddedAmount.slice(0, -decimals) || "0";
+  const fractionalPart = paddedAmount.slice(-decimals);
+  
+  // Combine and format to display decimals
+  const fullNumber = integerPart + "." + fractionalPart;
+  const parsed = parseFloat(fullNumber);
+  
+  return parsed.toFixed(displayDecimals);
+}
 
 // Re-export chains for wagmi config
-export { xLayerTestnet, xLayer, skaleBaseSepolia };
+export { sepolia, filecoinCalibration };

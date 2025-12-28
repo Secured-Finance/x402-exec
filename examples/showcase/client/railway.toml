@@ -1,0 +1,18 @@
+providers = ["node"]
+
+[phases.setup]
+nixPkgs = ['nodejs', 'pnpm']
+
+[phases.install]
+cmds = [
+  "pnpm install --frozen-lockfile"
+]
+
+[phases.build]
+cmds = [
+  "pnpm run build:client"
+]
+
+[start]
+cmd = "cd examples/showcase/client && npx serve -s dist -l ${PORT:-3000}"
+

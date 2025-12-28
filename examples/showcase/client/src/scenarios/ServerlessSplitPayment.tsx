@@ -10,7 +10,7 @@
 
 import { useState } from "react";
 import { useAccount } from "wagmi";
-import { TransferHook } from "@x402x/core";
+import { TransferHook, getNetworkConfig } from "@secured-finance/x402-core";
 import { ServerlessPaymentDialog } from "../components/ServerlessPaymentDialog";
 import { ScenarioCard } from "../components/ScenarioCard";
 import { PaymentButton } from "../components/PaymentButton";
@@ -514,7 +514,7 @@ export function ServerlessSplitPayment() {
               label: "Cost",
               value: paymentResult.facilitatorFee ? (
                 <strong>
-                  ${(parseFloat(paymentResult.facilitatorFee) / 1_000_000).toFixed(4)} facilitator
+                  ${(parseFloat(paymentResult.facilitatorFee) / Math.pow(10, getNetworkConfig(paymentResult.network).defaultAsset.decimals)).toFixed(2)} {getNetworkConfig(paymentResult.network).defaultAsset.symbol} facilitator
                   fee
                 </strong>
               ) : (

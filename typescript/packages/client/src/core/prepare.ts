@@ -6,8 +6,8 @@
  */
 
 import type { Address, Hex } from "viem";
-import { getNetworkConfig, calculateFacilitatorFee, type FeeCalculationResult } from "@x402x/core";
-import { calculateCommitment } from "@x402x/core";
+import { getNetworkConfig, calculateFacilitatorFee, type FeeCalculationResult } from "@secured-finance/x402-core";
+import { calculateCommitment } from "@secured-finance/x402-core";
 import type { PrepareParams, SettlementData } from "../types.js";
 import { NetworkError, ValidationError, FacilitatorError } from "../errors.js";
 import {
@@ -77,8 +77,8 @@ async function queryFacilitatorFee(
  *
  * @example
  * ```typescript
- * import { prepareSettlement } from '@x402x/client';
- * import { TransferHook, parseDefaultAssetAmount } from '@x402x/core';
+ * import { prepareSettlement } from '@secured-finance/x402-client';
+ * import { TransferHook, parseDefaultAssetAmount } from '@secured-finance/x402-core';
  *
  * // Convert USD amount to atomic units first
  * const atomicAmount = parseDefaultAssetAmount('1', 'base-sepolia'); // '1000000'

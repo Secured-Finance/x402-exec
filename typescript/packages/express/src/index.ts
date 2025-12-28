@@ -31,7 +31,7 @@ import {
   TransferHook,
   calculateFacilitatorFee,
   type FeeCalculationResult,
-} from "@x402x/core";
+} from "@secured-finance/x402-core";
 import type { Address } from "viem";
 import type { Address as SolanaAddress } from "@solana/kit";
 
@@ -143,7 +143,7 @@ export type X402xRoutesConfig = X402xRouteConfig | Record<string, X402xRouteConf
  * @example
  * ```typescript
  * import express from 'express';
- * import { paymentMiddleware } from '@x402x/express';
+ * import { paymentMiddleware } from '@secured-finance/x402-express';
  *
  * const app = express();
  *

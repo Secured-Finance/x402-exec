@@ -9,7 +9,6 @@ import "./PaymentMethodSelector.css";
 
 interface PaymentMethodSelectorProps {
   amount: string;
-  currency: string;
   balances: Record<Network, NetworkBalance>;
   selectedNetwork: Network | null;
   onSelect: (network: Network) => void;
@@ -20,7 +19,6 @@ interface PaymentMethodSelectorProps {
 
 export function PaymentMethodSelector({
   amount,
-  currency,
   balances,
   selectedNetwork,
   onSelect,
@@ -47,7 +45,7 @@ export function PaymentMethodSelector({
       <div className="selector-header">
         <h3>Choose Payment Network</h3>
         <p className="selector-description">
-          Select which network to use for paying {amount} {currency}
+          Select which network to use for your payment
         </p>
       </div>
 
@@ -101,7 +99,7 @@ export function PaymentMethodSelector({
                     <div className="balance-info">
                       <span className="balance-label">Balance:</span>
                       <span className="balance-value">
-                        {balance.balance} {currency}
+                        {balance.balance} {config.tokenSymbol}
                       </span>
                     </div>
 
@@ -115,7 +113,7 @@ export function PaymentMethodSelector({
                           onClick={(e) => e.stopPropagation()}
                           className="faucet-link"
                         >
-                          Get Test {currency}
+                          Get Test {config.tokenSymbol}
                         </a>
                       </div>
                     )}
@@ -139,7 +137,7 @@ export function PaymentMethodSelector({
                       className="faucet-link"
                       style={{ marginTop: "8px", display: "block" }}
                     >
-                      Get Test {currency} →
+                      Get Test {config.tokenSymbol} →
                     </a>
                   </div>
                 )}
@@ -154,7 +152,7 @@ export function PaymentMethodSelector({
           <p>
             You will pay{" "}
             <strong>
-              {amount} {currency}
+              {amount} {NETWORKS[selectedNetwork].tokenSymbol}
             </strong>{" "}
             on <strong>{NETWORKS[selectedNetwork].displayName}</strong>
           </p>
