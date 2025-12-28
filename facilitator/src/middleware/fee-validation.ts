@@ -1,9 +1,7 @@
 /**
  * Fee Validation Middleware
  *
- * Validates that facilitator fee meets minimum requirements.
- * - Testnets: Uses percentage-based validation (0.3% or $0.01 minimum)
- * - Mainnets: Uses gas cost-based validation
+ * Validates that facilitator fee meets minimum requirements using gas-based calculation.
  */
 
 import type { Request, Response, NextFunction } from "express";
@@ -14,7 +12,6 @@ import { calculateMinFacilitatorFee, type GasCostConfig } from "../gas-cost.js";
 import { isSettlementMode, validateTokenAddress } from "../settlement.js";
 import type { DynamicGasPriceConfig } from "../dynamic-gas-price.js";
 import type { TokenPriceConfig } from "../token-price.js";
-import { validateFee, getTokenSymbol } from "../fee-calculation.js";
 
 const logger = getLogger();
 
@@ -50,65 +47,6 @@ export function createFeeValidationMiddleware(
 
       const network = paymentRequirements.network;
       const asset = paymentRequirements.asset;
-
-      // For testnets, use percentage-based fee validation (0.3% or $0.01 min)
-      const isTestnet = network.includes("sepolia") || network.includes("testnet") || network.includes("calibration");
-      if (isTestnet) {
-        const extra = paymentRequirements.extra as Record<string, unknown> | undefined;
-        const facilitatorFee = extra?.facilitatorFee as string | undefined;
-        const maxAmountRequired = paymentRequirements.maxAmountRequired;
-        
-        if (facilitatorFee && maxAmountRequired) {
-          const networkConfig = getNetworkConfig(network);
-          const tokenDecimals = networkConfig.defaultAsset.decimals;
-          const tokenSymbol = getTokenSymbol(network);
-          
-          const feeAmount = BigInt(facilitatorFee);
-          const paymentAmount = BigInt(maxAmountRequired);
-          
-          // Validate using 0.3% or $0.01 minimum
-          const validation = validateFee(feeAmount, paymentAmount, tokenDecimals, tokenSymbol);
-          
-          if (validation.valid) {
-            logger.debug(
-              {
-                network,
-                facilitatorFee,
-                requiredFee: validation.requiredFee.toString(),
-                providedPercent: validation.providedFeePercent,
-                requiredPercent: validation.requiredFeePercent,
-                tokenSymbol,
-              },
-              "Testnet fee validation passed (percentage-based)"
-            );
-            return next();
-          }
-          
-          // Fee is below minimum - reject
-          logger.warn(
-            {
-              network,
-              facilitatorFee,
-              requiredFee: validation.requiredFee.toString(),
-              providedPercent: validation.providedFeePercent,
-              requiredPercent: validation.requiredFeePercent,
-              tokenSymbol,
-            },
-            "Testnet fee validation failed (below 0.3% / $0.01 minimum)"
-          );
-          
-          return res.status(400).json({
-            error: "Insufficient facilitator fee",
-            message: `Fee ${validation.providedFeePercent} is below minimum ${validation.requiredFeePercent} (0.3% or $0.01)`,
-            providedFee: facilitatorFee,
-            requiredFee: validation.requiredFee.toString(),
-            providedPercent: validation.providedFeePercent,
-            requiredPercent: validation.requiredFeePercent,
-          });
-        }
-        
-        return next();
-      }
 
       // Validate token address (only USDC is currently supported)
 
