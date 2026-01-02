@@ -6,16 +6,27 @@ solc_version = "0.8.20"
 optimizer = true
 optimizer_runs = 200
 via_ir = true
+evm_version = "paris"  # Compatible with Filecoin (no PUSH0 opcode)
 
 [rpc_endpoints]
-base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
+ethereum = "${ETHEREUM_RPC_URL}"
+sepolia = "${SEPOLIA_RPC_URL}"
 base = "${BASE_RPC_URL}"
-xlayer_testnet = "${X_LAYER_TESTNET_RPC_URL}"
+base_sepolia = "${BASE_SEPOLIA_RPC_URL}"
 xlayer = "${X_LAYER_RPC_URL}"
+xlayer_testnet = "${X_LAYER_TESTNET_RPC_URL}"
+polygon = "${POLYGON_RPC_URL}"
+polygon_amoy = "${POLYGON_AMOY_RPC_URL}"
+filecoin = "${FILECOIN_RPC_URL}"
+filecoin_calibration = "${FILECOIN_CALIBRATION_RPC_URL}"
 
 [etherscan]
-base_sepolia = { key = "${BASESCAN_API_KEY}" }
+ethereum = { key = "${ETHERSCAN_API_KEY}" }
+sepolia = { key = "${ETHERSCAN_API_KEY}" }
 base = { key = "${BASESCAN_API_KEY}" }
-xlayer_testnet = { key = "${OKLINK_API_KEY}", url = "https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/XLAYER_TESTNET" }
+base_sepolia = { key = "${BASESCAN_API_KEY}" }
 xlayer = { key = "${OKLINK_API_KEY}", url = "https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/XLAYER" }
+xlayer_testnet = { key = "${OKLINK_API_KEY}", url = "https://www.oklink.com/api/v5/explorer/contract/verify-source-code-plugin/XLAYER_TESTNET" }
+polygon = { key = "${POLYGONSCAN_API_KEY}" }
+polygon_amoy = { key = "${POLYGONSCAN_API_KEY}" }
 

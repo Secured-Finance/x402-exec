@@ -119,6 +119,27 @@ contract SettlementRouter is ISettlementRouter, ReentrancyGuard {
         if (!nonceAlreadyUsed) {
             // 7a. Normal flow: Call token.transferWithAuthorization
             // Note: signature verification and nonce check are done by token contract
+
+            // Extract v, r, s from signature bytes
+            // Signature format: 65 bytes = r (32 bytes) + s (32 bytes) + v (1 byte)
+            //
+            // Note: We accept bytes signature (not v,r,s params) for better DX:
+            // - JS libraries (ethers, viem, wagmi) return hex strings, not split components
+            // - Follows EIP-2612/EIP-712 pattern (industry standard)
+            // - Simpler interface (1 param vs 3), prevents ordering errors
+            bytes32 r;
+            bytes32 s;
+            uint8 v;
+
+            assembly {
+                // Load r (first 32 bytes)
+                r := calldataload(signature.offset)
+                // Load s (next 32 bytes)
+                s := calldataload(add(signature.offset, 32))
+                // Load v (last byte, at offset 64)
+                v := byte(0, calldataload(add(signature.offset, 64)))
+            }
+
             IERC3009(token).transferWithAuthorization(
                 from,
                 address(this),  // Funds enter Router first
@@ -126,7 +147,9 @@ contract SettlementRouter is ISettlementRouter, ReentrancyGuard {
                 validAfter,
                 validBefore,
                 nonce,
-                signature
+                v,  // Pass extracted v
+                r,  // Pass extracted r
+                s   // Pass extracted s
             );
             
             // 8. Verify balance increment (ensure transfer success)

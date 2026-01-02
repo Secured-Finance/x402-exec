@@ -53,7 +53,7 @@ contract MockUSDCWithSignatureValidation is ERC20, EIP712, IERC3009 {
         require(block.timestamp >= validAfter, "Authorization not yet valid");
         require(block.timestamp < validBefore, "Authorization expired");
         require(!_authorizationStates[from][nonce], "Authorization already used");
-        
+
         // Construct the digest
         bytes32 structHash = keccak256(abi.encode(
             TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
@@ -64,21 +64,62 @@ contract MockUSDCWithSignatureValidation is ERC20, EIP712, IERC3009 {
             validBefore,
             nonce
         ));
-        
+
         bytes32 digest = _hashTypedDataV4(structHash);
-        
+
         // Verify signature
         address signer = digest.recover(signature);
         require(signer == from, "Invalid signature");
-        
+
         // Mark authorization as used
         _authorizationStates[from][nonce] = true;
         emit AuthorizationUsed(from, nonce);
-        
+
         // Execute transfer
         _transfer(from, to, value);
     }
-    
+
+    /// @inheritdoc IERC3009
+    function transferWithAuthorization(
+        address from,
+        address to,
+        uint256 value,
+        uint256 validAfter,
+        uint256 validBefore,
+        bytes32 nonce,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) external {
+        require(block.timestamp >= validAfter, "Authorization not yet valid");
+        require(block.timestamp < validBefore, "Authorization expired");
+        require(!_authorizationStates[from][nonce], "Authorization already used");
+
+        // Construct the digest
+        bytes32 structHash = keccak256(abi.encode(
+            TRANSFER_WITH_AUTHORIZATION_TYPEHASH,
+            from,
+            to,
+            value,
+            validAfter,
+            validBefore,
+            nonce
+        ));
+
+        bytes32 digest = _hashTypedDataV4(structHash);
+
+        // Verify signature using v, r, s
+        address signer = ecrecover(digest, v, r, s);
+        require(signer == from, "Invalid signature");
+
+        // Mark authorization as used
+        _authorizationStates[from][nonce] = true;
+        emit AuthorizationUsed(from, nonce);
+
+        // Execute transfer
+        _transfer(from, to, value);
+    }
+
     /// @inheritdoc IERC3009
     function cancelAuthorization(
         address authorizer,
