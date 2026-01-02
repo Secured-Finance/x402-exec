@@ -239,7 +239,7 @@ get_default_rpc_url() {
             echo "https://eth.llamarpc.com"
             ;;
         sepolia)
-            echo "https://rpc.sepolia.org"
+            echo "https://ethereum-sepolia-rpc.publicnode.com"
             ;;
         base)
             echo "https://mainnet.base.org"
