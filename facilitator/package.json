@@ -34,7 +34,7 @@
     "settlement",
     "x402-exec"
   ],
-  "author": "Nuwa Protocol",
+  "author": "Secured Finance",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -64,7 +64,7 @@
     "pino-http": "^10.2.0",
     "pino-pretty": "^11.2.2",
     "viem": "2.40.3",
-    "x402": "npm:sf-x402x@^0.6.6-patch.4"
+    "x402": "npm:sf-x402x@^0.7.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",

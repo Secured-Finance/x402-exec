@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { validateTokenAddress } from "../../src/settlement.js";
-import { SettlementExtraError } from "@x402x/core";
+import { SettlementExtraError } from "@secured-finance/x402-core";
 
 describe("Token Address Validation", () => {
   describe("validateTokenAddress", () => {
