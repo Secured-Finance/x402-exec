@@ -33,7 +33,7 @@
     "payment",
     "settlement"
   ],
-  "author": "Nuwa Protocol",
+  "author": "Secured Finance",
   "license": "Apache-2.0",
   "dependencies": {
     "@secured-finance/x402-core": "workspace:*",
