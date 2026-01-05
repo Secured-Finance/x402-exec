@@ -17,8 +17,8 @@ export const GAS_COST_DEFAULTS = {
   /** Minimum gas limit to ensure transaction can execute */
   MIN_GAS_LIMIT: 150000,
 
-  /** Maximum gas limit per transaction (absolute safety cap for L2 chains) */
-  MAX_GAS_LIMIT: 5000000,
+  /** Maximum gas limit per transaction (absolute safety cap) */
+  MAX_GAS_LIMIT: 150000000, // 150M for FEVM support (Filecoin requires 50-100M gas for settlements)
 
   /** Profit margin reserved when calculating dynamic gas limit (0-1) */
   DYNAMIC_GAS_LIMIT_MARGIN: 0.2,
@@ -149,8 +149,8 @@ export const TOKEN_PRICE_DEFAULTS = {
  * Default native token prices (USD)
  */
 export const NATIVE_TOKEN_PRICE_DEFAULTS = {
-  /** ETH price for Base networks */
-  ETH: 3000,
+  /** ETH price for Base networks (use real price, not static) */
+  ETH: 3300, // Updated to current ETH price
 
   /** OKB price for X-Layer networks */
   OKB: 50,

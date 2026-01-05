@@ -7,7 +7,7 @@
 import { Router, Request, Response } from "express";
 import { getLogger, traced, recordMetric } from "../telemetry.js";
 import { calculateMinFacilitatorFee, type GasCostConfig } from "../gas-cost.js";
-import { getNetworkConfig } from "@x402x/core";
+import { getNetworkConfig, getSupportedNetworks } from "@secured-finance/x402-core";
 import type { DynamicGasPriceConfig } from "../dynamic-gas-price.js";
 import type { TokenPriceConfig } from "../token-price.js";
 import type { PoolManager } from "../pool-manager.js";
@@ -70,19 +70,22 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         });
       }
 
-      // Validate network is supported
+      // Validate network is supported and get config
+      let networkConfig;
       try {
-        getNetworkConfig(network);
+        networkConfig = getNetworkConfig(network);
       } catch (error) {
+        const supportedNetworks = getSupportedNetworks();
         return res.status(400).json({
           error: "Invalid network",
-          message: `Network '${network}' is not supported`,
+          message: `Network '${network}' is not supported. Supported networks: ${supportedNetworks.join(", ")}`,
           network,
+          supportedNetworks,
         });
       }
 
-      // Get token decimals (USDC has 6 decimals)
-      const tokenDecimals = 6;
+      // Get token decimals from network config
+      const tokenDecimals = networkConfig.defaultAsset.decimals;
 
       // Calculate minimum facilitator fee
       let feeCalculation;
@@ -135,8 +138,9 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         hookAllowed: String(feeCalculation.hookAllowed),
       });
 
-      // Get token info
-      const networkConfig = getNetworkConfig(network);
+      // Get token symbol from network config
+      // Type assertion needed - networkConfig from @secured-finance/x402-core has symbol but x402 types don't
+      const tokenSymbol = (networkConfig.defaultAsset as any).symbol;
 
       // Calculate fee validity period (60 seconds recommended)
       const validitySeconds = 60;
@@ -156,7 +160,7 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         validitySeconds,
         token: {
           address: networkConfig.defaultAsset.address,
-          symbol: "USDC",
+          symbol: tokenSymbol,
           decimals: tokenDecimals,
         },
         // Note: breakdown and prices removed to avoid exposing internal cost structure
@@ -208,10 +212,12 @@ export function createFeeRoutes(deps: FeeRouteDependencies): Router {
         try {
           getNetworkConfig(network);
         } catch {
+          const supportedNetworks = getSupportedNetworks();
           return res.status(400).json({
             error: "Invalid network",
-            message: `Network '${network}' is not supported`,
+            message: `Network '${network}' is not supported. Supported networks: ${supportedNetworks.join(", ")}`,
             network,
+            supportedNetworks,
           });
         }
       }

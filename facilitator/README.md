@@ -9,13 +9,13 @@
 Install via npm:
 
 ```bash
-npm install @x402x/facilitator
+npm install @secured-finance/x402-facilitator
 ```
 
 Or via pnpm:
 
 ```bash
-pnpm add @x402x/facilitator
+pnpm add @secured-finance/x402-facilitator
 ```
 
 ### As a Service
@@ -121,7 +121,7 @@ The facilitator automatically detects the settlement mode based on the presence 
 
 **Mainnet Note**: Mainnet networks are automatically supported through the SDK configuration. The facilitator will:
 
-- Auto-load SettlementRouter addresses from `@x402x/core`
+- Auto-load SettlementRouter addresses from `@secured-finance/x402-core`
 - Auto-load RPC URLs from viem chain definitions (or use environment variables if provided)
 - Apply mainnet security policies (only SettlementRouter mode allowed)
 
@@ -222,7 +222,7 @@ The server will start on http://localhost:3000 (or the port specified in your `.
 
 **For Serverless Mode (Client-Side SDK)**
 
-The facilitator now supports direct client-side access through the `@x402x/client` SDK. CORS (Cross-Origin Resource Sharing) must be properly configured:
+The facilitator now supports direct client-side access through the `@secured-finance/x402-client` SDK. CORS (Cross-Origin Resource Sharing) must be properly configured:
 
 #### Development
 
@@ -940,7 +940,7 @@ The facilitator includes production-grade security features:
 BASE_SEPOLIA_SETTLEMENT_ROUTER_ADDRESS=0x32431D4511e061F1133520461B07eC42afF157D6
 X_LAYER_TESTNET_SETTLEMENT_ROUTER_ADDRESS=0x8FbB2f214b3b3907BB733e77fa2cAaC16ddCe82e
 
-# Fallback: Uses addresses from @x402x/core if not specified
+# Fallback: Uses addresses from @secured-finance/x402-core if not specified
 ```
 
 **How it works:**

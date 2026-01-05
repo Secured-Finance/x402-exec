@@ -19,7 +19,7 @@ import {
   parseSettlementExtra as parseSettlementExtraCore,
   getNetworkConfig,
   calculateCommitment,
-} from "@x402x/core";
+} from "@secured-finance/x402-core";
 import type { Address, Hex } from "viem";
 import { parseErc6492Signature } from "viem/utils";
 import { getLogger } from "./telemetry.js";
@@ -34,7 +34,7 @@ const logger = getLogger();
 /**
  * Check if a payment request requires SettlementRouter mode
  *
- * Re-exported from @x402x/core for convenience.
+ * Re-exported from @secured-finance/x402-core for convenience.
  *
  * @param paymentRequirements - The payment requirements from the 402 response
  * @returns True if settlement mode is required (extra.settlementRouter exists)
@@ -107,28 +107,34 @@ export function validateSettlementRouter(
  */
 export function validateTokenAddress(network: string, tokenAddress: string): void {
   const networkConfig = getNetworkConfig(network);
-  const expectedUsdcAddress = networkConfig.defaultAsset.address.toLowerCase();
-  const actualTokenAddress = tokenAddress.toLowerCase();
-
-  if (actualTokenAddress !== expectedUsdcAddress) {
+  
+  // Check if token is in supportedAssets
+  const isValid = networkConfig.supportedAssets.some(
+    (asset) => asset.address.toLowerCase() === tokenAddress.toLowerCase(),
+  );
+  
+  if (!isValid) {
     logger.error(
       {
         network,
         providedToken: tokenAddress,
-        expectedToken: networkConfig.defaultAsset.address,
+        supportedTokens: networkConfig.supportedAssets.map((a) => a.symbol),
       },
       "Unsupported token address detected in settlement",
     );
     throw new SettlementExtraError(
-      `Only USDC is currently supported for settlement on ${network}. ` +
-        `Expected: ${networkConfig.defaultAsset.address}, Got: ${tokenAddress}`,
+      `Token ${tokenAddress} is not supported on network ${network}. ` +
+        `Supported tokens: ${networkConfig.supportedAssets.map((a) => a.symbol).join(", ")}`,
     );
   }
 
   logger.debug(
     {
       network,
-      tokenAddress: networkConfig.defaultAsset.address,
+      tokenAddress,
+      tokenSymbol: networkConfig.supportedAssets.find(
+        (a) => a.address.toLowerCase() === tokenAddress.toLowerCase(),
+      )?.symbol,
     },
     "Token address validated",
   );
@@ -137,7 +143,7 @@ export function validateTokenAddress(network: string, tokenAddress: string): voi
 /**
  * Parse and validate settlement extra parameters
  *
- * Uses @x402x/core's parseSettlementExtra for validation.
+ * Uses @secured-finance/x402-core's parseSettlementExtra for validation.
  *
  * @param extra - Extra field from PaymentRequirements
  * @returns Parsed settlement extra parameters
@@ -377,6 +383,7 @@ export async function settleWithRouter(
 
         // Calculate effective gas limit with triple constraints
         const calculatedLimit = calculateEffectiveGasLimit(
+          network,
           extra.facilitatorFee,
           gasPrice,
           nativePrice,
