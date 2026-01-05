@@ -29,6 +29,7 @@ import { useFacilitator } from "x402/verify";
 import {
   addSettlementExtra,
   getNetworkConfig,
+  getAssetBySymbol,
   TransferHook,
   calculateFacilitatorFee,
   type FeeCalculationResult,
@@ -86,6 +87,9 @@ export interface X402xRouteConfig {
 
   /** Network(s) to support - can be a single network or array for multi-network support */
   network: Network | Network[];
+
+  /** Token symbol to accept (e.g., 'USDC', 'JPYC') - defaults to network's default asset */
+  token?: string;
 
   /** Hook address - defaults to TransferHook for the network */
   hook?: string | ((network: Network) => string);
@@ -259,6 +263,7 @@ export function paymentMiddleware(
     const {
       price,
       network: networkConfig,
+      token,
       hook,
       hookData,
       facilitatorFee,
@@ -316,10 +321,27 @@ export function paymentMiddleware(
         if ("error" in atomicAmountForAsset) {
           throw new Error(atomicAmountForAsset.error);
         }
-        const { maxAmountRequired: baseAmount, asset } = atomicAmountForAsset;
+        const { maxAmountRequired: baseAmount, asset: defaultAsset } = atomicAmountForAsset;
 
         const resourceUrl: Resource = resource || (c.req.url as Resource);
         const x402xConfig = getNetworkConfig(network);
+
+        // Resolve asset from token symbol if provided, otherwise use default
+        let asset = defaultAsset;
+        if (token) {
+          const assetConfig = getAssetBySymbol(network, token);
+          if (!assetConfig) {
+            throw new Error(
+              `Token '${token}' is not supported on network '${network}'. ` +
+                `Supported tokens: ${x402xConfig.supportedAssets.map((a) => a.symbol).join(", ")}`,
+            );
+          }
+          asset = {
+            address: assetConfig.address as Address,
+            decimals: assetConfig.decimals,
+            eip712: assetConfig.eip712,
+          };
+        }
 
         // Resolve hook and hookData (support function or string)
         const resolvedHook =

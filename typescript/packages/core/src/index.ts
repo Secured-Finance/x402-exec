@@ -26,6 +26,7 @@
 
 // Export types
 export type {
+  AssetConfig,
   CommitmentParams,
   NetworkConfig,
   SettlementExtra,
@@ -47,6 +48,9 @@ export {
   getNetworkConfig,
   isNetworkSupported,
   getSupportedNetworks,
+  getSupportedAssets,
+  getAssetBySymbol,
+  validateAsset,
 } from "./networks.js";
 
 // Export builtin hooks

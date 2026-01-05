@@ -45,10 +45,17 @@ export interface ExecuteParams {
   /** Optional: Encoded hook data (defaults to "0x" for no hook data) */
   hookData?: Hex;
   /**
+   * Optional: Token symbol (e.g., 'USDC', 'JPYC') - developer specifies which token to use.
+   * If not provided, uses the default asset for the network.
+   * Mutually exclusive with `asset` address parameter.
+   */
+  token?: string;
+  /**
    * Optional: Asset contract address (ERC-3009 token, defaults to network's default asset).
    *
    * If not provided, uses the default asset for the network (typically USDC).
    * Must be a valid ERC-3009 compatible token address.
+   * Mutually exclusive with `token` symbol parameter.
    */
   asset?: Address;
   /**
@@ -141,10 +148,17 @@ export interface PrepareParams {
   /** Encoded hook data */
   hookData: Hex;
   /**
+   * Optional: Token symbol (e.g., 'USDC', 'JPYC') - developer specifies which token to use.
+   * If not provided, uses the default asset for the network.
+   * Mutually exclusive with `asset` address parameter.
+   */
+  token?: string;
+  /**
    * Optional: Asset contract address (ERC-3009 token, defaults to network's default asset).
    *
    * If not provided, uses the default asset for the network (typically USDC).
    * Must be a valid ERC-3009 compatible token address.
+   * Mutually exclusive with `token` symbol parameter.
    */
   asset?: Address;
   /**

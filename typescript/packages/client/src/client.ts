@@ -164,6 +164,7 @@ export class X402Client {
       network: this.config.network,
       hook,
       hookData,
+      token: params.token,
       asset: params.asset,
       amount: params.amount,
       payTo,

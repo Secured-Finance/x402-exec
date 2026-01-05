@@ -6,7 +6,7 @@
  */
 
 import type { Address, Hex } from "viem";
-import { getNetworkConfig, calculateFacilitatorFee, type FeeCalculationResult } from "@secured-finance/x402-core";
+import { getNetworkConfig, getAssetBySymbol, calculateFacilitatorFee, type FeeCalculationResult } from "@secured-finance/x402-core";
 import { calculateCommitment } from "@secured-finance/x402-core";
 import type { PrepareParams, SettlementData } from "../types.js";
 import { NetworkError, ValidationError, FacilitatorError } from "../errors.js";
@@ -122,8 +122,25 @@ export async function prepareSettlement(params: PrepareParams): Promise<Settleme
     );
   }
 
-  // 4. Determine asset address (use provided asset or default asset)
-  const asset = params.asset || (networkConfig.defaultAsset.address as Address);
+  // 4. Determine asset address (use token symbol, provided asset, or default asset)
+  let asset: Address;
+  if (params.token) {
+    // Resolve token symbol to address
+    const assetConfig = getAssetBySymbol(params.network, params.token);
+    if (!assetConfig) {
+      throw new ValidationError(
+        `Token '${params.token}' is not supported on network '${params.network}'. ` +
+          `Supported tokens: ${networkConfig.supportedAssets.map((a) => a.symbol).join(", ")}`,
+      );
+    }
+    asset = assetConfig.address as Address;
+  } else if (params.asset) {
+    // Direct address provided (backward compatible)
+    asset = params.asset;
+  } else {
+    // Use default asset (backward compatible)
+    asset = networkConfig.defaultAsset.address as Address;
+  }
   validateAddress(asset, "asset");
 
   // 5. Generate salt (if not provided)
