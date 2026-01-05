@@ -107,28 +107,34 @@ export function validateSettlementRouter(
  */
 export function validateTokenAddress(network: string, tokenAddress: string): void {
   const networkConfig = getNetworkConfig(network);
-  const expectedUsdcAddress = networkConfig.defaultAsset.address.toLowerCase();
-  const actualTokenAddress = tokenAddress.toLowerCase();
-
-  if (actualTokenAddress !== expectedUsdcAddress) {
+  
+  // Check if token is in supportedAssets
+  const isValid = networkConfig.supportedAssets.some(
+    (asset) => asset.address.toLowerCase() === tokenAddress.toLowerCase(),
+  );
+  
+  if (!isValid) {
     logger.error(
       {
         network,
         providedToken: tokenAddress,
-        expectedToken: networkConfig.defaultAsset.address,
+        supportedTokens: networkConfig.supportedAssets.map((a) => a.symbol),
       },
       "Unsupported token address detected in settlement",
     );
     throw new SettlementExtraError(
-      `Only USDC is currently supported for settlement on ${network}. ` +
-        `Expected: ${networkConfig.defaultAsset.address}, Got: ${tokenAddress}`,
+      `Token ${tokenAddress} is not supported on network ${network}. ` +
+        `Supported tokens: ${networkConfig.supportedAssets.map((a) => a.symbol).join(", ")}`,
     );
   }
 
   logger.debug(
     {
       network,
-      tokenAddress: networkConfig.defaultAsset.address,
+      tokenAddress,
+      tokenSymbol: networkConfig.supportedAssets.find(
+        (a) => a.address.toLowerCase() === tokenAddress.toLowerCase(),
+      )?.symbol,
     },
     "Token address validated",
   );
