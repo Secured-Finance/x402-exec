@@ -1,5 +1,5 @@
 /**
- * @x402x/core
+ * @secured-finance/x402-core
  *
  * Core utilities for x402x settlement framework
  *
@@ -11,7 +11,7 @@
  *   getNetworkConfig,
  *   TransferHook,
  *   addSettlementExtra
- * } from '@x402x/core';
+ * } from '@secured-finance/x402-core';
  *
  * // Generate payment requirements with settlement extension
  * const config = getNetworkConfig('base-sepolia');
@@ -26,6 +26,7 @@
 
 // Export types
 export type {
+  AssetConfig,
   CommitmentParams,
   NetworkConfig,
   SettlementExtra,
@@ -47,6 +48,9 @@ export {
   getNetworkConfig,
   isNetworkSupported,
   getSupportedNetworks,
+  getSupportedAssets,
+  getAssetBySymbol,
+  validateAsset,
 } from "./networks.js";
 
 // Export builtin hooks

@@ -1,6 +1,6 @@
 {
-  "name": "@x402x/hono",
-  "version": "0.3.0",
+  "name": "@secured-finance/x402-hono",
+  "version": "0.3.3",
   "description": "Hono middleware for x402x settlement framework",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -33,13 +33,13 @@
     "payment",
     "settlement"
   ],
-  "author": "Nuwa Protocol",
+  "author": "Secured Finance",
   "license": "Apache-2.0",
   "dependencies": {
     "@solana/kit": "^2.3.0",
-    "@x402x/core": "workspace:*",
+    "@secured-finance/x402-core": "workspace:*",
     "viem": "2.40.3",
-    "x402": "npm:@x402x/x402@^0.6.6-patch.3"
+    "x402": "npm:sf-x402x@^0.7.2"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

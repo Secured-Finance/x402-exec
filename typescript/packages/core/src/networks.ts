@@ -6,8 +6,9 @@
  */
 
 import { getDefaultAsset, getNetworkId } from "x402/shared";
+import { getUsdcChainConfigForChain } from "x402/shared/evm";
 import type { Network } from "x402/types";
-import type { NetworkConfig } from "./types.js";
+import type { AssetConfig, NetworkConfig } from "./types.js";
 
 /**
  * Helper to get default asset config from x402
@@ -16,12 +17,70 @@ function getDefaultAssetConfig(network: Network) {
   const defaultAsset = getDefaultAsset(network);
   return {
     address: defaultAsset.address as string,
+    symbol: "USDC", // All standard x402 networks use USDC
     decimals: defaultAsset.decimals,
     eip712: {
       name: defaultAsset.eip712.name,
       version: defaultAsset.eip712.version,
     },
   };
+}
+
+/**
+ * Helper to get supported assets for a network
+ */
+function getSupportedAssetsConfig(network: Network): AssetConfig[] {
+  const chainId = getNetworkId(network);
+  const chainConfig = getUsdcChainConfigForChain(chainId);
+
+  if (!chainConfig) {
+    // Fallback to default asset only
+    const defaultAsset = getDefaultAsset(network);
+    return [
+      {
+        address: defaultAsset.address as string,
+        symbol: "USDC",
+        name: "USD Coin",
+        decimals: defaultAsset.decimals,
+        isDefault: true,
+        eip712: {
+          name: defaultAsset.eip712.name,
+          version: defaultAsset.eip712.version,
+        },
+      },
+    ];
+  }
+
+  // If supportedTokens is available, use it
+  if (chainConfig.supportedTokens && chainConfig.supportedTokens.length > 0) {
+    return chainConfig.supportedTokens.map((token) => ({
+      address: token.address as string,
+      symbol: token.symbol,
+      name: token.name,
+      decimals: token.decimals,
+      isDefault: token.isDefault ?? false,
+      eip712: {
+        name: token.name,
+        version: "2",
+      },
+    }));
+  }
+
+  // Fallback: create single asset from default
+  const defaultAsset = getDefaultAsset(network);
+  return [
+    {
+      address: defaultAsset.address as string,
+      symbol: chainConfig.usdcName,
+      name: chainConfig.usdcName,
+      decimals: defaultAsset.decimals,
+      isDefault: true,
+      eip712: {
+        name: defaultAsset.eip712.name,
+        version: defaultAsset.eip712.version,
+      },
+    },
+  ];
 }
 
 /**
@@ -39,6 +98,7 @@ export const networks: Record<string, NetworkConfig> = {
     txExplorerBaseUrl: "https://sepolia.basescan.org/tx/",
     settlementRouter: "0x817e4f0ee2fbdaac426f1178e149f7dc98873ecb",
     defaultAsset: getDefaultAssetConfig("base-sepolia"),
+    supportedAssets: getSupportedAssetsConfig("base-sepolia"),
     hooks: {
       transfer: "0x4DE234059C6CcC94B8fE1eb1BD24804794083569",
     },
@@ -61,6 +121,7 @@ export const networks: Record<string, NetworkConfig> = {
     txExplorerBaseUrl: "https://www.oklink.com/xlayer-test/tx/",
     settlementRouter: "0xba9980fb08771e2fd10c17450f52d39bcb9ed576",
     defaultAsset: getDefaultAssetConfig("x-layer-testnet"),
+    supportedAssets: getSupportedAssetsConfig("x-layer-testnet"),
     hooks: {
       transfer: "0xD4b98dd614c1Ea472fC4547a5d2B93f3D3637BEE",
     },
@@ -75,6 +136,81 @@ export const networks: Record<string, NetworkConfig> = {
       nativeToken: "OKB",
     },
   },
+  sepolia: {
+    chainId: 11155111,
+    name: "Sepolia",
+    type: "testnet",
+    addressExplorerBaseUrl: "https://sepolia.etherscan.io/address/",
+    txExplorerBaseUrl: "https://sepolia.etherscan.io/tx/",
+    settlementRouter: "0x876308C01deCdbae46E353C81d869f102Ec1DFB3",
+    defaultAsset: {
+      address: "0xE7C3D8C9a439feDe00D2600032D5dB0Be71C3c29",
+      symbol: "JPYC",
+      decimals: 18,
+      eip712: {
+        name: "JPY Coin",
+        version: "1",
+      },
+    },
+    supportedAssets: getSupportedAssetsConfig("sepolia"),
+    hooks: {
+      transfer: "0x884B29Ee0BdDdFD262990f720D7387611a1be50c",
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "ETH",
+    },
+  },
+  "filecoin-calibration": {
+    chainId: 314159,
+    name: "Filecoin Calibration",
+    type: "testnet",
+    addressExplorerBaseUrl: "https://filecoin-testnet.blockscout.com/address/",
+    txExplorerBaseUrl: "https://filecoin-testnet.blockscout.com/tx/",
+    settlementRouter: "0xf9EF447517d15c503cfE3328b841441b878672A3",
+    defaultAsset: {
+      address: "0xb3042734b608a1B16e9e86B374A3f3e389B4cDf0",
+      symbol: "USDFC",
+      decimals: 18,
+      eip712: {
+        name: "USD for Filecoin Community",
+        version: "1",
+      },
+    },
+    supportedAssets: getSupportedAssetsConfig("filecoin-calibration"),
+    hooks: {
+      transfer: "0xcab270aD54C7ACc89F2545e4E29e1FDa2Ee0651f",
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "FIL",
+    },
+  },
+  "polygon-amoy": {
+    chainId: 80002,
+    name: "Polygon Amoy",
+    type: "testnet",
+    addressExplorerBaseUrl: "https://amoy.polygonscan.com/address/",
+    txExplorerBaseUrl: "https://amoy.polygonscan.com/tx/",
+    settlementRouter: "0x4f697ecbbb56f6748996b08d7bc09cdb9094fb9d",
+    defaultAsset: {
+      address: "0xe7c3d8c9a439fede00d2600032d5db0be71c3c29",
+      symbol: "JPYC",
+      decimals: 18,
+      eip712: {
+        name: "JPY Coin",
+        version: "1",
+      },
+    },
+    supportedAssets: getSupportedAssetsConfig("polygon-amoy"),
+    hooks: {
+      transfer: "0xCe05702Fb54b50F3FC038c68F33073fC098CbC2A",
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "POL",
+    },
+  },
   "skale-base-sepolia": {
     chainId: getNetworkId("skale-base-sepolia"),
     name: "SKALE Base Sepolia",
@@ -83,6 +219,7 @@ export const networks: Record<string, NetworkConfig> = {
     txExplorerBaseUrl: "https://base-sepolia-testnet-explorer.skalenodes.com/tx/",
     settlementRouter: "0x1Ae0E196dC18355aF3a19985faf67354213F833D",
     defaultAsset: getDefaultAssetConfig("skale-base-sepolia"),
+    supportedAssets: getSupportedAssetsConfig("skale-base-sepolia"),
     hooks: {
       transfer: "0x2f05fe5674aE756E25C26855258B4877E9e021Fd",
     },
@@ -106,6 +243,7 @@ export const networks: Record<string, NetworkConfig> = {
     txExplorerBaseUrl: "https://basescan.org/tx/",
     settlementRouter: "0x73fc659Cd5494E69852bE8D9D23FE05Aab14b29B",
     defaultAsset: getDefaultAssetConfig("base"),
+    supportedAssets: getSupportedAssetsConfig("base"),
     hooks: {
       transfer: "0x081258287F692D61575387ee2a4075f34dd7Aef7",
     },
@@ -128,6 +266,7 @@ export const networks: Record<string, NetworkConfig> = {
     txExplorerBaseUrl: "https://www.oklink.com/xlayer/tx/",
     settlementRouter: "0x73fc659Cd5494E69852bE8D9D23FE05Aab14b29B",
     defaultAsset: getDefaultAssetConfig("x-layer"),
+    supportedAssets: getSupportedAssetsConfig("x-layer"),
     hooks: {
       transfer: "0x081258287F692D61575387ee2a4075f34dd7Aef7",
     },
@@ -142,7 +281,140 @@ export const networks: Record<string, NetworkConfig> = {
       nativeToken: "OKB",
     },
   },
+  ethereum: {
+    chainId: 1,
+    name: "Ethereum Mainnet",
+    type: "mainnet",
+    addressExplorerBaseUrl: "https://etherscan.io/address/",
+    txExplorerBaseUrl: "https://etherscan.io/tx/",
+    settlementRouter: "0x0000000000000000000000000000000000000000", // TODO: Deploy SettlementRouter
+    defaultAsset: {
+      address: "0xe7c3d8c9a439fede00d2600032d5db0be71c3c29",
+      symbol: "JPYC",
+      decimals: 18,
+      eip712: {
+        name: "JPY Coin",
+        version: "1",
+      },
+    },
+    supportedAssets: getSupportedAssetsConfig("ethereum"),
+    hooks: {
+      transfer: "0x0000000000000000000000000000000000000000", // TODO: Deploy TransferHook
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "ETH",
+    },
+  },
+  polygon: {
+    chainId: 137,
+    name: "Polygon Mainnet",
+    type: "mainnet",
+    addressExplorerBaseUrl: "https://polygonscan.com/address/",
+    txExplorerBaseUrl: "https://polygonscan.com/tx/",
+    settlementRouter: "0x0000000000000000000000000000000000000000", // TODO: Deploy SettlementRouter
+    defaultAsset: {
+      address: "0xe7c3d8c9a439fede00d2600032d5db0be71c3c29",
+      symbol: "JPYC",
+      decimals: 18,
+      eip712: {
+        name: "JPY Coin",
+        version: "1",
+      },
+    },
+    supportedAssets: getSupportedAssetsConfig("polygon"),
+    hooks: {
+      transfer: "0x0000000000000000000000000000000000000000", // TODO: Deploy TransferHook
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "POL",
+    },
+  },
+  filecoin: {
+    chainId: 314,
+    name: "Filecoin Mainnet",
+    type: "mainnet",
+    addressExplorerBaseUrl: "https://filfox.info/en/address/",
+    txExplorerBaseUrl: "https://filfox.info/en/message/",
+    settlementRouter: "0x0000000000000000000000000000000000000000", // TODO: Deploy SettlementRouter
+    defaultAsset: {
+      address: "0x80B98d3aa09ffff255c3ba4A241111Ff1262F045",
+      symbol: "USDFC",
+      decimals: 18,
+      eip712: {
+        name: "USD for Filecoin Community",
+        version: "1",
+      },
+    },
+    supportedAssets: getSupportedAssetsConfig("filecoin"),
+    hooks: {
+      transfer: "0x0000000000000000000000000000000000000000", // TODO: Deploy TransferHook
+    },
+    metadata: {
+      gasModel: "eip1559",
+      nativeToken: "FIL",
+    },
+  },
 };
+
+/**
+ * Get all supported assets for a network
+ *
+ * @param network - Network name (e.g., 'sepolia', 'base-sepolia')
+ * @returns Array of supported asset configurations
+ * @throws Error if network is not supported
+ *
+ * @example
+ * ```typescript
+ * const assets = getSupportedAssets('sepolia');
+ * // => [{ symbol: 'JPYC', address: '0x...', ... }, { symbol: 'USDC', address: '0x...', ... }]
+ * ```
+ */
+export function getSupportedAssets(network: string): AssetConfig[] {
+  const config = getNetworkConfig(network);
+  return config.supportedAssets;
+}
+
+/**
+ * Get asset configuration by symbol for a network
+ *
+ * @param network - Network name (e.g., 'sepolia', 'base-sepolia')
+ * @param symbol - Token symbol (e.g., 'USDC', 'JPYC')
+ * @returns Asset configuration or null if not found
+ * @throws Error if network is not supported
+ *
+ * @example
+ * ```typescript
+ * const usdc = getAssetBySymbol('sepolia', 'USDC');
+ * // => { symbol: 'USDC', address: '0x...', decimals: 6, ... }
+ * ```
+ */
+export function getAssetBySymbol(network: string, symbol: string): AssetConfig | null {
+  const assets = getSupportedAssets(network);
+  return assets.find((asset) => asset.symbol.toUpperCase() === symbol.toUpperCase()) || null;
+}
+
+/**
+ * Validate if an asset address is supported on a network
+ *
+ * @param network - Network name (e.g., 'sepolia', 'base-sepolia')
+ * @param assetAddress - Asset contract address to validate
+ * @returns True if asset is supported on the network
+ * @throws Error if network is not supported
+ *
+ * @example
+ * ```typescript
+ * const isValid = validateAsset('sepolia', '0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238');
+ * // => true
+ * ```
+ */
+export function validateAsset(network: string, assetAddress: string): boolean {
+  const assets = getSupportedAssets(network);
+  return assets.some(
+    (asset) => asset.address.toLowerCase() === assetAddress.toLowerCase(),
+  );
+}
 
 /**
  * Get network configuration by network name

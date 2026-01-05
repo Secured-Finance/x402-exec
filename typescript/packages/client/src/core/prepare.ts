@@ -6,8 +6,8 @@
  */
 
 import type { Address, Hex } from "viem";
-import { getNetworkConfig, calculateFacilitatorFee, type FeeCalculationResult } from "@x402x/core";
-import { calculateCommitment } from "@x402x/core";
+import { getNetworkConfig, getAssetBySymbol, calculateFacilitatorFee, type FeeCalculationResult } from "@secured-finance/x402-core";
+import { calculateCommitment } from "@secured-finance/x402-core";
 import type { PrepareParams, SettlementData } from "../types.js";
 import { NetworkError, ValidationError, FacilitatorError } from "../errors.js";
 import {
@@ -77,8 +77,8 @@ async function queryFacilitatorFee(
  *
  * @example
  * ```typescript
- * import { prepareSettlement } from '@x402x/client';
- * import { TransferHook, parseDefaultAssetAmount } from '@x402x/core';
+ * import { prepareSettlement } from '@secured-finance/x402-client';
+ * import { TransferHook, parseDefaultAssetAmount } from '@secured-finance/x402-core';
  *
  * // Convert USD amount to atomic units first
  * const atomicAmount = parseDefaultAssetAmount('1', 'base-sepolia'); // '1000000'
@@ -122,8 +122,25 @@ export async function prepareSettlement(params: PrepareParams): Promise<Settleme
     );
   }
 
-  // 4. Determine asset address (use provided asset or default asset)
-  const asset = params.asset || (networkConfig.defaultAsset.address as Address);
+  // 4. Determine asset address (use token symbol, provided asset, or default asset)
+  let asset: Address;
+  if (params.token) {
+    // Resolve token symbol to address
+    const assetConfig = getAssetBySymbol(params.network, params.token);
+    if (!assetConfig) {
+      throw new ValidationError(
+        `Token '${params.token}' is not supported on network '${params.network}'. ` +
+          `Supported tokens: ${networkConfig.supportedAssets.map((a) => a.symbol).join(", ")}`,
+      );
+    }
+    asset = assetConfig.address as Address;
+  } else if (params.asset) {
+    // Direct address provided (backward compatible)
+    asset = params.asset;
+  } else {
+    // Use default asset (backward compatible)
+    asset = networkConfig.defaultAsset.address as Address;
+  }
   validateAddress(asset, "asset");
 
   // 5. Generate salt (if not provided)
