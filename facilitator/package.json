@@ -1,5 +1,5 @@
 {
-  "name": "@secured-finance/x402-facilitator",
+  "name": "@x402x/facilitator",
   "version": "1.0.0",
   "description": "X402 Facilitator - Production-ready implementation for x402 payment facilitation with SettlementRouter support",
   "type": "module",
@@ -34,7 +34,7 @@
     "settlement",
     "x402-exec"
   ],
-  "author": "Secured Finance",
+  "author": "Nuwa Protocol",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -64,7 +64,8 @@
     "pino-http": "^10.2.0",
     "pino-pretty": "^11.2.2",
     "viem": "2.40.3",
-    "x402": "npm:sf-x402x@^0.7.1"
+    "x402": "npm:sf-x402x@^0.7.4",
+    "@supabase/supabase-js": "^2.38.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.24.0",

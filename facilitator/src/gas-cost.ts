@@ -8,7 +8,7 @@
 import { getLogger } from "./telemetry.js";
 import { getNetworkConfig } from "@secured-finance/x402-core";
 import { getGasPrice, type DynamicGasPriceConfig } from "./dynamic-gas-price.js";
-import { getTokenPrice, getPaymentTokenPrice, type TokenPriceConfig } from "./token-price.js";
+import { getTokenPrice, type TokenPriceConfig } from "./token-price.js";
 
 const logger = getLogger();
 
@@ -23,7 +23,6 @@ export interface GasCostConfig {
   minGasLimit: number; // Minimum gas limit to ensure transaction can execute (default: 150000)
   maxGasLimit: number; // Absolute upper limit for gas to defend against malicious hooks (default: 5000000)
   dynamicGasLimitMargin: number; // Profit margin reserved when calculating dynamic limit (0-1, default: 0.2 = 20%)
-  networkMinGasLimit: Record<string, number>; // Network-specific minimum gas limits (overrides minGasLimit)
 
   // Gas Overhead Configuration
   hookGasOverhead: Record<string, number>; // Additional gas required by different hook types
@@ -88,7 +87,7 @@ export function isHookAllowed(network: string, hook: string, config: GasCostConf
  * @param hook - Hook address
  * @returns Hook type identifier
  */
-export function getHookType(network: string, hook: string): string {
+function getHookType(network: string, hook: string): string {
   try {
     const networkConfig = getNetworkConfig(network);
     const hookLower = hook.toLowerCase();
@@ -138,20 +137,14 @@ export function getGasLimit(network: string, hook: string, config: GasCostConfig
   // Determine hook type
   const hookType = getHookType(network, hook);
 
-  // Get network-specific minimum gas limit if available, otherwise use default
-  const minGasLimit = config.networkMinGasLimit[network] || config.minGasLimit;
-
   // Calculate gas limit
   const overhead = config.hookGasOverhead[hookType] || config.hookGasOverhead.custom || 100000;
-  const gasLimit = minGasLimit + overhead;
+  const gasLimit = config.minGasLimit + overhead;
 
-  // Validate against maximum (FEVM requires MUCH higher limits)
-  const isFilecoin = network.includes("filecoin");
-  const effectiveMaxGasLimit = isFilecoin ? 150000000 : config.maxGasLimit; // 150M for FEVM
-
-  if (gasLimit > effectiveMaxGasLimit) {
+  // Validate against maximum
+  if (gasLimit > config.maxGasLimit) {
     throw new Error(
-      `Calculated gas limit ${gasLimit} exceeds maximum ${effectiveMaxGasLimit} for hook ${hook}${isFilecoin ? " (FEVM)" : ""}`,
+      `Calculated gas limit ${gasLimit} exceeds maximum ${config.maxGasLimit} for hook ${hook}`,
     );
   }
 
@@ -160,7 +153,7 @@ export function getGasLimit(network: string, hook: string, config: GasCostConfig
       network,
       hook,
       hookType,
-      minGasLimit,
+      minGasLimit: config.minGasLimit,
       overhead,
       gasLimit,
     },
@@ -177,15 +170,9 @@ export function getGasLimit(network: string, hook: string, config: GasCostConfig
  * @param config - Gas cost configuration
  * @throws Error if gas limit exceeds maximum
  */
-export function validateGasLimit(gasLimit: number, config: GasCostConfig, network?: string): void {
-  // FEVM (Filecoin) requires MUCH higher gas limits
-  const isFilecoin = network?.includes("filecoin");
-  const effectiveMaxGasLimit = isFilecoin ? 150000000 : config.maxGasLimit; // 150M for FEVM
-
-  if (gasLimit > effectiveMaxGasLimit) {
-    throw new Error(
-      `Gas limit ${gasLimit} exceeds maximum ${effectiveMaxGasLimit}${isFilecoin ? " (FEVM)" : ""}`,
-    );
+export function validateGasLimit(gasLimit: number, config: GasCostConfig): void {
+  if (gasLimit > config.maxGasLimit) {
+    throw new Error(`Gas limit ${gasLimit} exceeds maximum ${config.maxGasLimit}`);
   }
 }
 
@@ -222,18 +209,14 @@ export async function convertNativeToUsd(
  *
  * @param usdAmount - USD amount as string
  * @param decimals - Token decimals
- * @param tokenPriceUsd - Token price in USD (default 1.0 for USD-pegged tokens)
  * @returns Token amount in smallest unit as string
  */
 export function convertUsdToToken(
   usdAmount: string,
   decimals: number,
-  tokenPriceUsd: number = 1.0,
+  paymentTokenPrice: number = 1.0, // Default to 1.0 for USDC (1:1 with USD)
 ): string {
-  // USD amount / token price = number of tokens needed
-  // e.g., $0.85 / $0.00667 per JPYC = 127.4 JPYC
-  const tokenAmount = parseFloat(usdAmount) / tokenPriceUsd;
-  const amount = tokenAmount * Math.pow(10, decimals);
+  const amount = (parseFloat(usdAmount) / paymentTokenPrice) * Math.pow(10, decimals);
   return Math.ceil(amount).toString();
 }
 
@@ -273,30 +256,30 @@ export function convertUsdToToken(
  * ```
  */
 export function calculateEffectiveGasLimit(
-  network: string,
   facilitatorFee: string,
   gasPrice: string,
   nativeTokenPrice: number,
   config: GasCostConfig,
-  tokenDecimals: number = 6,
+  tokenDecimals: number = 6, // Default to 6 for USDC, but support 18 for USDFC
+  network?: string, // Optional network name for network-specific overrides
 ): number {
-  // Convert facilitator fee to USD
+  // Convert facilitator fee to USD (use actual token decimals)
   const feeUSD = parseFloat(facilitatorFee) / Math.pow(10, tokenDecimals);
 
   // Calculate available amount for gas (after reserving profit margin)
   const availableForGasUSD = feeUSD * (1 - config.dynamicGasLimitMargin);
 
-  // Get network-specific minimum gas limit if available, otherwise use default
-  const isFilecoin = network.includes("filecoin");
-  const baseMinGasLimit = config.networkMinGasLimit[network] || config.minGasLimit;
+  // Network-specific minimum gas limits (for networks that need more gas)
+  // Filecoin limits include 10% safety buffer to account for FEVM overhead and network fluctuations
+  const networkMinGasLimits: Record<string, number> = {
+    "filecoin-calibration": 2_310_000, // 2.1M base + 10% buffer for FEVM overhead
+    filecoin: 2_310_000, // 2.1M base + 10% buffer for FEVM overhead
+    sepolia: 200_000, // Sepolia needs more gas for SettlementRouter operations (was failing at 150k)
+  };
 
-  // FEVM (Filecoin) has DRAMATICALLY higher gas costs due to USDC proxy pattern
-  // Root cause: USDC on FEVM is a proxy contract using delegatecall for every operation
-  // Call trace shows each operation costs 3-21M gas:
-  // - balanceOf: 4.6M gas, authorizationState: 3.6M, transferWithAuthorization: 4.4M
-  // - approve: 4.4M, transferFrom: 21M+ gas (all via proxy delegatecall)
-  // Total settlement requires ~68M gas minimum (47M setup + 21M final transfer)
-  const minGasLimit = isFilecoin ? Math.max(baseMinGasLimit, 150000000) : baseMinGasLimit; // 150M minimum for FEVM
+  // Get network-specific minimum or use default
+  const minGasLimit =
+    network && networkMinGasLimits[network] ? networkMinGasLimits[network] : config.minGasLimit;
 
   // Protect against invalid token price (zero or negative)
   // If price is invalid, return minimum gas limit as safety fallback
@@ -314,15 +297,14 @@ export function calculateEffectiveGasLimit(
   // Calculate maximum affordable gas
   const maxAffordableGas = Math.floor(availableWei / Number(gasPriceBigInt));
 
-  // FEVM uses a much higher max gas limit than standard EVM chains
-  // Even 50M may not be enough - use 150M to be safe
-  const effectiveMaxGasLimit = isFilecoin ? 150000000 : config.maxGasLimit; // 150M for FEVM
-
   // Apply triple constraints:
-  // 1. Not less than minimum (ensure transaction can execute - 15M for FEVM!)
-  // 2. Not more than maximum (absolute safety cap - 50M for FEVM)
-  // 3. Not more than affordable (profit protection - but FEVM ignores tiny fees)
-  const effectiveGasLimit = Math.max(minGasLimit, Math.min(maxAffordableGas, effectiveMaxGasLimit));
+  // 1. Not less than minimum (ensure transaction can execute)
+  // 2. Not more than maximum (absolute safety cap)
+  // 3. Not more than affordable (profit protection)
+  const effectiveGasLimit = Math.max(
+    minGasLimit,
+    Math.min(maxAffordableGas, config.maxGasLimit),
+  );
 
   return effectiveGasLimit;
 }
@@ -377,10 +359,7 @@ export async function calculateMinFacilitatorFee(
   let finalCostUSD = (parseFloat(gasCostUSD) * config.safetyMultiplier).toFixed(6);
 
   // Apply minimum facilitator fee USD
-  // Use lower minimum for testnets to allow small demo payments
-  const isTestnet =
-    network.includes("sepolia") || network.includes("testnet") || network.includes("calibration");
-  const minFacilitatorFeeUsd = isTestnet ? 0.001 : config.minFacilitatorFeeUsd || 0.01; // 0.1 cent for testnets, 1 cent for mainnet
+  const minFacilitatorFeeUsd = config.minFacilitatorFeeUsd || 0.01; // Default 1 cent
   if (parseFloat(finalCostUSD) < minFacilitatorFeeUsd) {
     finalCostUSD = minFacilitatorFeeUsd.toFixed(6);
     logger.debug(
@@ -390,29 +369,13 @@ export async function calculateMinFacilitatorFee(
         originalCostUSD: (parseFloat(gasCostUSD) * config.safetyMultiplier).toFixed(6),
         minFacilitatorFeeUsd,
         finalCostUSD,
-        isTestnet,
       },
       "Applied minimum facilitator fee USD",
     );
   }
 
-  // Get payment token price for this network (fetches from CoinGecko for JPYC)
-  const paymentTokenPrice = await getPaymentTokenPrice(network, tokenPriceConfig);
-
-  // Convert to token smallest unit using the payment token price
-  const minFacilitatorFee = convertUsdToToken(finalCostUSD, tokenDecimals, paymentTokenPrice);
-
-  logger.debug(
-    {
-      network,
-      hook,
-      finalCostUSD,
-      paymentTokenPrice,
-      minFacilitatorFee,
-      tokenDecimals,
-    },
-    "Converting USD to payment token",
-  );
+  // Convert to token smallest unit
+  const minFacilitatorFee = convertUsdToToken(finalCostUSD, tokenDecimals);
 
   logger.debug(
     {

@@ -107,34 +107,28 @@ export function validateSettlementRouter(
  */
 export function validateTokenAddress(network: string, tokenAddress: string): void {
   const networkConfig = getNetworkConfig(network);
-  
-  // Check if token is in supportedAssets
-  const isValid = networkConfig.supportedAssets.some(
-    (asset) => asset.address.toLowerCase() === tokenAddress.toLowerCase(),
-  );
-  
-  if (!isValid) {
+  const expectedUsdcAddress = networkConfig.defaultAsset.address.toLowerCase();
+  const actualTokenAddress = tokenAddress.toLowerCase();
+
+  if (actualTokenAddress !== expectedUsdcAddress) {
     logger.error(
       {
         network,
         providedToken: tokenAddress,
-        supportedTokens: networkConfig.supportedAssets.map((a) => a.symbol),
+        expectedToken: networkConfig.defaultAsset.address,
       },
       "Unsupported token address detected in settlement",
     );
     throw new SettlementExtraError(
-      `Token ${tokenAddress} is not supported on network ${network}. ` +
-        `Supported tokens: ${networkConfig.supportedAssets.map((a) => a.symbol).join(", ")}`,
+      `Only USDC is currently supported for settlement on ${network}. ` +
+        `Expected: ${networkConfig.defaultAsset.address}, Got: ${tokenAddress}`,
     );
   }
 
   logger.debug(
     {
       network,
-      tokenAddress,
-      tokenSymbol: networkConfig.supportedAssets.find(
-        (a) => a.address.toLowerCase() === tokenAddress.toLowerCase(),
-      )?.symbol,
+      tokenAddress: networkConfig.defaultAsset.address,
     },
     "Token address validated",
   );
@@ -381,13 +375,18 @@ export async function settleWithRouter(
         // Get native token price
         const nativePrice = nativeTokenPrices?.[network] || 0;
 
+        // Get network config for token decimals
+        const networkConfig = getNetworkConfig(network);
+        const tokenDecimals = networkConfig.defaultAsset.decimals;
+
         // Calculate effective gas limit with triple constraints
         const calculatedLimit = calculateEffectiveGasLimit(
-          network,
           extra.facilitatorFee,
           gasPrice,
           nativePrice,
           gasCostConfig,
+          tokenDecimals, // Pass token decimals
+          network, // Pass network for network-specific minimum gas limits
         );
 
         effectiveGasLimit = BigInt(calculatedLimit);
@@ -524,13 +523,15 @@ export async function settleWithRouter(
 
     // 9. Calculate gas metrics
     const nativePrice = nativeTokenPrices?.[network] || 0;
+    const networkConfig = getNetworkConfig(network);
+    const tokenDecimals = networkConfig.defaultAsset.decimals;
     const gasMetrics = calculateGasMetrics(
       receipt,
       extra.facilitatorFee,
       extra.hook,
       network,
       nativePrice.toString(),
-      6, // USDC decimals (all current settlements use USDC)
+      tokenDecimals, // Pass actual token decimals
     );
 
     // 10. Log settlement success with gas metrics

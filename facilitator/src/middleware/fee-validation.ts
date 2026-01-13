@@ -1,12 +1,11 @@
 /**
  * Fee Validation Middleware
  *
- * Validates that facilitator fee meets minimum requirements using gas-based calculation.
+ * Validates that facilitator fee meets minimum requirements based on gas cost calculations.
  */
 
 import type { Request, Response, NextFunction } from "express";
 import type { PaymentRequirements } from "x402/types";
-import { getNetworkConfig } from "@secured-finance/x402-core";
 import { getLogger } from "../telemetry.js";
 import { calculateMinFacilitatorFee, type GasCostConfig } from "../gas-cost.js";
 import { isSettlementMode, validateTokenAddress } from "../settlement.js";
@@ -45,10 +44,9 @@ export function createFeeValidationMiddleware(
         return next();
       }
 
+      // Validate token address (only USDC is currently supported)
       const network = paymentRequirements.network;
       const asset = paymentRequirements.asset;
-
-      // Validate token address (only USDC is currently supported)
 
       try {
         validateTokenAddress(network, asset);
@@ -96,9 +94,10 @@ export function createFeeValidationMiddleware(
         });
       }
 
-      // Get token decimals from network config
-      const networkConfig = getNetworkConfig(network);
-      const tokenDecimals = networkConfig.defaultAsset.decimals;
+      // Get token decimals
+      //const networkConfig = getNetworkConfig(network);
+      // TODO: In future, fetch token decimals dynamically from network config.
+      const tokenDecimals = 6; // USDC has 6 decimals (networkConfig.defaultAsset.decimals would have this info)
 
       // Calculate minimum required fee
       let feeCalculation;

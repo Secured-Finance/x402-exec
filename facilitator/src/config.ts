@@ -12,11 +12,7 @@
 import { config as loadEnv } from "dotenv";
 import type { X402Config } from "x402/types";
 import { evm } from "x402/types";
-import {
-  getSupportedNetworks,
-  getNetworkConfig,
-  isNetworkSupported,
-} from "@secured-finance/x402-core";
+import { getSupportedNetworks, getNetworkConfig, isNetworkSupported } from "@secured-finance/x402-core";
 import type { GasCostConfig } from "./gas-cost.js";
 import type { DynamicGasPriceConfig } from "./dynamic-gas-price.js";
 import type { TokenPriceConfig } from "./token-price.js";
@@ -288,37 +284,19 @@ export function isStandardX402Allowed(network: string): boolean {
 function loadEvmPrivateKeys(): string[] {
   const keys: string[] = [];
 
-  // 1. Try comma-separated format (EVM_PRIVATE_KEYS)
-  const keysStr = process.env.EVM_PRIVATE_KEYS;
-  if (keysStr) {
-    const list = keysStr
-      .split(",")
-      .map((k) => k.trim())
-      .filter(Boolean);
-    keys.push(...list);
-  }
-
-  // 2. Load from EVM_PRIVATE_KEY_1, EVM_PRIVATE_KEY_2, etc. (if not found in list)
-  if (keys.length === 0) {
-    for (let i = 1; i <= 100; i++) {
-      const key = process.env[`EVM_PRIVATE_KEY_${i}`];
-      if (key) {
-        keys.push(key);
-      } else {
-        break; // Stop at first missing key
-      }
+  // Load from EVM_PRIVATE_KEY_1, EVM_PRIVATE_KEY_2, etc.
+  for (let i = 1; i <= 100; i++) {
+    const key = process.env[`EVM_PRIVATE_KEY_${i}`];
+    if (key) {
+      keys.push(key);
+    } else {
+      break; // Stop at first missing key
     }
   }
 
-  // 3. Fallback to single EVM_PRIVATE_KEY
+  // Fallback to single EVM_PRIVATE_KEY
   if (keys.length === 0 && process.env.EVM_PRIVATE_KEY) {
     keys.push(process.env.EVM_PRIVATE_KEY);
-  }
-
-  if (keys.length === 0) {
-    throw new Error(
-      "No EVM private keys configured. Set EVM_PRIVATE_KEYS, EVM_PRIVATE_KEY_*, or EVM_PRIVATE_KEY",
-    );
   }
 
   return keys;
@@ -417,7 +395,7 @@ function parseGasCostConfig(): GasCostConfig {
       // Default prices (conservative estimates)
       // Check for most specific matches first
       if (network.includes("filecoin")) {
-        nativeTokenPrice[network] = 1.22; // FIL current price ~$1.22
+        nativeTokenPrice[network] = 5; // FIL price (default: ~$5-10, using $5 as conservative estimate)
       } else if (network.includes("x-layer")) {
         nativeTokenPrice[network] = DEFAULTS.nativeTokenPrice.OKB;
       } else if (network.includes("base")) {
@@ -425,16 +403,6 @@ function parseGasCostConfig(): GasCostConfig {
       } else {
         nativeTokenPrice[network] = DEFAULTS.nativeTokenPrice.GENERIC;
       }
-    }
-  }
-
-  // Parse network-specific minimum gas limits
-  const networkMinGasLimit: Record<string, number> = {};
-  for (const network of supportedNetworks) {
-    const envVarName = `${network.toUpperCase().replace(/-/g, "_")}_MIN_GAS_LIMIT`;
-    const minGasLimit = process.env[envVarName];
-    if (minGasLimit) {
-      networkMinGasLimit[network] = parseInt(minGasLimit);
     }
   }
 
@@ -450,7 +418,6 @@ function parseGasCostConfig(): GasCostConfig {
       process.env.GAS_COST_DYNAMIC_GAS_LIMIT_MARGIN ||
         String(DEFAULTS.gasCost.DYNAMIC_GAS_LIMIT_MARGIN),
     ),
-    networkMinGasLimit,
 
     // Gas Overhead Configuration
     hookGasOverhead,
@@ -598,12 +565,23 @@ function parseTokenPriceConfig(): TokenPriceConfig {
     }
   }
 
+  // Parse payment token coin IDs
+  const paymentTokenCoinIds: Record<string, string> = {};
+  for (const network of supportedNetworks) {
+    const paymentTokenEnvVarName = `${network.toUpperCase().replace(/-/g, "_")}_PAYMENT_TOKEN_COIN_ID`;
+    const paymentTokenCoinId = process.env[paymentTokenEnvVarName];
+    if (paymentTokenCoinId) {
+      paymentTokenCoinIds[network] = paymentTokenCoinId;
+    }
+  }
+
   return {
     enabled,
     cacheTTL: parseInt(process.env.TOKEN_PRICE_CACHE_TTL || "3600"), // 1 hour
     updateInterval: parseInt(process.env.TOKEN_PRICE_UPDATE_INTERVAL || "600"), // 10 minutes
     apiKey: process.env.COINGECKO_API_KEY,
     coinIds,
+    paymentTokenCoinIds, // Added for payment token prices
   };
 }
 
