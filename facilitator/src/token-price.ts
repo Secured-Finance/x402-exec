@@ -29,17 +29,31 @@ export interface TokenPriceConfig {
   cacheTTL: number; // Cache TTL in seconds
   updateInterval: number; // Background update interval in seconds
   apiKey?: string; // Optional CoinGecko Pro API key
-  coinIds: Record<string, string>; // network -> CoinGecko coin ID mapping
+  coinIds: Record<string, string>; // network -> CoinGecko coin ID mapping for native tokens
+  paymentTokenCoinIds: Record<string, string>; // network -> CoinGecko coin ID mapping for payment tokens
 }
 
 /**
- * Default CoinGecko coin ID mapping
+ * Default CoinGecko coin ID mapping for native tokens (used for gas cost calculations)
  */
 const DEFAULT_COIN_IDS: Record<string, string> = {
   "base-sepolia": "ethereum",
   base: "ethereum",
   "x-layer-testnet": "okb",
   "x-layer": "okb",
+  "filecoin-calibration": "filecoin",
+  filecoin: "filecoin",
+  sepolia: "ethereum", // Native token: ETH (for gas)
+};
+
+/**
+ * Payment token CoinGecko ID mapping (used for fee calculations)
+ * Maps payment token symbols to CoinGecko coin IDs
+ */
+const PAYMENT_TOKEN_COIN_IDS: Record<string, string> = {
+  USDC: "usd-coin",
+  JPYC: "jpycoin",
+  USDFC: "usd-coin",
 };
 
 /**
@@ -91,6 +105,50 @@ export async function getTokenPrice(
     return price;
   } catch (error) {
     logger.warn({ error, network }, "Failed to fetch token price, using static fallback");
+    return staticPrice;
+  }
+}
+
+/**
+ * Payment token price cache
+ */
+const paymentTokenPriceCache = new Map<string, TokenPriceCacheEntry>();
+
+/**
+ * Get payment token price by symbol
+ *
+ * @param paymentTokenSymbol - Payment token symbol (e.g., "JPYC", "USDFC", "USDC")
+ * @param staticPrice - Static fallback price (default: 1.0 for USDC)
+ * @param config - Optional token price configuration
+ * @returns Token price in USD
+ */
+export async function getPaymentTokenPrice(
+  paymentTokenSymbol: string,
+  staticPrice: number,
+  config?: TokenPriceConfig,
+): Promise<number> {
+  if (!config?.enabled) {
+    return staticPrice;
+  }
+
+  const cacheKey = `payment-${paymentTokenSymbol}`;
+  const cached = paymentTokenPriceCache.get(cacheKey);
+  if (cached) {
+    const age = (Date.now() - cached.timestamp) / 1000;
+    if (age < config.cacheTTL) {
+      return cached.price;
+    }
+  }
+
+  try {
+    const coinId = config.paymentTokenCoinIds[paymentTokenSymbol] || PAYMENT_TOKEN_COIN_IDS[paymentTokenSymbol];
+    if (!coinId) {
+      return staticPrice;
+    }
+    const price = await fetchCoinGeckoPrice(coinId, config.apiKey);
+    paymentTokenPriceCache.set(cacheKey, { price, timestamp: Date.now() });
+    return price;
+  } catch (error) {
     return staticPrice;
   }
 }

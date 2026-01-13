@@ -12,11 +12,11 @@
 import { config as loadEnv } from "dotenv";
 import type { X402Config } from "x402/types";
 import { evm } from "x402/types";
-import { getSupportedNetworks, getNetworkConfig, isNetworkSupported } from "@x402x/core";
+import { getSupportedNetworks, getNetworkConfig, isNetworkSupported } from "@secured-finance/x402-core";
 import type { GasCostConfig } from "./gas-cost.js";
 import type { DynamicGasPriceConfig } from "./dynamic-gas-price.js";
 import type { TokenPriceConfig } from "./token-price.js";
-import { baseSepolia, base } from "viem/chains";
+import { baseSepolia, base, sepolia } from "viem/chains";
 import type { Chain } from "viem";
 import { DEFAULTS } from "./defaults.js";
 
@@ -394,7 +394,9 @@ function parseGasCostConfig(): GasCostConfig {
     } else {
       // Default prices (conservative estimates)
       // Check for most specific matches first
-      if (network.includes("x-layer")) {
+      if (network.includes("filecoin")) {
+        nativeTokenPrice[network] = 5; // FIL price (default: ~$5-10, using $5 as conservative estimate)
+      } else if (network.includes("x-layer")) {
         nativeTokenPrice[network] = DEFAULTS.nativeTokenPrice.OKB;
       } else if (network.includes("base")) {
         nativeTokenPrice[network] = DEFAULTS.nativeTokenPrice.ETH;
@@ -472,6 +474,7 @@ function parseDynamicGasPriceConfig(): DynamicGasPriceConfig {
     base: base,
     "x-layer-testnet": evm.xLayerTestnet,
     "x-layer": evm.xLayer,
+    sepolia: sepolia,
   };
 
   // Parse RPC URLs for each network
@@ -562,12 +565,23 @@ function parseTokenPriceConfig(): TokenPriceConfig {
     }
   }
 
+  // Parse payment token coin IDs
+  const paymentTokenCoinIds: Record<string, string> = {};
+  for (const network of supportedNetworks) {
+    const paymentTokenEnvVarName = `${network.toUpperCase().replace(/-/g, "_")}_PAYMENT_TOKEN_COIN_ID`;
+    const paymentTokenCoinId = process.env[paymentTokenEnvVarName];
+    if (paymentTokenCoinId) {
+      paymentTokenCoinIds[network] = paymentTokenCoinId;
+    }
+  }
+
   return {
     enabled,
     cacheTTL: parseInt(process.env.TOKEN_PRICE_CACHE_TTL || "3600"), // 1 hour
     updateInterval: parseInt(process.env.TOKEN_PRICE_UPDATE_INTERVAL || "600"), // 10 minutes
     apiKey: process.env.COINGECKO_API_KEY,
     coinIds,
+    paymentTokenCoinIds, // Added for payment token prices
   };
 }
 

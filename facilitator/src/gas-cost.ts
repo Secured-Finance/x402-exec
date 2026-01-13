@@ -6,7 +6,7 @@
  */
 
 import { getLogger } from "./telemetry.js";
-import { getNetworkConfig } from "@x402x/core";
+import { getNetworkConfig } from "@secured-finance/x402-core";
 import { getGasPrice, type DynamicGasPriceConfig } from "./dynamic-gas-price.js";
 import { getTokenPrice, type TokenPriceConfig } from "./token-price.js";
 
@@ -211,8 +211,12 @@ export async function convertNativeToUsd(
  * @param decimals - Token decimals
  * @returns Token amount in smallest unit as string
  */
-export function convertUsdToToken(usdAmount: string, decimals: number): string {
-  const amount = parseFloat(usdAmount) * Math.pow(10, decimals);
+export function convertUsdToToken(
+  usdAmount: string,
+  decimals: number,
+  paymentTokenPrice: number = 1.0, // Default to 1.0 for USDC (1:1 with USD)
+): string {
+  const amount = (parseFloat(usdAmount) / paymentTokenPrice) * Math.pow(10, decimals);
   return Math.ceil(amount).toString();
 }
 
@@ -256,17 +260,31 @@ export function calculateEffectiveGasLimit(
   gasPrice: string,
   nativeTokenPrice: number,
   config: GasCostConfig,
+  tokenDecimals: number = 6, // Default to 6 for USDC, but support 18 for USDFC
+  network?: string, // Optional network name for network-specific overrides
 ): number {
-  // Convert facilitator fee to USD (assuming 6 decimals for USDC)
-  const feeUSD = parseFloat(facilitatorFee) / 1e6;
+  // Convert facilitator fee to USD (use actual token decimals)
+  const feeUSD = parseFloat(facilitatorFee) / Math.pow(10, tokenDecimals);
 
   // Calculate available amount for gas (after reserving profit margin)
   const availableForGasUSD = feeUSD * (1 - config.dynamicGasLimitMargin);
 
+  // Network-specific minimum gas limits (for networks that need more gas)
+  // Filecoin limits include 10% safety buffer to account for FEVM overhead and network fluctuations
+  const networkMinGasLimits: Record<string, number> = {
+    "filecoin-calibration": 2_310_000, // 2.1M base + 10% buffer for FEVM overhead
+    filecoin: 2_310_000, // 2.1M base + 10% buffer for FEVM overhead
+    sepolia: 200_000, // Sepolia needs more gas for SettlementRouter operations (was failing at 150k)
+  };
+
+  // Get network-specific minimum or use default
+  const minGasLimit =
+    network && networkMinGasLimits[network] ? networkMinGasLimits[network] : config.minGasLimit;
+
   // Protect against invalid token price (zero or negative)
   // If price is invalid, return minimum gas limit as safety fallback
   if (nativeTokenPrice <= 0 || !Number.isFinite(nativeTokenPrice)) {
-    return config.minGasLimit;
+    return minGasLimit;
   }
 
   // Calculate how much gas we can afford
@@ -284,7 +302,7 @@ export function calculateEffectiveGasLimit(
   // 2. Not more than maximum (absolute safety cap)
   // 3. Not more than affordable (profit protection)
   const effectiveGasLimit = Math.max(
-    config.minGasLimit,
+    minGasLimit,
     Math.min(maxAffordableGas, config.maxGasLimit),
   );
 

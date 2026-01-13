@@ -19,7 +19,7 @@ import {
   parseSettlementExtra as parseSettlementExtraCore,
   getNetworkConfig,
   calculateCommitment,
-} from "@x402x/core";
+} from "@secured-finance/x402-core";
 import type { Address, Hex } from "viem";
 import { parseErc6492Signature } from "viem/utils";
 import { getLogger } from "./telemetry.js";
@@ -34,7 +34,7 @@ const logger = getLogger();
 /**
  * Check if a payment request requires SettlementRouter mode
  *
- * Re-exported from @x402x/core for convenience.
+ * Re-exported from @secured-finance/x402-core for convenience.
  *
  * @param paymentRequirements - The payment requirements from the 402 response
  * @returns True if settlement mode is required (extra.settlementRouter exists)
@@ -137,7 +137,7 @@ export function validateTokenAddress(network: string, tokenAddress: string): voi
 /**
  * Parse and validate settlement extra parameters
  *
- * Uses @x402x/core's parseSettlementExtra for validation.
+ * Uses @secured-finance/x402-core's parseSettlementExtra for validation.
  *
  * @param extra - Extra field from PaymentRequirements
  * @returns Parsed settlement extra parameters
@@ -375,12 +375,18 @@ export async function settleWithRouter(
         // Get native token price
         const nativePrice = nativeTokenPrices?.[network] || 0;
 
+        // Get network config for token decimals
+        const networkConfig = getNetworkConfig(network);
+        const tokenDecimals = networkConfig.defaultAsset.decimals;
+
         // Calculate effective gas limit with triple constraints
         const calculatedLimit = calculateEffectiveGasLimit(
           extra.facilitatorFee,
           gasPrice,
           nativePrice,
           gasCostConfig,
+          tokenDecimals, // Pass token decimals
+          network, // Pass network for network-specific minimum gas limits
         );
 
         effectiveGasLimit = BigInt(calculatedLimit);
@@ -517,13 +523,15 @@ export async function settleWithRouter(
 
     // 9. Calculate gas metrics
     const nativePrice = nativeTokenPrices?.[network] || 0;
+    const networkConfig = getNetworkConfig(network);
+    const tokenDecimals = networkConfig.defaultAsset.decimals;
     const gasMetrics = calculateGasMetrics(
       receipt,
       extra.facilitatorFee,
       extra.hook,
       network,
       nativePrice.toString(),
-      6, // USDC decimals (all current settlements use USDC)
+      tokenDecimals, // Pass actual token decimals
     );
 
     // 10. Log settlement success with gas metrics
