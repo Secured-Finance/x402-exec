@@ -53,17 +53,28 @@ function getSupportedAssetsConfig(network: Network): AssetConfig[] {
 
   // If supportedTokens is available, use it
   if (chainConfig.supportedTokens && chainConfig.supportedTokens.length > 0) {
-    return chainConfig.supportedTokens.map((token) => ({
-      address: token.address as string,
-      symbol: token.symbol,
-      name: token.name,
-      decimals: token.decimals,
-      isDefault: token.isDefault ?? false,
-      eip712: {
+    // Get default asset to use its EIP-712 version for the default token
+    const defaultAsset = getDefaultAsset(network);
+    
+    return chainConfig.supportedTokens.map((token) => {
+      // For the default token, use the version from getDefaultAsset
+      // For other tokens, use "2" as default (most ERC-3009 tokens use version "2")
+      const version = token.isDefault 
+        ? defaultAsset.eip712.version 
+        : "2";
+      
+      return {
+        address: token.address as string,
+        symbol: token.symbol,
         name: token.name,
-        version: "2",
-      },
-    }));
+        decimals: token.decimals,
+        isDefault: token.isDefault ?? false,
+        eip712: {
+          name: token.name,
+          version,
+        },
+      };
+    });
   }
 
   // Fallback: create single asset from default

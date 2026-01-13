@@ -328,6 +328,8 @@ export function paymentMiddleware(
 
         // Resolve asset from token symbol if provided, otherwise use default
         let asset = defaultAsset;
+        let correctedBaseAmount = baseAmount;
+        
         if (token) {
           const assetConfig = getAssetBySymbol(network, token);
           if (!assetConfig) {
@@ -341,6 +343,20 @@ export function paymentMiddleware(
             decimals: assetConfig.decimals,
             eip712: assetConfig.eip712,
           };
+          // Recalculate amount with correct decimals if they differ
+          if (assetConfig.decimals !== defaultAsset.decimals) {
+            const priceNum = typeof price === "string" 
+              ? parseFloat(price.replace(/^\$/, "")) 
+              : typeof price === "number" 
+                ? price 
+                : parseFloat(baseAmount) / Math.pow(10, defaultAsset.decimals);
+            correctedBaseAmount = (BigInt(Math.round(priceNum * Math.pow(10, assetConfig.decimals)))).toString();
+          }
+        } else {
+          // sf-x402x@0.7.4+ now returns correct decimals and version from config
+          // No override needed - use the asset as-is from processPriceToAtomicAmount
+          asset = defaultAsset;
+          correctedBaseAmount = baseAmount;
         }
 
         // Resolve hook and hookData (support function or string)
@@ -380,7 +396,7 @@ export function paymentMiddleware(
 
             // When using dynamic fee, price is business price only
             // Total = business price + facilitator fee
-            businessAmount = baseAmount;
+            businessAmount = correctedBaseAmount;
             maxAmountRequired = (
               BigInt(businessAmount) + BigInt(resolvedFacilitatorFee)
             ).toString();
@@ -402,8 +418,8 @@ export function paymentMiddleware(
         } else if (resolvedFacilitatorFeeRaw === "0" || resolvedFacilitatorFeeRaw === 0) {
           // Explicitly set to 0
           resolvedFacilitatorFee = "0";
-          businessAmount = baseAmount;
-          maxAmountRequired = baseAmount;
+          businessAmount = correctedBaseAmount;
+          maxAmountRequired = correctedBaseAmount;
         } else {
           // Static fee configuration
           const feeResult = processPriceToAtomicAmount(resolvedFacilitatorFeeRaw, network);
@@ -411,7 +427,7 @@ export function paymentMiddleware(
             throw new Error(`Invalid facilitatorFee: ${feeResult.error}`);
           }
           resolvedFacilitatorFee = feeResult.maxAmountRequired;
-          businessAmount = baseAmount;
+          businessAmount = correctedBaseAmount;
           // Total = business price + static facilitator fee
           maxAmountRequired = (BigInt(businessAmount) + BigInt(resolvedFacilitatorFee)).toString();
         }
