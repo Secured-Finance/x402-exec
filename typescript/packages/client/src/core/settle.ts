@@ -6,7 +6,7 @@
  */
 
 import type { Address, Hex } from "viem";
-import { settle as coreSettle } from "@x402x/core";
+import { settle as coreSettle } from "@secured-finance/x402-core";
 import type {
   SignedAuthorization,
   SettleResult,
@@ -33,7 +33,7 @@ import { FacilitatorError } from "../errors.js";
  *
  * @example
  * ```typescript
- * import { settle } from '@x402x/client';
+ * import { settle } from '@secured-finance/x402-client';
  *
  * const result = await settle(
  *   'https://facilitator.x402x.dev',

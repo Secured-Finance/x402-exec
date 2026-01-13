@@ -1,9 +1,9 @@
 /**
- * Type definitions for @x402x/client
+ * Type definitions for @secured-finance/x402-client
  */
 
 import type { Address, Hex, WalletClient, TransactionReceipt } from "viem";
-import type { NetworkConfig } from "@x402x/core";
+import type { NetworkConfig } from "@secured-finance/x402-core";
 import type { PaymentRequirements, PaymentPayload } from "x402/types";
 
 /**
@@ -45,21 +45,28 @@ export interface ExecuteParams {
   /** Optional: Encoded hook data (defaults to "0x" for no hook data) */
   hookData?: Hex;
   /**
+   * Optional: Token symbol (e.g., 'USDC', 'JPYC') - developer specifies which token to use.
+   * If not provided, uses the default asset for the network.
+   * Mutually exclusive with `asset` address parameter.
+   */
+  token?: string;
+  /**
    * Optional: Asset contract address (ERC-3009 token, defaults to network's default asset).
    *
    * If not provided, uses the default asset for the network (typically USDC).
    * Must be a valid ERC-3009 compatible token address.
+   * Mutually exclusive with `token` symbol parameter.
    */
   asset?: Address;
   /**
    * Payment amount in atomic units (smallest unit of the asset).
    *
    * Must be a positive integer string. For USDC (6 decimals), use parseDefaultAssetAmount()
-   * from @x402x/core to convert USD amounts to atomic units.
+   * from @secured-finance/x402-core to convert USD amounts to atomic units.
    *
    * @example
    * ```typescript
-   * import { parseDefaultAssetAmount } from '@x402x/core';
+   * import { parseDefaultAssetAmount } from '@secured-finance/x402-core';
    * const atomicAmount = parseDefaultAssetAmount('1', 'base-sepolia'); // '1000000'
    * await client.execute({ amount: atomicAmount, payTo: '0x...' });
    * ```
@@ -141,17 +148,24 @@ export interface PrepareParams {
   /** Encoded hook data */
   hookData: Hex;
   /**
+   * Optional: Token symbol (e.g., 'USDC', 'JPYC') - developer specifies which token to use.
+   * If not provided, uses the default asset for the network.
+   * Mutually exclusive with `asset` address parameter.
+   */
+  token?: string;
+  /**
    * Optional: Asset contract address (ERC-3009 token, defaults to network's default asset).
    *
    * If not provided, uses the default asset for the network (typically USDC).
    * Must be a valid ERC-3009 compatible token address.
+   * Mutually exclusive with `token` symbol parameter.
    */
   asset?: Address;
   /**
    * Payment amount in atomic units (smallest unit of the asset).
    *
    * Must be a positive integer string. For USDC (6 decimals), use parseDefaultAssetAmount()
-   * from @x402x/core to convert USD amounts to atomic units.
+   * from @secured-finance/x402-core to convert USD amounts to atomic units.
    */
   amount: string;
   /** Primary recipient address */

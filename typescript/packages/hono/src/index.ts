@@ -29,10 +29,11 @@ import { useFacilitator } from "x402/verify";
 import {
   addSettlementExtra,
   getNetworkConfig,
+  getAssetBySymbol,
   TransferHook,
   calculateFacilitatorFee,
   type FeeCalculationResult,
-} from "@x402x/core";
+} from "@secured-finance/x402-core";
 import type { Address } from "viem";
 import type { Address as SolanaAddress } from "@solana/kit";
 
@@ -87,6 +88,9 @@ export interface X402xRouteConfig {
   /** Network(s) to support - can be a single network or array for multi-network support */
   network: Network | Network[];
 
+  /** Token symbol to accept (e.g., 'USDC', 'JPYC') - defaults to network's default asset */
+  token?: string;
+
   /** Hook address - defaults to TransferHook for the network */
   hook?: string | ((network: Network) => string);
 
@@ -136,7 +140,7 @@ export type X402xRoutesConfig = X402xRouteConfig | Record<string, X402xRouteConf
  * Simple usage - single network with default TransferHook:
  * ```typescript
  * import { Hono } from 'hono';
- * import { paymentMiddleware } from '@x402x/hono';
+ * import { paymentMiddleware } from '@secured-finance/x402-hono';
  *
  * const app = new Hono();
  *
@@ -259,6 +263,7 @@ export function paymentMiddleware(
     const {
       price,
       network: networkConfig,
+      token,
       hook,
       hookData,
       facilitatorFee,
@@ -316,10 +321,43 @@ export function paymentMiddleware(
         if ("error" in atomicAmountForAsset) {
           throw new Error(atomicAmountForAsset.error);
         }
-        const { maxAmountRequired: baseAmount, asset } = atomicAmountForAsset;
+        const { maxAmountRequired: baseAmount, asset: defaultAsset } = atomicAmountForAsset;
 
         const resourceUrl: Resource = resource || (c.req.url as Resource);
         const x402xConfig = getNetworkConfig(network);
+
+        // Resolve asset from token symbol if provided, otherwise use default
+        let asset = defaultAsset;
+        let correctedBaseAmount = baseAmount;
+        
+        if (token) {
+          const assetConfig = getAssetBySymbol(network, token);
+          if (!assetConfig) {
+            throw new Error(
+              `Token '${token}' is not supported on network '${network}'. ` +
+                `Supported tokens: ${x402xConfig.supportedAssets.map((a) => a.symbol).join(", ")}`,
+            );
+          }
+          asset = {
+            address: assetConfig.address as Address,
+            decimals: assetConfig.decimals,
+            eip712: assetConfig.eip712,
+          };
+          // Recalculate amount with correct decimals if they differ
+          if (assetConfig.decimals !== defaultAsset.decimals) {
+            const priceNum = typeof price === "string" 
+              ? parseFloat(price.replace(/^\$/, "")) 
+              : typeof price === "number" 
+                ? price 
+                : parseFloat(baseAmount) / Math.pow(10, defaultAsset.decimals);
+            correctedBaseAmount = (BigInt(Math.round(priceNum * Math.pow(10, assetConfig.decimals)))).toString();
+          }
+        } else {
+          // sf-x402x@0.7.4+ now returns correct decimals and version from config
+          // No override needed - use the asset as-is from processPriceToAtomicAmount
+          asset = defaultAsset;
+          correctedBaseAmount = baseAmount;
+        }
 
         // Resolve hook and hookData (support function or string)
         const resolvedHook =
@@ -358,7 +396,7 @@ export function paymentMiddleware(
 
             // When using dynamic fee, price is business price only
             // Total = business price + facilitator fee
-            businessAmount = baseAmount;
+            businessAmount = correctedBaseAmount;
             maxAmountRequired = (
               BigInt(businessAmount) + BigInt(resolvedFacilitatorFee)
             ).toString();
@@ -380,8 +418,8 @@ export function paymentMiddleware(
         } else if (resolvedFacilitatorFeeRaw === "0" || resolvedFacilitatorFeeRaw === 0) {
           // Explicitly set to 0
           resolvedFacilitatorFee = "0";
-          businessAmount = baseAmount;
-          maxAmountRequired = baseAmount;
+          businessAmount = correctedBaseAmount;
+          maxAmountRequired = correctedBaseAmount;
         } else {
           // Static fee configuration
           const feeResult = processPriceToAtomicAmount(resolvedFacilitatorFeeRaw, network);
@@ -389,7 +427,7 @@ export function paymentMiddleware(
             throw new Error(`Invalid facilitatorFee: ${feeResult.error}`);
           }
           resolvedFacilitatorFee = feeResult.maxAmountRequired;
-          businessAmount = baseAmount;
+          businessAmount = correctedBaseAmount;
           // Total = business price + static facilitator fee
           maxAmountRequired = (BigInt(businessAmount) + BigInt(resolvedFacilitatorFee)).toString();
         }

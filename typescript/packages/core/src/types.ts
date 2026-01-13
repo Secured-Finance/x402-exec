@@ -1,5 +1,5 @@
 /**
- * Type definitions for @x402x/core
+ * Type definitions for @secured-finance/x402-core
  */
 
 import type { PaymentRequirements, PaymentPayload, Signer } from "x402/types";
@@ -68,6 +68,29 @@ export interface DemoHooks {
 }
 
 /**
+ * Asset configuration for a supported token
+ */
+export interface AssetConfig {
+  /** Asset contract address */
+  address: string;
+  /** Token symbol (e.g., "USDC", "JPYC") */
+  symbol: string;
+  /** Token name (e.g., "USD Coin", "JPY Coin") */
+  name: string;
+  /** Asset decimals */
+  decimals: number;
+  /** Whether this is the default asset for the network */
+  isDefault?: boolean;
+  /** EIP-712 domain info for signing */
+  eip712: {
+    /** Asset contract name (for EIP-712) */
+    name: string;
+    /** Asset contract version (for EIP-712) */
+    version: string;
+  };
+}
+
+/**
  * Network configuration for x402x
  */
 export interface NetworkConfig {
@@ -87,6 +110,8 @@ export interface NetworkConfig {
   defaultAsset: {
     /** Asset contract address */
     address: string;
+    /** Asset symbol (e.g., "USDC", "JPYC") */
+    symbol: string;
     /** Asset decimals */
     decimals: number;
     /** EIP-712 domain info for signing */
@@ -97,6 +122,8 @@ export interface NetworkConfig {
       version: string;
     };
   };
+  /** All supported assets for this network */
+  supportedAssets: AssetConfig[];
   /** Builtin hook addresses */
   hooks: {
     /** TransferHook address */
